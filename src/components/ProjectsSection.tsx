@@ -9,31 +9,31 @@ const ProjectsSection = () => {
 
   const projects = [
     {
+      title: 'PiSphere',
+      description: 'Site demonstração focado no mercado de criptomoedas e controle financeiro com interface moderna e intuitiva.',
+      image: '/api/placeholder/400/250',
+      technologies: ['React', 'TypeScript', 'TailwindCSS', 'Chart.js'],
+      category: 'frontend',
+      liveUrl: 'https://toniakbanares.github.io/pisphere-harmony/',
+      githubUrl: 'https://github.com/Toniakbanares/pisphere-harmony',
+      featured: true
+    },
+    {
+      title: 'RAMDUT Showcase',
+      description: 'Blog pessoal e portfólio com integração das minhas redes sociais e conteúdo sobre tecnologia.',
+      image: '/api/placeholder/400/250',
+      technologies: ['HTML5', 'CSS3', 'JavaScript', 'Responsive Design'],
+      category: 'frontend',
+      liveUrl: 'https://toniakbanares.github.io/ramdut-showcase-website-jaques/',
+      githubUrl: 'https://github.com/Toniakbanares/ramdut-showcase-website-jaques',
+      featured: true
+    },
+    {
       title: 'Sistema de Gestão Acadêmica',
       description: 'Plataforma completa para gestão de estudantes, professores e cursos universitários com dashboard interativo.',
       image: '/api/placeholder/400/250',
       technologies: ['React', 'Node.js', 'PostgreSQL', 'TypeScript'],
       category: 'fullstack',
-      liveUrl: '#',
-      githubUrl: '#',
-      featured: true
-    },
-    {
-      title: 'App de Controle Financeiro',
-      description: 'Aplicativo mobile para controle de gastos pessoais com gráficos e relatórios detalhados.',
-      image: '/api/placeholder/400/250',
-      technologies: ['React Native', 'Firebase', 'Chart.js'],
-      category: 'mobile',
-      liveUrl: '#',
-      githubUrl: '#',
-      featured: true
-    },
-    {
-      title: 'E-commerce Moderno',
-      description: 'Loja virtual responsiva com carrinho de compras, integração de pagamentos e painel administrativo.',
-      image: '/api/placeholder/400/250',
-      technologies: ['Next.js', 'Stripe', 'Prisma', 'TailwindCSS'],
-      category: 'frontend',
       liveUrl: '#',
       githubUrl: '#',
       featured: false
@@ -47,26 +47,6 @@ const ProjectsSection = () => {
       liveUrl: '#',
       githubUrl: '#',
       featured: false
-    },
-    {
-      title: 'Dashboard Analytics',
-      description: 'Dashboard interativo para visualização de dados em tempo real com gráficos dinâmicos.',
-      image: '/api/placeholder/400/250',
-      technologies: ['Vue.js', 'D3.js', 'Express', 'WebSocket'],
-      category: 'frontend',
-      liveUrl: '#',
-      githubUrl: '#',
-      featured: false
-    },
-    {
-      title: 'Chatbot Inteligente',
-      description: 'Bot conversacional com processamento de linguagem natural para atendimento ao cliente.',
-      image: '/api/placeholder/400/250',
-      technologies: ['Python', 'TensorFlow', 'NLP', 'Flask'],
-      category: 'ai',
-      liveUrl: '#',
-      githubUrl: '#',
-      featured: true
     }
   ];
 
