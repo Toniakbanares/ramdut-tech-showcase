@@ -3,6 +3,10 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ExternalLink, Github, Eye } from 'lucide-react';
+import pisphereImage from '@/assets/pisphere-project.jpg';
+import ramdutImage from '@/assets/ramdut-project.jpg';
+import academicSystemImage from '@/assets/academic-system-project.jpg';
+import apiProjectImage from '@/assets/api-project.jpg';
 
 const ProjectsSection = () => {
   const [activeFilter, setActiveFilter] = useState('all');
@@ -11,7 +15,7 @@ const ProjectsSection = () => {
     {
       title: 'PiSphere',
       description: 'Site demonstração focado no mercado de criptomoedas e controle financeiro com interface moderna e intuitiva.',
-      image: '/api/placeholder/400/250',
+      image: pisphereImage,
       technologies: ['React', 'TypeScript', 'TailwindCSS', 'Chart.js'],
       category: 'frontend',
       liveUrl: 'https://toniakbanares.github.io/pisphere-harmony/',
@@ -21,7 +25,7 @@ const ProjectsSection = () => {
     {
       title: 'RAMDUT Showcase',
       description: 'Blog pessoal e portfólio com integração das minhas redes sociais e conteúdo sobre tecnologia.',
-      image: '/api/placeholder/400/250',
+      image: ramdutImage,
       technologies: ['HTML5', 'CSS3', 'JavaScript', 'Responsive Design'],
       category: 'frontend',
       liveUrl: 'https://toniakbanares.github.io/ramdut-showcase-website-jaques/',
@@ -31,7 +35,7 @@ const ProjectsSection = () => {
     {
       title: 'Sistema de Gestão Acadêmica',
       description: 'Plataforma completa para gestão de estudantes, professores e cursos universitários com dashboard interativo.',
-      image: '/api/placeholder/400/250',
+      image: academicSystemImage,
       technologies: ['React', 'Node.js', 'PostgreSQL', 'TypeScript'],
       category: 'fullstack',
       liveUrl: '#',
@@ -41,7 +45,7 @@ const ProjectsSection = () => {
     {
       title: 'API de Gerenciamento de Tarefas',
       description: 'API RESTful robusta para gerenciamento de projetos e tarefas com autenticação JWT.',
-      image: '/api/placeholder/400/250',
+      image: apiProjectImage,
       technologies: ['Python', 'FastAPI', 'MongoDB', 'Docker'],
       category: 'backend',
       liveUrl: '#',
