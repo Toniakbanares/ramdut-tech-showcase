@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Menu, X, Code, Home, User, Briefcase, Award, Mail } from 'lucide-react';
+import { Menu, X, Code, Home, User, Briefcase, Award, Mail, Sparkles } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Navigation = () => {
   const [isScrolled, setIsScrolled] = useState(false);
