@@ -66,6 +66,15 @@ const Navigation = () => {
                   {item.name}
                 </Button>
               ))}
+              <Link to="/ai-tools">
+                <Button
+                  variant="ghost"
+                  className="hover:bg-primary/10 hover:text-primary transition-all duration-300 border border-primary/30"
+                >
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  AI Lab
+                </Button>
+              </Link>
             </div>
 
             {/* Mobile Menu Button */}
@@ -100,6 +109,15 @@ const Navigation = () => {
                     {item.name}
                   </Button>
                 ))}
+                <Link to="/ai-tools" onClick={() => setIsMobileMenuOpen(false)}>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start hover:bg-primary/10 hover:text-primary transition-all duration-300 border border-primary/30"
+                  >
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    AI Lab
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>
