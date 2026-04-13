@@ -7,13 +7,12 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { 
-  Send, Bot, User, Loader2, Image, Sparkles, MessageSquare, 
-  ArrowLeft, Trash2, ImagePlus, Eye, Wand2, ThermometerSun
+  Send, Bot, User, Loader2, Sparkles, MessageSquare, 
+  ArrowLeft, Trash2, ImagePlus, Eye, Wand2, ThermometerSun, Volume2
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// Puter.js is loaded via CDN in index.html — we reference the global `puter`
 declare global {
   interface Window {
     puter: any;
@@ -37,8 +36,8 @@ const AITools = () => {
 
   // Image generation state
   const [imagePrompt, setImagePrompt] = useState('');
-  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [isImageLoading, setIsImageLoading] = useState(false);
+  const imageContainerRef = useRef<HTMLDivElement>(null);
 
   // Image analysis state
   const [imageUrl, setImageUrl] = useState('');
@@ -50,6 +49,11 @@ const AITools = () => {
   const [creativeResult, setCreativeResult] = useState('');
   const [isCreativeLoading, setIsCreativeLoading] = useState(false);
   const [temperature, setTemperature] = useState(0.7);
+
+  // TTS state
+  const [ttsText, setTtsText] = useState('');
+  const [isTtsLoading, setIsTtsLoading] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -65,7 +69,6 @@ const AITools = () => {
   // --- CHAT ---
   const handleSendMessage = async () => {
     if (!chatInput.trim() || isChatLoading) return;
-
     const userMessage: ChatMessage = { role: 'user', content: chatInput };
     const updatedMessages = [...chatMessages, userMessage];
     setChatMessages(updatedMessages);
@@ -77,43 +80,37 @@ const AITools = () => {
         updatedMessages.map(m => ({ role: m.role, content: m.content })),
         { model: selectedModel }
       );
-
       setChatMessages(prev => [
         ...prev,
         { role: 'assistant', content: response.message.content }
       ]);
     } catch (error: any) {
-      toast({
-        title: 'Erro no Chat',
-        description: error.message || 'Falha ao obter resposta da IA.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Erro no Chat', description: error.message || 'Falha ao obter resposta.', variant: 'destructive' });
     } finally {
       setIsChatLoading(false);
     }
   };
 
-  // --- IMAGE GENERATION ---
+  // --- IMAGE GENERATION (fixed: append HTMLImageElement directly) ---
   const handleGenerateImage = async () => {
     if (!imagePrompt.trim() || isImageLoading) return;
     setIsImageLoading(true);
-    setGeneratedImage(null);
+    // Clear previous image
+    if (imageContainerRef.current) {
+      imageContainerRef.current.innerHTML = '';
+    }
 
     try {
-      const image = await window.puter.ai.txt2img({
-        prompt: imagePrompt,
-        model: 'grok-2-image',
-        provider: 'xai',
-      });
-
-      // image is an HTMLImageElement
-      setGeneratedImage(image.src);
+      const image = await window.puter.ai.txt2img(imagePrompt);
+      // txt2img returns an HTMLImageElement — append it directly
+      if (image && imageContainerRef.current) {
+        image.style.width = '100%';
+        image.style.borderRadius = '8px';
+        image.alt = 'Imagem gerada por IA';
+        imageContainerRef.current.appendChild(image);
+      }
     } catch (error: any) {
-      toast({
-        title: 'Erro na Geração',
-        description: error.message || 'Falha ao gerar imagem.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Erro na Geração', description: error.message || 'Falha ao gerar imagem.', variant: 'destructive' });
     } finally {
       setIsImageLoading(false);
     }
@@ -133,11 +130,7 @@ const AITools = () => {
       );
       setAnalysisResult(response.message.content);
     } catch (error: any) {
-      toast({
-        title: 'Erro na Análise',
-        description: error.message || 'Falha ao analisar imagem.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Erro na Análise', description: error.message || 'Falha ao analisar imagem.', variant: 'destructive' });
     } finally {
       setIsAnalyzing(false);
     }
@@ -157,13 +150,29 @@ const AITools = () => {
       });
       setCreativeResult(response.message.content);
     } catch (error: any) {
-      toast({
-        title: 'Erro na Escrita',
-        description: error.message || 'Falha ao gerar texto.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Erro na Escrita', description: error.message || 'Falha ao gerar texto.', variant: 'destructive' });
     } finally {
       setIsCreativeLoading(false);
+    }
+  };
+
+  // --- TEXT TO SPEECH ---
+  const handleTTS = async () => {
+    if (!ttsText.trim() || isTtsLoading) return;
+    setIsTtsLoading(true);
+
+    try {
+      const audio = await window.puter.ai.txt2speech(ttsText);
+      // audio is an HTMLAudioElement
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+      audioRef.current = audio;
+      audio.play();
+    } catch (error: any) {
+      toast({ title: 'Erro no TTS', description: error.message || 'Falha ao gerar áudio.', variant: 'destructive' });
+    } finally {
+      setIsTtsLoading(false);
     }
   };
 
@@ -195,7 +204,6 @@ const AITools = () => {
       </div>
 
       <div className="max-w-6xl mx-auto px-6 py-8">
-        {/* Intro */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -205,14 +213,13 @@ const AITools = () => {
             Laboratório de Inteligência Artificial
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Explore funcionalidades de IA gratuitas e ilimitadas com a API Grok via Puter.js. 
-            Chat, geração de imagens, análise visual e escrita criativa — tudo no navegador.
+            Explore funcionalidades de IA gratuitas e ilimitadas com a API Grok via Puter.js.
+            Chat, geração de imagens, análise visual, escrita criativa e texto para fala.
           </p>
         </motion.div>
 
-        {/* Tabs */}
         <Tabs defaultValue="chat" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto">
+          <TabsList className="grid w-full grid-cols-3 md:grid-cols-5 h-auto">
             <TabsTrigger value="chat" className="flex items-center gap-2 py-3">
               <MessageSquare className="h-4 w-4" />
               <span className="hidden sm:inline">Chat IA</span>
@@ -232,6 +239,11 @@ const AITools = () => {
               <Wand2 className="h-4 w-4" />
               <span className="hidden sm:inline">Escrita Criativa</span>
               <span className="sm:hidden">Escrita</span>
+            </TabsTrigger>
+            <TabsTrigger value="tts" className="flex items-center gap-2 py-3">
+              <Volume2 className="h-4 w-4" />
+              <span className="hidden sm:inline">Texto para Fala</span>
+              <span className="sm:hidden">TTS</span>
             </TabsTrigger>
           </TabsList>
 
@@ -260,7 +272,6 @@ const AITools = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                {/* Messages */}
                 <div className="h-[400px] overflow-y-auto border border-border rounded-lg p-4 mb-4 bg-muted/30 space-y-4">
                   {chatMessages.length === 0 && (
                     <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
@@ -308,8 +319,6 @@ const AITools = () => {
                   )}
                   <div ref={chatEndRef} />
                 </div>
-
-                {/* Input */}
                 <div className="flex gap-2">
                   <Input
                     value={chatInput}
@@ -322,11 +331,7 @@ const AITools = () => {
                   <Button onClick={handleSendMessage} disabled={isChatLoading || !chatInput.trim()}>
                     {isChatLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                   </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => setChatMessages([])}
-                    disabled={chatMessages.length === 0}
-                  >
+                  <Button variant="outline" onClick={() => setChatMessages([])} disabled={chatMessages.length === 0}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
@@ -340,22 +345,19 @@ const AITools = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <ImagePlus className="h-5 w-5 text-primary" />
-                  Geração de Imagens com Grok
+                  Geração de Imagens
                 </CardTitle>
                 <CardDescription>
-                  Crie imagens únicas a partir de descrições em texto usando o modelo Grok-2-Image.
+                  Crie imagens únicas a partir de descrições em texto.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex gap-2">
-                  <Textarea
-                    value={imagePrompt}
-                    onChange={(e) => setImagePrompt(e.target.value)}
-                    placeholder="Descreva a imagem que deseja criar... Ex: Um gato astronauta flutuando no espaço com a Terra ao fundo"
-                    rows={3}
-                    className="flex-1"
-                  />
-                </div>
+                <Textarea
+                  value={imagePrompt}
+                  onChange={(e) => setImagePrompt(e.target.value)}
+                  placeholder="Descreva a imagem que deseja criar... Ex: Um gato astronauta flutuando no espaço com a Terra ao fundo"
+                  rows={3}
+                />
                 <Button
                   onClick={handleGenerateImage}
                   disabled={isImageLoading || !imagePrompt.trim()}
@@ -374,15 +376,10 @@ const AITools = () => {
                   )}
                 </Button>
 
-                {generatedImage && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="rounded-lg overflow-hidden border border-border"
-                  >
-                    <img src={generatedImage} alt="Imagem gerada por IA" className="w-full" />
-                  </motion.div>
-                )}
+                <div
+                  ref={imageContainerRef}
+                  className="rounded-lg overflow-hidden border border-border empty:hidden"
+                />
               </CardContent>
             </Card>
           </TabsContent>
@@ -407,14 +404,10 @@ const AITools = () => {
                     placeholder="Cole a URL da imagem... Ex: https://exemplo.com/foto.jpg"
                     className="flex-1"
                   />
-                  <Button
-                    onClick={handleAnalyzeImage}
-                    disabled={isAnalyzing || !imageUrl.trim()}
-                  >
+                  <Button onClick={handleAnalyzeImage} disabled={isAnalyzing || !imageUrl.trim()}>
                     {isAnalyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
                   </Button>
                 </div>
-
                 {imageUrl && (
                   <div className="rounded-lg overflow-hidden border border-border max-h-64">
                     <img
@@ -425,7 +418,6 @@ const AITools = () => {
                     />
                   </div>
                 )}
-
                 {analysisResult && (
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
@@ -456,7 +448,6 @@ const AITools = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Temperature control */}
                 <div className="flex items-center gap-4 bg-muted/30 rounded-lg p-3 border border-border">
                   <ThermometerSun className="h-5 w-5 text-primary shrink-0" />
                   <div className="flex-1">
@@ -519,6 +510,51 @@ const AITools = () => {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* ========== TEXT TO SPEECH TAB ========== */}
+          <TabsContent value="tts">
+            <Card className="border-border">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Volume2 className="h-5 w-5 text-primary" />
+                  Texto para Fala (TTS)
+                </CardTitle>
+                <CardDescription>
+                  Converta texto em áudio usando a API de Text-to-Speech do Puter.js.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Textarea
+                  value={ttsText}
+                  onChange={(e) => setTtsText(e.target.value)}
+                  placeholder="Digite o texto que deseja ouvir... Ex: Olá, bem-vindo ao RAMDUT AI Lab!"
+                  rows={4}
+                />
+
+                <Button
+                  onClick={handleTTS}
+                  disabled={isTtsLoading || !ttsText.trim()}
+                  className="w-full"
+                >
+                  {isTtsLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Gerando áudio...
+                    </>
+                  ) : (
+                    <>
+                      <Volume2 className="h-4 w-4 mr-2" />
+                      Reproduzir Áudio
+                    </>
+                  )}
+                </Button>
+
+                <div className="bg-muted/30 rounded-lg p-4 border border-border text-sm text-muted-foreground">
+                  <p>💡 O áudio será reproduzido automaticamente no navegador. Certifique-se de que o volume está ligado.</p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
 
         {/* Models info */}
@@ -529,12 +565,13 @@ const AITools = () => {
           className="mt-12 mb-8"
         >
           <h3 className="text-xl font-bold text-foreground mb-4 text-center">Modelos Disponíveis</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             {[
               { name: 'Grok 4.20', desc: 'Último modelo' },
               { name: 'Grok 4.1 Fast', desc: 'Rápido' },
               { name: 'Grok 3', desc: 'Alta qualidade' },
               { name: 'Grok 2 Image', desc: 'Geração de imagens' },
+              { name: 'TTS', desc: 'Texto para fala' },
             ].map((m, i) => (
               <Card key={i} className="border-border text-center">
                 <CardContent className="pt-4 pb-4">
