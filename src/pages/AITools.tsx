@@ -91,23 +91,46 @@ const AITools = () => {
     }
   };
 
-  // --- IMAGE GENERATION (fixed: append HTMLImageElement directly) ---
+  // --- IMAGE GENERATION (Google Gemini API for higher quality) ---
   const handleGenerateImage = async () => {
     if (!imagePrompt.trim() || isImageLoading) return;
     setIsImageLoading(true);
-    // Clear previous image
     if (imageContainerRef.current) {
       imageContainerRef.current.innerHTML = '';
     }
 
     try {
-      const image = await window.puter.ai.txt2img(imagePrompt);
-      // txt2img returns an HTMLImageElement — append it directly
-      if (image && imageContainerRef.current) {
-        image.style.width = '100%';
-        image.style.borderRadius = '8px';
-        image.alt = 'Imagem gerada por IA';
-        imageContainerRef.current.appendChild(image);
+      const GOOGLE_API_KEY = 'AIzaSyAH9Jwif7ZRdpajoitzvr3oUwYlRaUGrjc';
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp-image-generation:generateContent?key=${GOOGLE_API_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: `Generate an image: ${imagePrompt}` }] }],
+            generationConfig: { responseModalities: ['TEXT', 'IMAGE'] },
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData?.error?.message || `Erro ${response.status}`);
+      }
+
+      const data = await response.json();
+      const parts = data?.candidates?.[0]?.content?.parts || [];
+      const imagePart = parts.find((p: any) => p.inlineData);
+
+      if (imagePart && imageContainerRef.current) {
+        const img = document.createElement('img');
+        img.src = `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`;
+        img.style.width = '100%';
+        img.style.borderRadius = '8px';
+        img.alt = 'Imagem gerada por IA';
+        imageContainerRef.current.appendChild(img);
+      } else {
+        toast({ title: 'Aviso', description: 'Nenhuma imagem foi retornada. Tente um prompt diferente.', variant: 'destructive' });
       }
     } catch (error: any) {
       toast({ title: 'Erro na Geração', description: error.message || 'Falha ao gerar imagem.', variant: 'destructive' });
