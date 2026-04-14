@@ -437,9 +437,9 @@ const AITools = () => {
                             ? 'bg-primary text-primary-foreground'
                             : 'bg-card border border-border text-foreground'
                         }`}>
-                          <ReactMarkdown className="prose prose-sm dark:prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
-                            {msg.content}
-                          </ReactMarkdown>
+<div className="prose prose-sm dark:prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+                            <ReactMarkdown>{msg.content}</ReactMarkdown>
+                          </div>
                         </div>
                         {msg.role === 'user' && (
                           <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
@@ -733,9 +733,9 @@ const AITools = () => {
                       Resultado da Análise
                     </h4>
                     <div className="text-sm text-foreground">
-                      <ReactMarkdown className="prose prose-sm dark:prose-invert max-w-none">
-                        {analysisResult}
-                      </ReactMarkdown>
+<div className="prose prose-sm dark:prose-invert max-w-none">
+                        <ReactMarkdown>{analysisResult}</ReactMarkdown>
+                      </div>
                     </div>
                   </motion.div>
                 )}
@@ -826,9 +826,9 @@ const AITools = () => {
                     className="bg-muted/50 rounded-lg p-6 border border-border"
                   >
                     <div className="text-sm text-foreground leading-relaxed">
-                      <ReactMarkdown className="prose prose-sm dark:prose-invert max-w-none">
-                        {creativeResult}
-                      </ReactMarkdown>
+<div className="prose prose-sm dark:prose-invert max-w-none">
+                        <ReactMarkdown>{creativeResult}</ReactMarkdown>
+                      </div>
                     </div>
                   </motion.div>
                 )}
