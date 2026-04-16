@@ -532,6 +532,27 @@ const AITools = () => {
                   </div>
                 </div>
 
+                {/* Aspect ratio selector */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">📐 Proporção</label>
+                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                    {ASPECT_RATIOS.map(a => (
+                      <button
+                        key={a.id}
+                        onClick={() => setSelectedAspectRatio(a.id)}
+                        className={`text-xs rounded-lg py-2 px-2 border transition-all text-center ${
+                          selectedAspectRatio === a.id
+                            ? 'border-primary bg-primary/10 text-foreground font-medium'
+                            : 'border-border bg-card text-muted-foreground hover:border-primary/50'
+                        }`}
+                      >
+                        <div>{a.label}</div>
+                        <div className="text-[10px] text-muted-foreground">{a.desc}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <Textarea
                   value={imagePrompt}
                   onChange={(e) => setImagePrompt(e.target.value)}
