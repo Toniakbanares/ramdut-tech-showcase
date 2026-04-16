@@ -907,6 +907,16 @@ const AITools = () => {
           </TabsContent>
         </Tabs>
 
+        {/* Google AdSense Banner */}
+        <div className="mt-8 mb-4">
+          <div className="bg-muted/30 rounded-lg p-6 border border-border text-center">
+            <p className="text-muted-foreground text-xs mb-2">Publicidade</p>
+            <div className="h-24 bg-muted/50 rounded-lg flex items-center justify-center border border-dashed border-border">
+              <p className="text-muted-foreground text-xs">Google AdSense - 728x90</p>
+            </div>
+          </div>
+        </div>
+
         {/* Footer info */}
         <motion.div
           initial={{ opacity: 0 }}
