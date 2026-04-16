@@ -82,8 +82,9 @@ const AITools = () => {
   const [imagePrompt, setImagePrompt] = useState('');
   const [isImageLoading, setIsImageLoading] = useState(false);
   const [generatedImageSrc, setGeneratedImageSrc] = useState('');
-  const [selectedImageModel, setSelectedImageModel] = useState(IMAGE_MODELS[1].id);
+  const [selectedImageModel, setSelectedImageModel] = useState(IMAGE_MODELS[0].id);
   const [selectedStyle, setSelectedStyle] = useState(IMAGE_STYLES[0].id);
+  const [selectedAspectRatio, setSelectedAspectRatio] = useState(ASPECT_RATIOS[0].id);
 
   // Meme state
   const [memeTopText, setMemeTopText] = useState('');
