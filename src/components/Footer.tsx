@@ -1,7 +1,14 @@
+import { useEffect } from 'react';
 import { Github, Linkedin, Twitter, Heart, Code } from 'lucide-react';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
+
+  useEffect(() => {
+    try {
+      ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
+    } catch (e) {}
+  }, []);
 
   const socialLinks = [
     {
@@ -107,15 +114,11 @@ const Footer = () => {
       <div className="border-t border-muted bg-muted/30">
         <div className="max-w-6xl mx-auto px-6 py-8">
           <div className="text-center">
-            <div className="bg-gradient-secondary rounded-lg p-8 border border-muted">
-              <p className="text-muted-foreground text-sm mb-2">
-                Espaço reservado para publicidade
-              </p>
-              <div className="h-24 bg-muted/50 rounded-lg flex items-center justify-center">
-                <p className="text-muted-foreground text-xs">
-                  Google AdSense - 728x90
-                </p>
-              </div>
+            <div className="bg-gradient-secondary rounded-lg p-8 border border-muted flex justify-center">
+              <ins className="adsbygoogle"
+                style={{ display: 'inline-block', width: 728, height: 90 }}
+                data-ad-client="ca-pub-6011474845504842"
+                data-ad-slot="1367604945"></ins>
             </div>
           </div>
         </div>
