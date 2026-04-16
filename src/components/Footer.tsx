@@ -1,7 +1,14 @@
+import { useEffect } from 'react';
 import { Github, Linkedin, Twitter, Heart, Code } from 'lucide-react';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
+
+  useEffect(() => {
+    try {
+      ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
+    } catch (e) {}
+  }, []);
 
   const socialLinks = [
     {
