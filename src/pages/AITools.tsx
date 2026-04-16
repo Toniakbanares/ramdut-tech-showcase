@@ -148,33 +148,15 @@ const AITools = () => {
     }
   };
 
-  // --- IMAGE GENERATION (Google Gemini API) ---
-  const generateWithGemini = async (prompt: string, model: string): Promise<string | null> => {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GOOGLE_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { responseModalities: ['TEXT', 'IMAGE'] },
-        }),
-      }
-    );
+  // --- IMAGE GENERATION (Lovable AI Gateway via Edge Function) ---
+  const generateImage = async (prompt: string, model: string, aspectRatio: string): Promise<string | null> => {
+    const { data, error } = await supabase.functions.invoke('generate-image', {
+      body: { prompt, model, aspect_ratio: aspectRatio },
+    });
 
-    if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      throw new Error(errData?.error?.message || `Erro ${response.status}`);
-    }
-
-    const data = await response.json();
-    const parts = data?.candidates?.[0]?.content?.parts || [];
-    const imagePart = parts.find((p: any) => p.inlineData);
-
-    if (imagePart) {
-      return `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`;
-    }
-    return null;
+    if (error) throw new Error(error.message || 'Erro na função de geração');
+    if (data?.error) throw new Error(data.error);
+    return data?.imageUrl || null;
   };
 
   const handleGenerateImage = async () => {
@@ -185,7 +167,7 @@ const AITools = () => {
     try {
       const style = IMAGE_STYLES.find(s => s.id === selectedStyle);
       const fullPrompt = `Generate a high-quality image: ${imagePrompt}. Style: ${style?.prompt || ''}`;
-      const src = await generateWithGemini(fullPrompt, selectedImageModel);
+      const src = await generateImage(fullPrompt, selectedImageModel, selectedAspectRatio);
       if (src) {
         setGeneratedImageSrc(src);
       } else {
