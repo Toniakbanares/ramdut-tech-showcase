@@ -28,11 +28,19 @@ interface ChatMessage {
   content: string;
 }
 
-const GOOGLE_API_KEY = 'AIzaSyAH9Jwif7ZRdpajoitzvr3oUwYlRaUGrjc';
-
 const IMAGE_MODELS = [
-  { id: 'gemini-2.0-flash-exp-image-generation', name: 'Gemini 2.0 Flash', desc: 'Rápido', icon: Zap },
-  { id: 'gemini-2.5-flash-preview-image-generation', name: 'Gemini 2.5 Flash', desc: 'Melhor qualidade', icon: Crown },
+  { id: 'google/gemini-2.5-flash-image', name: 'Nano Banana', desc: 'Rápido', icon: Zap },
+  { id: 'google/gemini-3.1-flash-image-preview', name: 'Nano Banana 2', desc: 'Rápido + Alta qualidade', icon: Crown },
+  { id: 'google/gemini-3-pro-image-preview', name: 'Pro Image', desc: 'Melhor qualidade', icon: Crown },
+];
+
+const ASPECT_RATIOS = [
+  { id: '1:1', label: '⬜ 1:1', desc: 'Quadrado' },
+  { id: '16:9', label: '🖥️ 16:9', desc: 'Paisagem' },
+  { id: '9:16', label: '📱 9:16', desc: 'Retrato' },
+  { id: '4:3', label: '📺 4:3', desc: 'Clássico' },
+  { id: '3:2', label: '📷 3:2', desc: 'Foto' },
+  { id: '21:9', label: '🎬 21:9', desc: 'Ultrawide' },
 ];
 
 const IMAGE_STYLES = [
