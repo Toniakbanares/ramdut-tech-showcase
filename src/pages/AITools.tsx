@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
@@ -27,11 +28,19 @@ interface ChatMessage {
   content: string;
 }
 
-const GOOGLE_API_KEY = 'AIzaSyAH9Jwif7ZRdpajoitzvr3oUwYlRaUGrjc';
-
 const IMAGE_MODELS = [
-  { id: 'gemini-2.0-flash-exp-image-generation', name: 'Gemini 2.0 Flash', desc: 'Rápido', icon: Zap },
-  { id: 'gemini-2.5-flash-preview-image-generation', name: 'Gemini 2.5 Flash', desc: 'Melhor qualidade', icon: Crown },
+  { id: 'google/gemini-2.5-flash-image', name: 'Nano Banana', desc: 'Rápido', icon: Zap },
+  { id: 'google/gemini-3.1-flash-image-preview', name: 'Nano Banana 2', desc: 'Rápido + Alta qualidade', icon: Crown },
+  { id: 'google/gemini-3-pro-image-preview', name: 'Pro Image', desc: 'Melhor qualidade', icon: Crown },
+];
+
+const ASPECT_RATIOS = [
+  { id: '1:1', label: '⬜ 1:1', desc: 'Quadrado' },
+  { id: '16:9', label: '🖥️ 16:9', desc: 'Paisagem' },
+  { id: '9:16', label: '📱 9:16', desc: 'Retrato' },
+  { id: '4:3', label: '📺 4:3', desc: 'Clássico' },
+  { id: '3:2', label: '📷 3:2', desc: 'Foto' },
+  { id: '21:9', label: '🎬 21:9', desc: 'Ultrawide' },
 ];
 
 const IMAGE_STYLES = [
@@ -73,8 +82,9 @@ const AITools = () => {
   const [imagePrompt, setImagePrompt] = useState('');
   const [isImageLoading, setIsImageLoading] = useState(false);
   const [generatedImageSrc, setGeneratedImageSrc] = useState('');
-  const [selectedImageModel, setSelectedImageModel] = useState(IMAGE_MODELS[1].id);
+  const [selectedImageModel, setSelectedImageModel] = useState(IMAGE_MODELS[0].id);
   const [selectedStyle, setSelectedStyle] = useState(IMAGE_STYLES[0].id);
+  const [selectedAspectRatio, setSelectedAspectRatio] = useState(ASPECT_RATIOS[0].id);
 
   // Meme state
   const [memeTopText, setMemeTopText] = useState('');
@@ -138,33 +148,15 @@ const AITools = () => {
     }
   };
 
-  // --- IMAGE GENERATION (Google Gemini API) ---
-  const generateWithGemini = async (prompt: string, model: string): Promise<string | null> => {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GOOGLE_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { responseModalities: ['TEXT', 'IMAGE'] },
-        }),
-      }
-    );
+  // --- IMAGE GENERATION (Lovable AI Gateway via Edge Function) ---
+  const generateImage = async (prompt: string, model: string, aspectRatio: string): Promise<string | null> => {
+    const { data, error } = await supabase.functions.invoke('generate-image', {
+      body: { prompt, model, aspect_ratio: aspectRatio },
+    });
 
-    if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      throw new Error(errData?.error?.message || `Erro ${response.status}`);
-    }
-
-    const data = await response.json();
-    const parts = data?.candidates?.[0]?.content?.parts || [];
-    const imagePart = parts.find((p: any) => p.inlineData);
-
-    if (imagePart) {
-      return `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`;
-    }
-    return null;
+    if (error) throw new Error(error.message || 'Erro na função de geração');
+    if (data?.error) throw new Error(data.error);
+    return data?.imageUrl || null;
   };
 
   const handleGenerateImage = async () => {
@@ -175,7 +167,7 @@ const AITools = () => {
     try {
       const style = IMAGE_STYLES.find(s => s.id === selectedStyle);
       const fullPrompt = `Generate a high-quality image: ${imagePrompt}. Style: ${style?.prompt || ''}`;
-      const src = await generateWithGemini(fullPrompt, selectedImageModel);
+      const src = await generateImage(fullPrompt, selectedImageModel, selectedAspectRatio);
       if (src) {
         setGeneratedImageSrc(src);
       } else {
@@ -201,7 +193,7 @@ const AITools = () => {
         : '';
       const fullPrompt = `Generate a funny meme image: ${memePrompt || 'a hilarious meme'}. ${template?.prompt || ''}. ${textInstructions} Make it funny and viral-worthy, internet humor style.`;
       
-      const src = await generateWithGemini(fullPrompt, selectedImageModel);
+      const src = await generateImage(fullPrompt, selectedImageModel, '1:1');
       if (src) {
         setGeneratedMemeSrc(src);
       } else {
@@ -535,6 +527,27 @@ const AITools = () => {
                         }`}
                       >
                         {s.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Aspect ratio selector */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">📐 Proporção</label>
+                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                    {ASPECT_RATIOS.map(a => (
+                      <button
+                        key={a.id}
+                        onClick={() => setSelectedAspectRatio(a.id)}
+                        className={`text-xs rounded-lg py-2 px-2 border transition-all text-center ${
+                          selectedAspectRatio === a.id
+                            ? 'border-primary bg-primary/10 text-foreground font-medium'
+                            : 'border-border bg-card text-muted-foreground hover:border-primary/50'
+                        }`}
+                      >
+                        <div>{a.label}</div>
+                        <div className="text-[10px] text-muted-foreground">{a.desc}</div>
                       </button>
                     ))}
                   </div>
@@ -893,6 +906,16 @@ const AITools = () => {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Google AdSense Banner */}
+        <div className="mt-8 mb-4">
+          <div className="bg-muted/30 rounded-lg p-6 border border-border text-center">
+            <p className="text-muted-foreground text-xs mb-2">Publicidade</p>
+            <div className="h-24 bg-muted/50 rounded-lg flex items-center justify-center border border-dashed border-border">
+              <p className="text-muted-foreground text-xs">Google AdSense - 728x90</p>
+            </div>
+          </div>
+        </div>
 
         {/* Footer info */}
         <motion.div
