@@ -193,7 +193,7 @@ const AITools = () => {
         : '';
       const fullPrompt = `Generate a funny meme image: ${memePrompt || 'a hilarious meme'}. ${template?.prompt || ''}. ${textInstructions} Make it funny and viral-worthy, internet humor style.`;
       
-      const src = await generateWithGemini(fullPrompt, selectedImageModel);
+      const src = await generateImage(fullPrompt, selectedImageModel, '1:1');
       if (src) {
         setGeneratedMemeSrc(src);
       } else {
