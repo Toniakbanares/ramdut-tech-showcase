@@ -970,6 +970,7 @@ const AITools = () => {
           </div>
         </motion.div>
       </div>
+      </div>
     </div>
   );
 };
