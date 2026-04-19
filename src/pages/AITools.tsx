@@ -69,6 +69,20 @@ const CREATIVE_STYLES = [
   { id: 'code', label: '💻 Código', system: 'Você é um programador expert. Explique e escreva código de forma clara.' },
 ];
 
+const EXTERNAL_AI_RESOURCES = {
+  qvac: [
+    'completion() para respostas locais e workflows de texto',
+    'ocr() para leitura de texto em imagens',
+    'embed() + ragIngest() + ragSearch() para busca semântica e base de conhecimento',
+    'textToSpeech() e transcribe()/transcribeStream() para voz e transcrição',
+  ],
+  rapidApi: [
+    'APIs de OCR, busca, notícias e clima para enriquecer prompts e análises',
+    'Catálogo enorme para testes rápidos sem montar backend customizado',
+    'Bom para prototipar integrações antes de fixar um provedor principal',
+  ],
+};
+
 const AITools = () => {
   const { toast } = useToast();
 
@@ -289,13 +303,15 @@ const AITools = () => {
     <div className="min-h-screen bg-background relative overflow-hidden">
       {/* Animated background — King of Hearts */}
       <div className="fixed inset-0 z-0 pointer-events-none">
-        <motion.div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-[0.08] dark:opacity-[0.12]"
-          style={{ backgroundImage: `url(${kingBg})` }}
-          animate={{ scale: [1, 1.05, 1], y: [0, -10, 0] }}
+        <motion.img
+          src={kingBg}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-cover opacity-25 dark:opacity-35"
+          animate={{ scale: [1.02, 1.08, 1.02], x: [0, 10, 0], y: [0, -12, 0] }}
           transition={{ repeat: Infinity, duration: 18, ease: 'easeInOut' }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/85 to-background" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/70 to-background" />
       </div>
       <div className="relative z-10">
       {/* Header */}
@@ -349,6 +365,53 @@ const AITools = () => {
             criação de memes, análise visual, escrita criativa e texto para fala — tudo gratuito!
           </p>
         </motion.div>
+
+        <Card className="border-border/70 bg-card/85 backdrop-blur-sm mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Sparkles className="h-5 w-5 text-primary" />
+              APIs úteis mapeadas para o Lab
+            </CardTitle>
+            <CardDescription>
+              Levantei recursos do QVAC SDK e do RapidAPI Hub que fazem sentido para próximas integrações.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="font-semibold text-foreground">QVAC SDK</h3>
+                <a href="https://docs.qvac.tether.io/sdk/api/" target="_blank" rel="noreferrer" className="text-sm text-primary hover:underline">
+                  Ver docs
+                </a>
+              </div>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                {EXTERNAL_AI_RESOURCES.qvac.map((item) => (
+                  <li key={item} className="flex gap-2">
+                    <span className="text-primary">•</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="font-semibold text-foreground">RapidAPI Hub</h3>
+                <a href="https://rapidapi.com/hub" target="_blank" rel="noreferrer" className="text-sm text-primary hover:underline">
+                  Explorar hub
+                </a>
+              </div>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                {EXTERNAL_AI_RESOURCES.rapidApi.map((item) => (
+                  <li key={item} className="flex gap-2">
+                    <span className="text-primary">•</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </CardContent>
+        </Card>
 
         <Tabs defaultValue="chat" className="space-y-6">
           <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 h-auto">
