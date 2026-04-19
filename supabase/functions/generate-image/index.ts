@@ -40,14 +40,14 @@ serve(async (req) => {
 
     if (!response.ok) {
       if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit excedido. Tente novamente em alguns segundos." }), {
-          status: 429,
+        return new Response(JSON.stringify({ error: "Rate limit excedido. Tente novamente em alguns segundos.", errorType: "rate_limited" }), {
+          status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "Créditos insuficientes. Adicione créditos ao workspace." }), {
-          status: 402,
+        return new Response(JSON.stringify({ error: "Créditos insuficientes. Adicione créditos ao workspace.", errorType: "insufficient_credits" }), {
+          status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
