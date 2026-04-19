@@ -16,6 +16,7 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import mascotImg from '@/assets/mascot-ramu.png';
+import kingBg from '@/assets/king-hearts-bg.jpg';
 
 declare global {
   interface Window {
@@ -285,7 +286,18 @@ const AITools = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Animated background — King of Hearts */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <motion.div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-[0.08] dark:opacity-[0.12]"
+          style={{ backgroundImage: `url(${kingBg})` }}
+          animate={{ scale: [1, 1.05, 1], y: [0, -10, 0] }}
+          transition={{ repeat: Infinity, duration: 18, ease: 'easeInOut' }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/85 to-background" />
+      </div>
+      <div className="relative z-10">
       {/* Header */}
       <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
