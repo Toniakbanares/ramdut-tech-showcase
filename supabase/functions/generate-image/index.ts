@@ -5,9 +5,23 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const GEMINI_IMAGE_MODEL_FALLBACK = "gemini-3.1-flash-image-preview";
+
+function resolveGeminiModel(model?: string) {
+  const normalized = (model || "").replace(/^google\//, "").trim();
+  const supportedModels = new Set([
+    "gemini-2.5-flash-image",
+    "gemini-3.1-flash-image-preview",
+    "gemini-3-pro-image-preview",
+  ]);
+
+  return supportedModels.has(normalized) ? normalized : GEMINI_IMAGE_MODEL_FALLBACK;
+}
+
 // Fallback: gera imagem diretamente via Google Gemini API (chave do usuário)
-async function generateWithGemini(prompt: string, geminiKey: string) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${geminiKey}`;
+async function generateWithGemini(prompt: string, geminiKey: string, model?: string) {
+  const geminiModel = resolveGeminiModel(model);
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${geminiKey}`;
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -18,7 +32,7 @@ async function generateWithGemini(prompt: string, geminiKey: string) {
   });
   if (!res.ok) {
     const t = await res.text();
-    throw new Error(`Gemini direct error ${res.status}: ${t.slice(0, 200)}`);
+    throw new Error(`Gemini direct error ${res.status} [${geminiModel}]: ${t.slice(0, 200)}`);
   }
   const json = await res.json();
   const parts = json?.candidates?.[0]?.content?.parts || [];
@@ -84,7 +98,7 @@ serve(async (req) => {
     // Fallback: Gemini direto com a chave do usuário
     if (GEMINI_API_KEY) {
       try {
-        const imageUrl = await generateWithGemini(fullPrompt, GEMINI_API_KEY);
+        const imageUrl = await generateWithGemini(fullPrompt, GEMINI_API_KEY, aiModel);
         return new Response(JSON.stringify({ imageUrl, provider: "gemini-direct" }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
