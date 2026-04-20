@@ -336,7 +336,7 @@ const AITools = () => {
           </div>
           <Badge variant="secondary" className="hidden sm:flex gap-1">
             <Sparkles className="h-3 w-3" />
-            Powered by Grok + Gemini
+            Grok + Gemini + Pollinations
           </Badge>
         </div>
       </div>
@@ -361,8 +361,12 @@ const AITools = () => {
             Olá, eu sou o <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Ramu</span>! 🤖
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Seu assistente de IA no RAMDUT Lab. Chat inteligente, geração de imagens HD, 
-            criação de memes, análise visual, escrita criativa e texto para fala — tudo gratuito!
+            Seu assistente de IA no RAMDUT Lab. Chat inteligente, geração de imagens HD,
+            criação de memes, análise visual, escrita criativa e texto para fala.
+          </p>
+          <p className="text-xs text-muted-foreground/80 max-w-2xl mx-auto mt-2">
+            ⚡ Uso gratuito sujeito às cotas dos provedores: Gemini (até 50 imagens/dia por chave) e
+            Pollinations.ai como fallback aberto. Chat e TTS via Puter.js.
           </p>
         </motion.div>
 
@@ -1011,7 +1015,7 @@ const AITools = () => {
             />
             <div>
               <p className="font-bold text-foreground">Ramu AI Assistant</p>
-              <p className="text-xs text-muted-foreground">Gratuito e ilimitado via Puter.js + Google Gemini</p>
+              <p className="text-xs text-muted-foreground">Gratuito via Puter.js + Google Gemini + Pollinations (sujeito a cotas)</p>
             </div>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-6 gap-3">

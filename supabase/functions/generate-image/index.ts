@@ -164,6 +164,7 @@ serve(async (req) => {
     }
 
     // 2) Fallback: rotação de chaves Gemini
+    let geminiError: string | null = null;
     if (geminiKeys.length > 0) {
       try {
         const { imageUrl, keyIndex } = await generateWithGeminiRotating(fullPrompt, geminiKeys, aiModel);
@@ -175,18 +176,46 @@ serve(async (req) => {
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       } catch (e) {
-        console.error("Gemini rotação falhou:", e);
-        return new Response(
-          JSON.stringify({ error: e instanceof Error ? e.message : "Erro Gemini" }),
-          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        geminiError = e instanceof Error ? e.message : "Erro Gemini";
+        console.error("Gemini rotação falhou, tentando Pollinations:", geminiError);
       }
     }
 
-    return new Response(JSON.stringify({ error: "Nenhum provedor de IA configurado." }), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    // 3) Último fallback: Pollinations.ai (gratuito, sem chave)
+    try {
+      const ratioMap: Record<string, { w: number; h: number }> = {
+        "1:1": { w: 1024, h: 1024 },
+        "16:9": { w: 1280, h: 720 },
+        "9:16": { w: 720, h: 1280 },
+        "4:3": { w: 1024, h: 768 },
+        "3:2": { w: 1080, h: 720 },
+        "21:9": { w: 1280, h: 548 },
+      };
+      const dims = ratioMap[aspect_ratio || "1:1"] || ratioMap["1:1"];
+      const seed = Math.floor(Math.random() * 1000000);
+      const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(fullPrompt)}?width=${dims.w}&height=${dims.h}&nologo=true&seed=${seed}`;
+      const imgRes = await fetch(url);
+      if (!imgRes.ok) throw new Error(`Pollinations ${imgRes.status}`);
+      const buf = await imgRes.arrayBuffer();
+      const base64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+      console.log("Pollinations OK (fallback gratuito)");
+      return new Response(
+        JSON.stringify({
+          imageUrl: `data:image/jpeg;base64,${base64}`,
+          provider: "pollinations-free",
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    } catch (e) {
+      const pollErr = e instanceof Error ? e.message : "Erro Pollinations";
+      console.error("Pollinations falhou:", pollErr);
+      return new Response(
+        JSON.stringify({
+          error: `Todos os provedores falharam. Gemini: ${geminiError || "sem chaves"}. Pollinations: ${pollErr}`,
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
   } catch (e) {
     console.error("generate-image error:", e);
     return new Response(
