@@ -405,46 +405,77 @@ const AITools = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <Sparkles className="h-5 w-5 text-primary" />
-              APIs úteis mapeadas para o Lab
+              APIs e ferramentas integradas
             </CardTitle>
             <CardDescription>
-              Levantei recursos do QVAC SDK e do RapidAPI Hub que fazem sentido para próximas integrações.
+              Provedores que alimentam o Lab e candidatos para próximas integrações.
+              Página {apiPage} de {totalApiPages}.
             </CardDescription>
           </CardHeader>
-          <CardContent className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between gap-3">
-                <h3 className="font-semibold text-foreground">QVAC SDK</h3>
-                <a href="https://docs.qvac.tether.io/sdk/api/" target="_blank" rel="noreferrer" className="text-sm text-primary hover:underline">
-                  Ver docs
+          <CardContent className="space-y-4">
+            <div className="grid gap-3 md:grid-cols-2">
+              {paginatedApis.map((api) => (
+                <a
+                  key={api.name}
+                  href={api.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex flex-col gap-1 rounded-lg border border-border bg-card/60 p-4 hover:border-primary/60 transition-all"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
+                      {api.name}
+                    </h3>
+                    <ExternalLink className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary" />
+                  </div>
+                  <p className="text-sm text-muted-foreground">{api.desc}</p>
+                  <Badge variant="secondary" className="mt-1 w-fit text-[10px]">
+                    {api.free}
+                  </Badge>
                 </a>
-              </div>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                {EXTERNAL_AI_RESOURCES.qvac.map((item) => (
-                  <li key={item} className="flex gap-2">
-                    <span className="text-primary">•</span>
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
+              ))}
             </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center justify-between gap-3">
-                <h3 className="font-semibold text-foreground">RapidAPI Hub</h3>
-                <a href="https://rapidapi.com/hub" target="_blank" rel="noreferrer" className="text-sm text-primary hover:underline">
-                  Explorar hub
-                </a>
-              </div>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                {EXTERNAL_AI_RESOURCES.rapidApi.map((item) => (
-                  <li key={item} className="flex gap-2">
-                    <span className="text-primary">•</span>
-                    <span>{item}</span>
-                  </li>
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setApiPage((p) => Math.max(1, p - 1));
+                    }}
+                    aria-disabled={apiPage === 1}
+                    className={apiPage === 1 ? 'pointer-events-none opacity-50' : ''}
+                  />
+                </PaginationItem>
+                {Array.from({ length: totalApiPages }, (_, i) => i + 1).map((n) => (
+                  <PaginationItem key={n}>
+                    <PaginationLink
+                      href="#"
+                      isActive={apiPage === n}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setApiPage(n);
+                      }}
+                    >
+                      {n}
+                    </PaginationLink>
+                  </PaginationItem>
                 ))}
-              </ul>
-            </div>
+                <PaginationItem>
+                  <PaginationNext
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setApiPage((p) => Math.min(totalApiPages, p + 1));
+                    }}
+                    aria-disabled={apiPage === totalApiPages}
+                    className={apiPage === totalApiPages ? 'pointer-events-none opacity-50' : ''}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
           </CardContent>
         </Card>
 
