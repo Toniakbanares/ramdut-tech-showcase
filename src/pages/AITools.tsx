@@ -69,17 +69,35 @@ const CREATIVE_STYLES = [
   { id: 'code', label: '💻 Código', system: 'Você é um programador expert. Explique e escreva código de forma clara.' },
 ];
 
+interface ApiResource {
+  name: string;
+  desc: string;
+  url: string;
+  free: string;
+}
+
+const EXTERNAL_APIS: ApiResource[] = [
+  { name: 'Google Gemini', desc: 'Geração de imagens HD e chat multimodal', url: 'https://ai.google.dev/', free: '50 imagens/dia por chave' },
+  { name: 'Pollinations.ai', desc: 'Geração de imagens sem chave, fallback aberto', url: 'https://pollinations.ai/', free: 'Aberto, com rate limit suave' },
+  { name: 'Puter.js', desc: 'Chat Grok, TTS e visão diretamente no browser', url: 'https://puter.com/', free: 'Cota generosa por usuário' },
+  { name: 'QVAC SDK (Tether)', desc: 'OCR, RAG, embeddings, TTS e transcrição local', url: 'https://docs.qvac.tether.io/sdk/api/', free: 'Local, sem cota de rede' },
+  { name: 'RapidAPI Hub', desc: 'Catálogo de APIs (clima, busca, notícias, OCR)', url: 'https://rapidapi.com/hub', free: 'Tier free por API' },
+  { name: 'Hugging Face Inference', desc: 'Milhares de modelos open-source via API', url: 'https://huggingface.co/inference-api', free: 'Cota grátis com conta' },
+  { name: 'Groq', desc: 'Inferência ultra-rápida de Llama 3.1 / Mixtral', url: 'https://console.groq.com/', free: 'Tier grátis com chave' },
+  { name: 'OpenRouter', desc: 'Roteador unificado para vários LLMs', url: 'https://openrouter.ai/', free: 'Modelos :free disponíveis' },
+];
+
 const EXTERNAL_AI_RESOURCES = {
   qvac: [
     'completion() para respostas locais e workflows de texto',
     'ocr() para leitura de texto em imagens',
-    'embed() + ragIngest() + ragSearch() para busca semântica e base de conhecimento',
-    'textToSpeech() e transcribe()/transcribeStream() para voz e transcrição',
+    'embed() + ragIngest() + ragSearch() para busca semântica',
+    'textToSpeech() e transcribe()/transcribeStream() para voz',
   ],
   rapidApi: [
-    'APIs de OCR, busca, notícias e clima para enriquecer prompts e análises',
-    'Catálogo enorme para testes rápidos sem montar backend customizado',
-    'Bom para prototipar integrações antes de fixar um provedor principal',
+    'APIs de OCR, busca, notícias e clima para enriquecer prompts',
+    'Catálogo grande para prototipar sem backend customizado',
+    'Bom antes de fixar um provedor principal',
   ],
 };
 
