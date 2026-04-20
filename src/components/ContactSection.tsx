@@ -97,9 +97,10 @@ const ContactSection = () => {
 
     setIsSubmitting(true);
     try {
+      const { name, email, subject, message } = parsed.data;
       const { error } = await supabase
         .from('contact_messages')
-        .insert(parsed.data);
+        .insert({ name, email, subject, message });
 
       if (error) throw error;
 
