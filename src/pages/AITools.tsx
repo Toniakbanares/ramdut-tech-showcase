@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
@@ -6,11 +6,15 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Pagination, PaginationContent, PaginationItem,
+  PaginationLink, PaginationNext, PaginationPrevious,
+} from '@/components/ui/pagination';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  Send, Bot, User, Loader2, Sparkles, MessageSquare, 
+import {
+  Send, Bot, User, Loader2, Sparkles, MessageSquare,
   ArrowLeft, Trash2, ImagePlus, Eye, Wand2, ThermometerSun, Volume2,
-  Laugh, Download, RefreshCw, Settings2, Zap, Crown
+  Laugh, Download, RefreshCw, Settings2, Zap, Crown, ExternalLink
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
