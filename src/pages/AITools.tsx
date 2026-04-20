@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
@@ -6,11 +6,15 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Pagination, PaginationContent, PaginationItem,
+  PaginationLink, PaginationNext, PaginationPrevious,
+} from '@/components/ui/pagination';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  Send, Bot, User, Loader2, Sparkles, MessageSquare, 
+import {
+  Send, Bot, User, Loader2, Sparkles, MessageSquare,
   ArrowLeft, Trash2, ImagePlus, Eye, Wand2, ThermometerSun, Volume2,
-  Laugh, Download, RefreshCw, Settings2, Zap, Crown
+  Laugh, Download, RefreshCw, Settings2, Zap, Crown, ExternalLink
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -69,17 +73,35 @@ const CREATIVE_STYLES = [
   { id: 'code', label: '💻 Código', system: 'Você é um programador expert. Explique e escreva código de forma clara.' },
 ];
 
+interface ApiResource {
+  name: string;
+  desc: string;
+  url: string;
+  free: string;
+}
+
+const EXTERNAL_APIS: ApiResource[] = [
+  { name: 'Google Gemini', desc: 'Geração de imagens HD e chat multimodal', url: 'https://ai.google.dev/', free: '50 imagens/dia por chave' },
+  { name: 'Pollinations.ai', desc: 'Geração de imagens sem chave, fallback aberto', url: 'https://pollinations.ai/', free: 'Aberto, com rate limit suave' },
+  { name: 'Puter.js', desc: 'Chat Grok, TTS e visão diretamente no browser', url: 'https://puter.com/', free: 'Cota generosa por usuário' },
+  { name: 'QVAC SDK (Tether)', desc: 'OCR, RAG, embeddings, TTS e transcrição local', url: 'https://docs.qvac.tether.io/sdk/api/', free: 'Local, sem cota de rede' },
+  { name: 'RapidAPI Hub', desc: 'Catálogo de APIs (clima, busca, notícias, OCR)', url: 'https://rapidapi.com/hub', free: 'Tier free por API' },
+  { name: 'Hugging Face Inference', desc: 'Milhares de modelos open-source via API', url: 'https://huggingface.co/inference-api', free: 'Cota grátis com conta' },
+  { name: 'Groq', desc: 'Inferência ultra-rápida de Llama 3.1 / Mixtral', url: 'https://console.groq.com/', free: 'Tier grátis com chave' },
+  { name: 'OpenRouter', desc: 'Roteador unificado para vários LLMs', url: 'https://openrouter.ai/', free: 'Modelos :free disponíveis' },
+];
+
 const EXTERNAL_AI_RESOURCES = {
   qvac: [
     'completion() para respostas locais e workflows de texto',
     'ocr() para leitura de texto em imagens',
-    'embed() + ragIngest() + ragSearch() para busca semântica e base de conhecimento',
-    'textToSpeech() e transcribe()/transcribeStream() para voz e transcrição',
+    'embed() + ragIngest() + ragSearch() para busca semântica',
+    'textToSpeech() e transcribe()/transcribeStream() para voz',
   ],
   rapidApi: [
-    'APIs de OCR, busca, notícias e clima para enriquecer prompts e análises',
-    'Catálogo enorme para testes rápidos sem montar backend customizado',
-    'Bom para prototipar integrações antes de fixar um provedor principal',
+    'APIs de OCR, busca, notícias e clima para enriquecer prompts',
+    'Catálogo grande para prototipar sem backend customizado',
+    'Bom antes de fixar um provedor principal',
   ],
 };
 
@@ -126,6 +148,15 @@ const AITools = () => {
   const [ttsText, setTtsText] = useState('');
   const [isTtsLoading, setIsTtsLoading] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // APIs pagination
+  const [apiPage, setApiPage] = useState(1);
+  const apisPerPage = 4;
+  const totalApiPages = Math.ceil(EXTERNAL_APIS.length / apisPerPage);
+  const paginatedApis = useMemo(
+    () => EXTERNAL_APIS.slice((apiPage - 1) * apisPerPage, apiPage * apisPerPage),
+    [apiPage]
+  );
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -336,7 +367,7 @@ const AITools = () => {
           </div>
           <Badge variant="secondary" className="hidden sm:flex gap-1">
             <Sparkles className="h-3 w-3" />
-            Powered by Grok + Gemini
+            Grok + Gemini + Pollinations
           </Badge>
         </div>
       </div>
@@ -361,8 +392,12 @@ const AITools = () => {
             Olá, eu sou o <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Ramu</span>! 🤖
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Seu assistente de IA no RAMDUT Lab. Chat inteligente, geração de imagens HD, 
-            criação de memes, análise visual, escrita criativa e texto para fala — tudo gratuito!
+            Seu assistente de IA no RAMDUT Lab. Chat inteligente, geração de imagens HD,
+            criação de memes, análise visual, escrita criativa e texto para fala.
+          </p>
+          <p className="text-xs text-muted-foreground/80 max-w-2xl mx-auto mt-2">
+            ⚡ Uso gratuito sujeito às cotas dos provedores: Gemini (até 50 imagens/dia por chave) e
+            Pollinations.ai como fallback aberto. Chat e TTS via Puter.js.
           </p>
         </motion.div>
 
@@ -370,46 +405,77 @@ const AITools = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <Sparkles className="h-5 w-5 text-primary" />
-              APIs úteis mapeadas para o Lab
+              APIs e ferramentas integradas
             </CardTitle>
             <CardDescription>
-              Levantei recursos do QVAC SDK e do RapidAPI Hub que fazem sentido para próximas integrações.
+              Provedores que alimentam o Lab e candidatos para próximas integrações.
+              Página {apiPage} de {totalApiPages}.
             </CardDescription>
           </CardHeader>
-          <CardContent className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between gap-3">
-                <h3 className="font-semibold text-foreground">QVAC SDK</h3>
-                <a href="https://docs.qvac.tether.io/sdk/api/" target="_blank" rel="noreferrer" className="text-sm text-primary hover:underline">
-                  Ver docs
+          <CardContent className="space-y-4">
+            <div className="grid gap-3 md:grid-cols-2">
+              {paginatedApis.map((api) => (
+                <a
+                  key={api.name}
+                  href={api.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex flex-col gap-1 rounded-lg border border-border bg-card/60 p-4 hover:border-primary/60 transition-all"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
+                      {api.name}
+                    </h3>
+                    <ExternalLink className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary" />
+                  </div>
+                  <p className="text-sm text-muted-foreground">{api.desc}</p>
+                  <Badge variant="secondary" className="mt-1 w-fit text-[10px]">
+                    {api.free}
+                  </Badge>
                 </a>
-              </div>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                {EXTERNAL_AI_RESOURCES.qvac.map((item) => (
-                  <li key={item} className="flex gap-2">
-                    <span className="text-primary">•</span>
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
+              ))}
             </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center justify-between gap-3">
-                <h3 className="font-semibold text-foreground">RapidAPI Hub</h3>
-                <a href="https://rapidapi.com/hub" target="_blank" rel="noreferrer" className="text-sm text-primary hover:underline">
-                  Explorar hub
-                </a>
-              </div>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                {EXTERNAL_AI_RESOURCES.rapidApi.map((item) => (
-                  <li key={item} className="flex gap-2">
-                    <span className="text-primary">•</span>
-                    <span>{item}</span>
-                  </li>
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setApiPage((p) => Math.max(1, p - 1));
+                    }}
+                    aria-disabled={apiPage === 1}
+                    className={apiPage === 1 ? 'pointer-events-none opacity-50' : ''}
+                  />
+                </PaginationItem>
+                {Array.from({ length: totalApiPages }, (_, i) => i + 1).map((n) => (
+                  <PaginationItem key={n}>
+                    <PaginationLink
+                      href="#"
+                      isActive={apiPage === n}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setApiPage(n);
+                      }}
+                    >
+                      {n}
+                    </PaginationLink>
+                  </PaginationItem>
                 ))}
-              </ul>
-            </div>
+                <PaginationItem>
+                  <PaginationNext
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setApiPage((p) => Math.min(totalApiPages, p + 1));
+                    }}
+                    aria-disabled={apiPage === totalApiPages}
+                    className={apiPage === totalApiPages ? 'pointer-events-none opacity-50' : ''}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
           </CardContent>
         </Card>
 
@@ -1011,7 +1077,7 @@ const AITools = () => {
             />
             <div>
               <p className="font-bold text-foreground">Ramu AI Assistant</p>
-              <p className="text-xs text-muted-foreground">Gratuito e ilimitado via Puter.js + Google Gemini</p>
+              <p className="text-xs text-muted-foreground">Gratuito via Puter.js + Google Gemini + Pollinations (sujeito a cotas)</p>
             </div>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
