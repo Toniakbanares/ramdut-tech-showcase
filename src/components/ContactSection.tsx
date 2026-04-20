@@ -1,19 +1,28 @@
 import { useState } from 'react';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  Mail, 
-  MapPin, 
-  Phone, 
-  Send, 
-  Github, 
-  Linkedin, 
+import { supabase } from '@/integrations/supabase/client';
+import {
+  Mail,
+  MapPin,
+  Phone,
+  Send,
+  Github,
+  Linkedin,
   Twitter,
   MessageCircle
 } from 'lucide-react';
+
+const contactSchema = z.object({
+  name: z.string().trim().min(1, 'Nome obrigatório').max(100),
+  email: z.string().trim().email('Email inválido').max(255),
+  subject: z.string().trim().min(1, 'Assunto obrigatório').max(200),
+  message: z.string().trim().min(1, 'Mensagem obrigatória').max(5000),
+});
 
 const ContactSection = () => {
   const [formData, setFormData] = useState({
@@ -77,28 +86,34 @@ const ContactSection = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
+
+    const parsed = contactSchema.safeParse(formData);
+    if (!parsed.success) {
+      const first = parsed.error.issues[0]?.message || 'Dados inválidos';
+      toast({ title: 'Verifique o formulário', description: first, variant: 'destructive' });
+      return;
+    }
+
     setIsSubmitting(true);
-
-    // Simulate form submission
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
+      const { error } = await supabase
+        .from('contact_messages')
+        .insert(parsed.data);
+
+      if (error) throw error;
+
       toast({
-        title: "Mensagem enviada!",
-        description: "Obrigado pelo contato. Retornarei em breve!",
+        title: 'Mensagem enviada! ✉️',
+        description: 'Recebi sua mensagem e responderei em breve.',
       });
 
-      setFormData({
-        name: '',
-        email: '',
-        subject: '',
-        message: ''
-      });
-    } catch (error) {
+      setFormData({ name: '', email: '', subject: '', message: '' });
+    } catch (error: any) {
       toast({
-        title: "Erro ao enviar",
-        description: "Ocorreu um erro. Tente novamente ou use outro meio de contato.",
-        variant: "destructive",
+        title: 'Erro ao enviar',
+        description: error?.message || 'Tente novamente ou use WhatsApp/Email direto.',
+        variant: 'destructive',
       });
     } finally {
       setIsSubmitting(false);
