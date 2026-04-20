@@ -179,13 +179,36 @@ const AITools = () => {
     setIsChatLoading(true);
 
     try {
-      const response = await window.puter.ai.chat(
-        updatedMessages.map(m => ({ role: m.role, content: m.content })),
-        { model: selectedModel }
-      );
+      // 1) Tenta edge function ai-chat (Lovable AI + rotação Gemini)
+      let assistantText: string | null = null;
+      try {
+        const { data, error } = await supabase.functions.invoke('ai-chat', {
+          body: {
+            messages: updatedMessages.map(m => ({ role: m.role, content: m.content })),
+            model: 'google/gemini-2.5-flash',
+          },
+        });
+        if (!error && data?.content) {
+          assistantText = data.content;
+        } else if (data?.error) {
+          console.warn('ai-chat erro, fallback Puter:', data.error);
+        }
+      } catch (e) {
+        console.warn('ai-chat exception, fallback Puter:', e);
+      }
+
+      // 2) Fallback: Puter.js (Grok) — preserva comportamento atual
+      if (!assistantText) {
+        const response = await window.puter.ai.chat(
+          updatedMessages.map(m => ({ role: m.role, content: m.content })),
+          { model: selectedModel }
+        );
+        assistantText = response.message.content;
+      }
+
       setChatMessages(prev => [
         ...prev,
-        { role: 'assistant', content: response.message.content }
+        { role: 'assistant', content: assistantText || '' },
       ]);
     } catch (error: any) {
       toast({ title: 'Erro no Chat', description: error.message || 'Falha ao obter resposta.', variant: 'destructive' });
@@ -291,12 +314,38 @@ const AITools = () => {
         { role: 'system' as const, content: style?.system || 'Você é um escritor criativo.' },
         { role: 'user' as const, content: creativePrompt },
       ];
-      const response = await window.puter.ai.chat(messages, {
-        model: selectedModel,
-        temperature,
-        max_tokens: 2000,
-      });
-      setCreativeResult(response.message.content);
+
+      // 1) Tenta edge function ai-chat (Lovable AI + rotação Gemini)
+      let resultText: string | null = null;
+      try {
+        const { data, error } = await supabase.functions.invoke('ai-chat', {
+          body: {
+            messages,
+            model: 'google/gemini-2.5-flash',
+            temperature,
+            max_tokens: 2000,
+          },
+        });
+        if (!error && data?.content) {
+          resultText = data.content;
+        } else if (data?.error) {
+          console.warn('ai-chat erro (criativo), fallback Puter:', data.error);
+        }
+      } catch (e) {
+        console.warn('ai-chat exception (criativo), fallback Puter:', e);
+      }
+
+      // 2) Fallback: Puter.js
+      if (!resultText) {
+        const response = await window.puter.ai.chat(messages, {
+          model: selectedModel,
+          temperature,
+          max_tokens: 2000,
+        });
+        resultText = response.message.content;
+      }
+
+      setCreativeResult(resultText || '');
     } catch (error: any) {
       toast({ title: 'Erro na Escrita', description: error.message || 'Falha ao gerar texto.', variant: 'destructive' });
     } finally {
