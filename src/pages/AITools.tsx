@@ -179,13 +179,36 @@ const AITools = () => {
     setIsChatLoading(true);
 
     try {
-      const response = await window.puter.ai.chat(
-        updatedMessages.map(m => ({ role: m.role, content: m.content })),
-        { model: selectedModel }
-      );
+      // 1) Tenta edge function ai-chat (Lovable AI + rotação Gemini)
+      let assistantText: string | null = null;
+      try {
+        const { data, error } = await supabase.functions.invoke('ai-chat', {
+          body: {
+            messages: updatedMessages.map(m => ({ role: m.role, content: m.content })),
+            model: 'google/gemini-2.5-flash',
+          },
+        });
+        if (!error && data?.content) {
+          assistantText = data.content;
+        } else if (data?.error) {
+          console.warn('ai-chat erro, fallback Puter:', data.error);
+        }
+      } catch (e) {
+        console.warn('ai-chat exception, fallback Puter:', e);
+      }
+
+      // 2) Fallback: Puter.js (Grok) — preserva comportamento atual
+      if (!assistantText) {
+        const response = await window.puter.ai.chat(
+          updatedMessages.map(m => ({ role: m.role, content: m.content })),
+          { model: selectedModel }
+        );
+        assistantText = response.message.content;
+      }
+
       setChatMessages(prev => [
         ...prev,
-        { role: 'assistant', content: response.message.content }
+        { role: 'assistant', content: assistantText || '' },
       ]);
     } catch (error: any) {
       toast({ title: 'Erro no Chat', description: error.message || 'Falha ao obter resposta.', variant: 'destructive' });
