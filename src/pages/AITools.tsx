@@ -112,6 +112,24 @@ const EXTERNAL_AI_RESOURCES = {
 const AITools = () => {
   const { toast } = useToast();
 
+  // Paywall + limites
+  const limit = useGenerationLimit();
+  const [paywallOpen, setPaywallOpen] = useState(false);
+  const [paywallReason, setPaywallReason] = useState<'limit' | 'watermark' | 'hd' | 'truncated' | 'tts'>('limit');
+
+  const triggerPaywall = (reason: typeof paywallReason) => {
+    setPaywallReason(reason);
+    setPaywallOpen(true);
+  };
+
+  const checkLimit = (): boolean => {
+    if (limit.limitReached) {
+      triggerPaywall('limit');
+      return false;
+    }
+    return true;
+  };
+
   // Chat state
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
