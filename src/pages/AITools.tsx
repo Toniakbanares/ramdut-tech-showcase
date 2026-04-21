@@ -194,6 +194,7 @@ const AITools = () => {
   // --- CHAT ---
   const handleSendMessage = async () => {
     if (!chatInput.trim() || isChatLoading) return;
+    if (!checkLimit()) return;
     const userMessage: ChatMessage = { role: 'user', content: chatInput };
     const updatedMessages = [...chatMessages, userMessage];
     setChatMessages(updatedMessages);
@@ -228,10 +229,22 @@ const AITools = () => {
         assistantText = response.message.content;
       }
 
+      const finalText = assistantText || '';
+      // Hook: trunca em 40% se grátis e a resposta for substancial
+      const displayed = limit.isPro || finalText.length < 200
+        ? finalText
+        : truncateForFree(finalText, 0.4);
+
       setChatMessages(prev => [
         ...prev,
-        { role: 'assistant', content: assistantText || '' },
+        { role: 'assistant', content: displayed },
       ]);
+      limit.increment();
+
+      // Dispara paywall logo após mostrar a resposta truncada
+      if (!limit.isPro && finalText.length >= 200) {
+        setTimeout(() => triggerPaywall('truncated'), 800);
+      }
     } catch (error: any) {
       toast({ title: 'Erro no Chat', description: error.message || 'Falha ao obter resposta.', variant: 'destructive' });
     } finally {
