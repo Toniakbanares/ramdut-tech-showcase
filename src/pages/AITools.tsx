@@ -265,6 +265,7 @@ const AITools = () => {
 
   const handleGenerateImage = async () => {
     if (!imagePrompt.trim() || isImageLoading) return;
+    if (!checkLimit()) return;
     setIsImageLoading(true);
     setGeneratedImageSrc('');
 
@@ -273,7 +274,15 @@ const AITools = () => {
       const fullPrompt = `Generate a high-quality image: ${imagePrompt}. Style: ${style?.prompt || ''}`;
       const src = await generateImage(fullPrompt, selectedImageModel, selectedAspectRatio);
       if (src) {
-        setGeneratedImageSrc(src);
+        // Aplica marca d'água nas contas grátis (hook de conversão)
+        const finalSrc = limit.isPro ? src : await applyWatermark(src, 'RAMU.AI');
+        setGeneratedImageSrc(finalSrc);
+        limit.increment();
+
+        // Após 2ª geração, aquece o paywall
+        if (!limit.isPro && limit.count + 1 >= 2) {
+          setTimeout(() => triggerPaywall('watermark'), 1500);
+        }
       } else {
         toast({ title: 'Aviso', description: 'Nenhuma imagem retornada. Tente outro prompt ou modelo.', variant: 'destructive' });
       }
@@ -287,6 +296,7 @@ const AITools = () => {
   // --- MEME GENERATION ---
   const handleGenerateMeme = async () => {
     if ((!memePrompt.trim() && !memeTopText.trim()) || isMemeLoading) return;
+    if (!checkLimit()) return;
     setIsMemeLoading(true);
     setGeneratedMemeSrc('');
 
@@ -299,7 +309,12 @@ const AITools = () => {
       
       const src = await generateImage(fullPrompt, selectedImageModel, '1:1');
       if (src) {
-        setGeneratedMemeSrc(src);
+        const finalSrc = limit.isPro ? src : await applyWatermark(src, 'RAMU.AI');
+        setGeneratedMemeSrc(finalSrc);
+        limit.increment();
+        if (!limit.isPro && limit.count + 1 >= 2) {
+          setTimeout(() => triggerPaywall('watermark'), 1500);
+        }
       } else {
         toast({ title: 'Aviso', description: 'Nenhum meme gerado. Tente outro prompt.', variant: 'destructive' });
       }
