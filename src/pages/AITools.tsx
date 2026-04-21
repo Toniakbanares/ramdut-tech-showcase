@@ -439,6 +439,11 @@ const AITools = () => {
   };
 
   const handleDownloadImage = (src: string, filename: string) => {
+    // Hook de conversão: download força paywall em conta grátis
+    if (!limit.isPro) {
+      triggerPaywall('watermark');
+      return;
+    }
     const link = document.createElement('a');
     link.href = src;
     link.download = filename;
