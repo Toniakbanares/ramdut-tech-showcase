@@ -1271,6 +1271,13 @@ const AITools = () => {
         </motion.div>
       </div>
       </div>
+
+      {/* Paywall Modal — gatilho de conversão */}
+      <PaywallModal
+        open={paywallOpen}
+        onOpenChange={setPaywallOpen}
+        reason={paywallReason}
+      />
     </div>
   );
 };
