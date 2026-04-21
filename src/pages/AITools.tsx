@@ -480,10 +480,28 @@ const AITools = () => {
               </div>
             </div>
           </div>
-          <Badge variant="secondary" className="hidden sm:flex gap-1">
-            <Sparkles className="h-3 w-3" />
-            Grok + Gemini + Pollinations
-          </Badge>
+          <div className="flex items-center gap-2">
+            {!limit.isPro ? (
+              <Button
+                size="sm"
+                onClick={() => triggerPaywall('limit')}
+                className="bg-gradient-to-r from-primary to-accent hover:opacity-90 text-primary-foreground font-bold gap-1.5"
+              >
+                <Crown className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Upgrade</span>
+                <span className="sm:hidden">Pro</span>
+                <span className="hidden md:inline text-xs opacity-90">R$ 9,90/mês</span>
+              </Button>
+            ) : (
+              <Badge variant="default" className="gap-1 bg-gradient-to-r from-primary to-accent">
+                <Crown className="h-3 w-3" /> Creator
+              </Badge>
+            )}
+            <Badge variant="secondary" className="hidden lg:flex gap-1">
+              <Sparkles className="h-3 w-3" />
+              Grok + Gemini
+            </Badge>
+          </div>
         </div>
       </div>
 
