@@ -539,6 +539,39 @@ const AITools = () => {
           </p>
         </motion.div>
 
+        {/* Contador de gerações grátis */}
+        {!limit.isPro && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 rounded-xl border border-primary/30 bg-card/85 backdrop-blur-sm p-4"
+          >
+            <div className="flex items-center justify-between gap-3 mb-2">
+              <div className="flex items-center gap-2">
+                <Zap className="h-4 w-4 text-primary" />
+                <span className="text-sm font-semibold text-foreground">
+                  {limit.remaining > 0
+                    ? `${limit.count} de ${limit.limit} gerações grátis usadas hoje`
+                    : 'Você atingiu o limite gratuito de hoje'}
+                </span>
+              </div>
+              <Button
+                size="sm"
+                variant={limit.limitReached ? 'default' : 'outline'}
+                onClick={() => triggerPaywall(limit.limitReached ? 'limit' : 'watermark')}
+                className={limit.limitReached ? 'bg-gradient-to-r from-primary to-accent text-primary-foreground font-bold' : ''}
+              >
+                <Crown className="h-3.5 w-3.5 mr-1" />
+                {limit.limitReached ? 'Desbloquear ilimitado' : 'Remover limite'}
+              </Button>
+            </div>
+            <Progress value={(limit.count / limit.limit) * 100} className="h-2" />
+            <p className="text-[11px] text-muted-foreground mt-2">
+              💡 Plano Creator: gerações ilimitadas, sem marca d'água, HD 1920px — <strong>R$ 9,90/mês</strong>
+            </p>
+          </motion.div>
+        )}
+
         <Card className="border-border/70 bg-card/85 backdrop-blur-sm mb-8">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
