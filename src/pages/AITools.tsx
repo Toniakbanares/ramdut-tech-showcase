@@ -21,6 +21,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import mascotImg from '@/assets/mascot-ramu.png';
 import kingBg from '@/assets/king-hearts-bg.jpg';
+import { useGenerationLimit } from '@/hooks/use-generation-limit';
+import { applyWatermark, truncateForFree } from '@/lib/watermark';
+import { PaywallModal } from '@/components/PaywallModal';
+import { Progress } from '@/components/ui/progress';
 
 declare global {
   interface Window {
@@ -108,6 +112,24 @@ const EXTERNAL_AI_RESOURCES = {
 const AITools = () => {
   const { toast } = useToast();
 
+  // Paywall + limites
+  const limit = useGenerationLimit();
+  const [paywallOpen, setPaywallOpen] = useState(false);
+  const [paywallReason, setPaywallReason] = useState<'limit' | 'watermark' | 'hd' | 'truncated' | 'tts'>('limit');
+
+  const triggerPaywall = (reason: typeof paywallReason) => {
+    setPaywallReason(reason);
+    setPaywallOpen(true);
+  };
+
+  const checkLimit = (): boolean => {
+    if (limit.limitReached) {
+      triggerPaywall('limit');
+      return false;
+    }
+    return true;
+  };
+
   // Chat state
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
@@ -172,6 +194,7 @@ const AITools = () => {
   // --- CHAT ---
   const handleSendMessage = async () => {
     if (!chatInput.trim() || isChatLoading) return;
+    if (!checkLimit()) return;
     const userMessage: ChatMessage = { role: 'user', content: chatInput };
     const updatedMessages = [...chatMessages, userMessage];
     setChatMessages(updatedMessages);
@@ -206,10 +229,22 @@ const AITools = () => {
         assistantText = response.message.content;
       }
 
+      const finalText = assistantText || '';
+      // Hook: trunca em 40% se grátis e a resposta for substancial
+      const displayed = limit.isPro || finalText.length < 200
+        ? finalText
+        : truncateForFree(finalText, 0.4);
+
       setChatMessages(prev => [
         ...prev,
-        { role: 'assistant', content: assistantText || '' },
+        { role: 'assistant', content: displayed },
       ]);
+      limit.increment();
+
+      // Dispara paywall logo após mostrar a resposta truncada
+      if (!limit.isPro && finalText.length >= 200) {
+        setTimeout(() => triggerPaywall('truncated'), 800);
+      }
     } catch (error: any) {
       toast({ title: 'Erro no Chat', description: error.message || 'Falha ao obter resposta.', variant: 'destructive' });
     } finally {
@@ -230,6 +265,7 @@ const AITools = () => {
 
   const handleGenerateImage = async () => {
     if (!imagePrompt.trim() || isImageLoading) return;
+    if (!checkLimit()) return;
     setIsImageLoading(true);
     setGeneratedImageSrc('');
 
@@ -238,7 +274,15 @@ const AITools = () => {
       const fullPrompt = `Generate a high-quality image: ${imagePrompt}. Style: ${style?.prompt || ''}`;
       const src = await generateImage(fullPrompt, selectedImageModel, selectedAspectRatio);
       if (src) {
-        setGeneratedImageSrc(src);
+        // Aplica marca d'água nas contas grátis (hook de conversão)
+        const finalSrc = limit.isPro ? src : await applyWatermark(src, 'RAMU.AI');
+        setGeneratedImageSrc(finalSrc);
+        limit.increment();
+
+        // Após 2ª geração, aquece o paywall
+        if (!limit.isPro && limit.count + 1 >= 2) {
+          setTimeout(() => triggerPaywall('watermark'), 1500);
+        }
       } else {
         toast({ title: 'Aviso', description: 'Nenhuma imagem retornada. Tente outro prompt ou modelo.', variant: 'destructive' });
       }
@@ -252,6 +296,7 @@ const AITools = () => {
   // --- MEME GENERATION ---
   const handleGenerateMeme = async () => {
     if ((!memePrompt.trim() && !memeTopText.trim()) || isMemeLoading) return;
+    if (!checkLimit()) return;
     setIsMemeLoading(true);
     setGeneratedMemeSrc('');
 
@@ -264,7 +309,12 @@ const AITools = () => {
       
       const src = await generateImage(fullPrompt, selectedImageModel, '1:1');
       if (src) {
-        setGeneratedMemeSrc(src);
+        const finalSrc = limit.isPro ? src : await applyWatermark(src, 'RAMU.AI');
+        setGeneratedMemeSrc(finalSrc);
+        limit.increment();
+        if (!limit.isPro && limit.count + 1 >= 2) {
+          setTimeout(() => triggerPaywall('watermark'), 1500);
+        }
       } else {
         toast({ title: 'Aviso', description: 'Nenhum meme gerado. Tente outro prompt.', variant: 'destructive' });
       }
@@ -305,6 +355,7 @@ const AITools = () => {
   // --- CREATIVE WRITING ---
   const handleCreativeWrite = async () => {
     if (!creativePrompt.trim() || isCreativeLoading) return;
+    if (!checkLimit()) return;
     setIsCreativeLoading(true);
     setCreativeResult('');
 
@@ -345,7 +396,16 @@ const AITools = () => {
         resultText = response.message.content;
       }
 
-      setCreativeResult(resultText || '');
+      const fullText = resultText || '';
+      const displayed = limit.isPro || fullText.length < 200
+        ? fullText
+        : truncateForFree(fullText, 0.4);
+      setCreativeResult(displayed);
+      limit.increment();
+
+      if (!limit.isPro && fullText.length >= 200) {
+        setTimeout(() => triggerPaywall('truncated'), 1000);
+      }
     } catch (error: any) {
       toast({ title: 'Erro na Escrita', description: error.message || 'Falha ao gerar texto.', variant: 'destructive' });
     } finally {
@@ -356,6 +416,11 @@ const AITools = () => {
   // --- TEXT TO SPEECH ---
   const handleTTS = async () => {
     if (!ttsText.trim() || isTtsLoading) return;
+    if (!limit.isPro && ttsText.length > 100) {
+      triggerPaywall('tts');
+      return;
+    }
+    if (!checkLimit()) return;
     setIsTtsLoading(true);
 
     try {
@@ -365,6 +430,7 @@ const AITools = () => {
       }
       audioRef.current = audio;
       audio.play();
+      limit.increment();
     } catch (error: any) {
       toast({ title: 'Erro no TTS', description: error.message || 'Falha ao gerar áudio.', variant: 'destructive' });
     } finally {
@@ -373,6 +439,11 @@ const AITools = () => {
   };
 
   const handleDownloadImage = (src: string, filename: string) => {
+    // Hook de conversão: download força paywall em conta grátis
+    if (!limit.isPro) {
+      triggerPaywall('watermark');
+      return;
+    }
     const link = document.createElement('a');
     link.href = src;
     link.download = filename;
@@ -414,10 +485,28 @@ const AITools = () => {
               </div>
             </div>
           </div>
-          <Badge variant="secondary" className="hidden sm:flex gap-1">
-            <Sparkles className="h-3 w-3" />
-            Grok + Gemini + Pollinations
-          </Badge>
+          <div className="flex items-center gap-2">
+            {!limit.isPro ? (
+              <Button
+                size="sm"
+                onClick={() => triggerPaywall('limit')}
+                className="bg-gradient-to-r from-primary to-accent hover:opacity-90 text-primary-foreground font-bold gap-1.5"
+              >
+                <Crown className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Upgrade</span>
+                <span className="sm:hidden">Pro</span>
+                <span className="hidden md:inline text-xs opacity-90">R$ 9,90/mês</span>
+              </Button>
+            ) : (
+              <Badge variant="default" className="gap-1 bg-gradient-to-r from-primary to-accent">
+                <Crown className="h-3 w-3" /> Creator
+              </Badge>
+            )}
+            <Badge variant="secondary" className="hidden lg:flex gap-1">
+              <Sparkles className="h-3 w-3" />
+              Grok + Gemini
+            </Badge>
+          </div>
         </div>
       </div>
 
@@ -449,6 +538,39 @@ const AITools = () => {
             Pollinations.ai como fallback aberto. Chat e TTS via Puter.js.
           </p>
         </motion.div>
+
+        {/* Contador de gerações grátis */}
+        {!limit.isPro && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 rounded-xl border border-primary/30 bg-card/85 backdrop-blur-sm p-4"
+          >
+            <div className="flex items-center justify-between gap-3 mb-2">
+              <div className="flex items-center gap-2">
+                <Zap className="h-4 w-4 text-primary" />
+                <span className="text-sm font-semibold text-foreground">
+                  {limit.remaining > 0
+                    ? `${limit.count} de ${limit.limit} gerações grátis usadas hoje`
+                    : 'Você atingiu o limite gratuito de hoje'}
+                </span>
+              </div>
+              <Button
+                size="sm"
+                variant={limit.limitReached ? 'default' : 'outline'}
+                onClick={() => triggerPaywall(limit.limitReached ? 'limit' : 'watermark')}
+                className={limit.limitReached ? 'bg-gradient-to-r from-primary to-accent text-primary-foreground font-bold' : ''}
+              >
+                <Crown className="h-3.5 w-3.5 mr-1" />
+                {limit.limitReached ? 'Desbloquear ilimitado' : 'Remover limite'}
+              </Button>
+            </div>
+            <Progress value={(limit.count / limit.limit) * 100} className="h-2" />
+            <p className="text-[11px] text-muted-foreground mt-2">
+              💡 Plano Creator: gerações ilimitadas, sem marca d'água, HD 1920px — <strong>R$ 9,90/mês</strong>
+            </p>
+          </motion.div>
+        )}
 
         <Card className="border-border/70 bg-card/85 backdrop-blur-sm mb-8">
           <CardHeader>
@@ -1149,6 +1271,13 @@ const AITools = () => {
         </motion.div>
       </div>
       </div>
+
+      {/* Paywall Modal — gatilho de conversão */}
+      <PaywallModal
+        open={paywallOpen}
+        onOpenChange={setPaywallOpen}
+        reason={paywallReason}
+      />
     </div>
   );
 };
