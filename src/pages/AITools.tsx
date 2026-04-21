@@ -355,6 +355,7 @@ const AITools = () => {
   // --- CREATIVE WRITING ---
   const handleCreativeWrite = async () => {
     if (!creativePrompt.trim() || isCreativeLoading) return;
+    if (!checkLimit()) return;
     setIsCreativeLoading(true);
     setCreativeResult('');
 
@@ -395,7 +396,16 @@ const AITools = () => {
         resultText = response.message.content;
       }
 
-      setCreativeResult(resultText || '');
+      const fullText = resultText || '';
+      const displayed = limit.isPro || fullText.length < 200
+        ? fullText
+        : truncateForFree(fullText, 0.4);
+      setCreativeResult(displayed);
+      limit.increment();
+
+      if (!limit.isPro && fullText.length >= 200) {
+        setTimeout(() => triggerPaywall('truncated'), 1000);
+      }
     } catch (error: any) {
       toast({ title: 'Erro na Escrita', description: error.message || 'Falha ao gerar texto.', variant: 'destructive' });
     } finally {
@@ -406,6 +416,11 @@ const AITools = () => {
   // --- TEXT TO SPEECH ---
   const handleTTS = async () => {
     if (!ttsText.trim() || isTtsLoading) return;
+    if (!limit.isPro && ttsText.length > 100) {
+      triggerPaywall('tts');
+      return;
+    }
+    if (!checkLimit()) return;
     setIsTtsLoading(true);
 
     try {
@@ -415,6 +430,7 @@ const AITools = () => {
       }
       audioRef.current = audio;
       audio.play();
+      limit.increment();
     } catch (error: any) {
       toast({ title: 'Erro no TTS', description: error.message || 'Falha ao gerar áudio.', variant: 'destructive' });
     } finally {
