@@ -108,7 +108,7 @@ export const PaywallModal = ({ open, onOpenChange, reason = 'limit', onUpgrade }
                     <span className="text-3xl font-bold text-foreground">R$ 9,90</span>
                     <span className="text-sm text-muted-foreground">/mês</span>
                     <span className="text-sm text-muted-foreground line-through ml-2">R$ 19,90</span>
-                    <span className="text-xs font-bold text-green-600 dark:text-green-400">−50%</span>
+                    <span className="text-xs font-bold text-primary">−50%</span>
                   </div>
                   <ul className="space-y-1.5 text-sm mb-4">
                     {[

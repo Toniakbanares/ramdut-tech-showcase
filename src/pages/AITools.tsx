@@ -21,6 +21,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import mascotImg from '@/assets/mascot-ramu.png';
 import kingBg from '@/assets/king-hearts-bg.jpg';
+import { useGenerationLimit } from '@/hooks/use-generation-limit';
+import { applyWatermark, truncateForFree } from '@/lib/watermark';
+import { PaywallModal } from '@/components/PaywallModal';
+import { Progress } from '@/components/ui/progress';
 
 declare global {
   interface Window {
