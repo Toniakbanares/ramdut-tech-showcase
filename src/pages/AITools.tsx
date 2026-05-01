@@ -448,6 +448,67 @@ const AITools = () => {
     }
   };
 
+  // --- FAL.AI IMAGE PRO ---
+  const handleGenerateFal = async () => {
+    if (!falPrompt.trim() || isFalLoading) return;
+    if (!checkLimit()) return;
+    setIsFalLoading(true);
+    setFalImageSrc('');
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-fal', {
+        body: { prompt: falPrompt, model: falModel, aspect_ratio: falAspect },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      if (data?.imageUrl) {
+        setFalImageSrc(data.imageUrl);
+        limit.increment();
+        toast({ title: 'Imagem gerada ✨', description: data.provider || 'fal.ai' });
+      } else {
+        toast({ title: 'Sem imagem', variant: 'destructive' });
+      }
+    } catch (e: any) {
+      toast({ title: 'Erro fal.ai', description: e.message || 'Falha', variant: 'destructive' });
+    } finally {
+      setIsFalLoading(false);
+    }
+  };
+
+  // --- SVG GENERATOR (Recraft via fal.ai) ---
+  const handleGenerateSvg = async () => {
+    if (!svgPrompt.trim() || isSvgLoading) return;
+    if (!checkLimit()) return;
+    setIsSvgLoading(true);
+    setSvgCode('');
+    setSvgImageUrl('');
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-fal', {
+        body: { prompt: svgPrompt, svg: true, aspect_ratio: '1:1' },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      if (data?.svg) setSvgCode(data.svg);
+      if (data?.imageUrl) setSvgImageUrl(data.imageUrl);
+      limit.increment();
+      toast({ title: 'SVG gerado 🎨', description: data?.provider || 'Recraft via fal.ai' });
+    } catch (e: any) {
+      toast({ title: 'Erro SVG', description: e.message || 'Falha', variant: 'destructive' });
+    } finally {
+      setIsSvgLoading(false);
+    }
+  };
+
+  const handleDownloadSvg = () => {
+    if (!svgCode && !svgImageUrl) return;
+    const blob = svgCode
+      ? new Blob([svgCode], { type: 'image/svg+xml' })
+      : null;
+    const link = document.createElement('a');
+    link.href = blob ? URL.createObjectURL(blob) : svgImageUrl;
+    link.download = blob ? 'ramdut-vector.svg' : 'ramdut-vector.png';
+    link.click();
+  };
+
   const handleDownloadImage = (src: string, filename: string) => {
     const link = document.createElement('a');
     link.href = src;
