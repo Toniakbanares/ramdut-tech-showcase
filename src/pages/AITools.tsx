@@ -163,14 +163,7 @@ const AITools = () => {
   const [svgImageUrl, setSvgImageUrl] = useState('');
   const [isSvgLoading, setIsSvgLoading] = useState(false);
 
-  // APIs pagination
-  const [apiPage, setApiPage] = useState(1);
-  const apisPerPage = 4;
-  const totalApiPages = Math.ceil(EXTERNAL_APIS.length / apisPerPage);
-  const paginatedApis = useMemo(
-    () => EXTERNAL_APIS.slice((apiPage - 1) * apisPerPage, apiPage * apisPerPage),
-    [apiPage]
-  );
+
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
