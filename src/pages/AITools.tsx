@@ -925,6 +925,175 @@ const AITools = () => {
             </Card>
           </TabsContent>
 
+          {/* ========== FAL.AI PRO IMAGE ========== */}
+          <TabsContent value="fal-pro">
+            <Card className="border-border">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Crown className="h-5 w-5 text-primary" />
+                  Imagem Pro · Flux & SDXL (fal.ai)
+                </CardTitle>
+                <CardDescription>
+                  Geração premium com Flux Schnell/Dev/Pro, SDXL Fast e Stable Diffusion 3 — direto do fal.ai.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                    <Settings2 className="h-4 w-4" /> Modelo fal
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {FAL_MODELS.map((m) => (
+                      <Badge
+                        key={m.id}
+                        variant={falModel === m.id ? 'default' : 'outline'}
+                        className="cursor-pointer transition-all hover:scale-105 gap-1"
+                        onClick={() => setFalModel(m.id)}
+                      >
+                        <Crown className="h-3 w-3" /> {m.name}
+                      </Badge>
+                    ))}
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    {FAL_MODELS.find((m) => m.id === falModel)?.desc}
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">📐 Proporção</label>
+                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                    {ASPECT_RATIOS.map((a) => (
+                      <button
+                        key={a.id}
+                        onClick={() => setFalAspect(a.id)}
+                        className={`text-xs rounded-lg py-2 px-2 border transition-all text-center ${
+                          falAspect === a.id
+                            ? 'border-primary bg-primary/10 text-foreground font-medium'
+                            : 'border-border bg-card text-muted-foreground hover:border-primary/50'
+                        }`}
+                      >
+                        <div>{a.label}</div>
+                        <div className="text-[10px] text-muted-foreground">{a.desc}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <Textarea
+                  value={falPrompt}
+                  onChange={(e) => setFalPrompt(e.target.value)}
+                  placeholder="Ex: cinematic portrait of a cyberpunk samurai, neon Tokyo, 85mm, ultra detailed"
+                  rows={3}
+                />
+                <Button onClick={handleGenerateFal} disabled={isFalLoading || !falPrompt.trim()} className="w-full">
+                  {isFalLoading ? (
+                    <><Loader2 className="h-4 w-4 animate-spin mr-2" />Gerando com fal.ai...</>
+                  ) : (
+                    <><Crown className="h-4 w-4 mr-2" />Gerar Imagem Pro</>
+                  )}
+                </Button>
+
+                {falImageSrc && (
+                  <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-3">
+                    <div className="rounded-lg overflow-hidden border border-border">
+                      <img src={falImageSrc} alt="Imagem fal.ai" className="w-full" loading="lazy" />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" className="flex-1" onClick={() => handleDownloadImage(falImageSrc, 'ramdut-fal.png')}>
+                        <Download className="h-4 w-4 mr-2" /> Baixar
+                      </Button>
+                      <Button variant="outline" className="flex-1" onClick={handleGenerateFal}>
+                        <RefreshCw className="h-4 w-4 mr-2" /> Regenerar
+                      </Button>
+                    </div>
+                  </motion.div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* ========== SVG GENERATOR ========== */}
+          <TabsContent value="svg">
+            <Card className="border-border">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileCode className="h-5 w-5 text-primary" />
+                  Gerador de SVG Vetorial
+                </CardTitle>
+                <CardDescription>
+                  Crie ilustrações vetoriais e ícones SVG editáveis com Recraft v3 via fal.ai.
+                  Perfeito para logos, ícones e assets do site.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {[
+                    { label: '🎯 Ícone app', text: 'minimalist app icon, rounded square, single color, modern' },
+                    { label: '🦊 Mascote', text: 'cute fox mascot, vector illustration, friendly, flat colors' },
+                    { label: '🚀 Logo', text: 'tech startup logo, abstract rocket, geometric, two colors' },
+                    { label: '🌈 Ilustração', text: 'flat illustration of person coding on laptop, vibrant colors' },
+                  ].map((p, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setSvgPrompt(p.text)}
+                      className="text-xs rounded-lg py-2 px-3 border border-border bg-card text-muted-foreground hover:border-primary/50 transition-all"
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+
+                <Textarea
+                  value={svgPrompt}
+                  onChange={(e) => setSvgPrompt(e.target.value)}
+                  placeholder="Descreva o vetor SVG... Ex: minimalist mountain logo, two colors, geometric"
+                  rows={3}
+                />
+                <Button onClick={handleGenerateSvg} disabled={isSvgLoading || !svgPrompt.trim()} className="w-full">
+                  {isSvgLoading ? (
+                    <><Loader2 className="h-4 w-4 animate-spin mr-2" />Vetorizando...</>
+                  ) : (
+                    <><Palette className="h-4 w-4 mr-2" />Gerar SVG</>
+                  )}
+                </Button>
+
+                {(svgCode || svgImageUrl) && (
+                  <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-3">
+                    <div className="rounded-lg overflow-hidden border border-border bg-white p-4 flex items-center justify-center">
+                      {svgCode ? (
+                        <div
+                          className="max-w-full max-h-[420px] [&_svg]:max-w-full [&_svg]:h-auto"
+                          dangerouslySetInnerHTML={{ __html: svgCode }}
+                        />
+                      ) : (
+                        <img src={svgImageUrl} alt="SVG gerado" className="max-w-full max-h-[420px]" />
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" className="flex-1" onClick={handleDownloadSvg}>
+                        <Download className="h-4 w-4 mr-2" />
+                        Baixar {svgCode ? 'SVG' : 'PNG'}
+                      </Button>
+                      <Button variant="outline" className="flex-1" onClick={handleGenerateSvg}>
+                        <RefreshCw className="h-4 w-4 mr-2" /> Regenerar
+                      </Button>
+                    </div>
+                    {svgCode && (
+                      <details className="rounded-lg border border-border bg-muted/30 p-3">
+                        <summary className="text-xs font-medium text-muted-foreground cursor-pointer">
+                          Ver código SVG
+                        </summary>
+                        <pre className="text-[10px] text-foreground mt-2 overflow-x-auto max-h-48">
+                          {svgCode}
+                        </pre>
+                      </details>
+                    )}
+                  </motion.div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           {/* ========== MEME TAB ========== */}
           <TabsContent value="meme">
             <Card className="border-border">
