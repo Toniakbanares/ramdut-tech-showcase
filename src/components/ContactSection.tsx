@@ -38,8 +38,8 @@ const ContactSection = () => {
     {
       icon: Mail,
       label: 'Email',
-      value: 'jaques.dutra@example.com',
-      href: 'mailto:jaques.dutra@example.com'
+      value: 'protonramdut2026@proton.me',
+      href: 'mailto:protonramdut2026@proton.me'
     },
     {
       icon: MapPin,
