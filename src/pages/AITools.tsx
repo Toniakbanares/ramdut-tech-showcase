@@ -14,7 +14,8 @@ import { useToast } from '@/hooks/use-toast';
 import {
   Send, Bot, User, Loader2, Sparkles, MessageSquare,
   ArrowLeft, Trash2, ImagePlus, Eye, Wand2, ThermometerSun, Volume2,
-  Laugh, Download, RefreshCw, Settings2, Zap, Crown, ExternalLink
+  Laugh, Download, RefreshCw, Settings2, Zap, Crown, ExternalLink,
+  Activity, FileCode, Palette,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
