@@ -638,83 +638,26 @@ const AITools = () => {
           </motion.div>
         )}
 
-        <Card className="border-border/70 bg-card/85 backdrop-blur-sm mb-8">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Sparkles className="h-5 w-5 text-primary" />
-              APIs e ferramentas integradas
-            </CardTitle>
-            <CardDescription>
-              Provedores que alimentam o Lab e candidatos para próximas integrações.
-              Página {apiPage} de {totalApiPages}.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-3 md:grid-cols-2">
-              {paginatedApis.map((api) => (
-                <a
-                  key={api.name}
-                  href={api.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group flex flex-col gap-1 rounded-lg border border-border bg-card/60 p-4 hover:border-primary/60 transition-all"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
-                      {api.name}
-                    </h3>
-                    <ExternalLink className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary" />
-                  </div>
-                  <p className="text-sm text-muted-foreground">{api.desc}</p>
-                  <Badge variant="secondary" className="mt-1 w-fit text-[10px]">
-                    {api.free}
-                  </Badge>
-                </a>
-              ))}
-            </div>
-
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setApiPage((p) => Math.max(1, p - 1));
-                    }}
-                    aria-disabled={apiPage === 1}
-                    className={apiPage === 1 ? 'pointer-events-none opacity-50' : ''}
-                  />
-                </PaginationItem>
-                {Array.from({ length: totalApiPages }, (_, i) => i + 1).map((n) => (
-                  <PaginationItem key={n}>
-                    <PaginationLink
-                      href="#"
-                      isActive={apiPage === n}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setApiPage(n);
-                      }}
-                    >
-                      {n}
-                    </PaginationLink>
-                  </PaginationItem>
-                ))}
-                <PaginationItem>
-                  <PaginationNext
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setApiPage((p) => Math.min(totalApiPages, p + 1));
-                    }}
-                    aria-disabled={apiPage === totalApiPages}
-                    className={apiPage === totalApiPages ? 'pointer-events-none opacity-50' : ''}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </CardContent>
-        </Card>
+        <Link to="/api-status" className="block mb-8">
+          <Card className="border-primary/30 bg-card/85 backdrop-blur-sm hover:border-primary/60 transition-all group">
+            <CardContent className="flex items-center justify-between gap-4 py-5">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary/25 to-accent/25 flex items-center justify-center">
+                  <Activity className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="font-semibold text-foreground group-hover:text-primary transition-colors">
+                    Status & Relatório das APIs
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Veja todas as integrações: fal.ai, Gemini, Pollinations, Puter, Recraft SVG…
+                  </p>
+                </div>
+              </div>
+              <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
+            </CardContent>
+          </Card>
+        </Link>
 
         <Tabs defaultValue="chat" className="space-y-6">
           <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 h-auto">
