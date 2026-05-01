@@ -532,9 +532,15 @@ const AITools = () => {
                 <Crown className="h-3 w-3" /> Creator
               </Badge>
             )}
+            <Link to="/api-status">
+              <Button variant="outline" size="sm" className="gap-1.5">
+                <Activity className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">APIs</span>
+              </Button>
+            </Link>
             <Badge variant="secondary" className="hidden lg:flex gap-1">
               <Sparkles className="h-3 w-3" />
-              Grok + Gemini
+              fal · Gemini · Grok
             </Badge>
           </div>
         </div>
