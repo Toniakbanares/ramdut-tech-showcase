@@ -660,16 +660,26 @@ const AITools = () => {
         </Link>
 
         <Tabs defaultValue="chat" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 h-auto">
+          <TabsList className="grid w-full grid-cols-4 md:grid-cols-8 h-auto">
             <TabsTrigger value="chat" className="flex items-center gap-1.5 py-3 text-xs sm:text-sm">
               <MessageSquare className="h-4 w-4" />
-              <span className="hidden sm:inline">Chat IA</span>
+              <span className="hidden sm:inline">Chat</span>
               <span className="sm:hidden">Chat</span>
             </TabsTrigger>
             <TabsTrigger value="image-gen" className="flex items-center gap-1.5 py-3 text-xs sm:text-sm">
               <ImagePlus className="h-4 w-4" />
               <span className="hidden sm:inline">Imagens</span>
               <span className="sm:hidden">Img</span>
+            </TabsTrigger>
+            <TabsTrigger value="fal-pro" className="flex items-center gap-1.5 py-3 text-xs sm:text-sm">
+              <Crown className="h-4 w-4" />
+              <span className="hidden sm:inline">Pro fal</span>
+              <span className="sm:hidden">Pro</span>
+            </TabsTrigger>
+            <TabsTrigger value="svg" className="flex items-center gap-1.5 py-3 text-xs sm:text-sm">
+              <FileCode className="h-4 w-4" />
+              <span className="hidden sm:inline">SVG</span>
+              <span className="sm:hidden">SVG</span>
             </TabsTrigger>
             <TabsTrigger value="meme" className="flex items-center gap-1.5 py-3 text-xs sm:text-sm">
               <Laugh className="h-4 w-4" />
