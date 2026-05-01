@@ -172,6 +172,26 @@ const AITools = () => {
   const [isTtsLoading, setIsTtsLoading] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  // fal.ai (Pro Image) state
+  const FAL_MODELS = [
+    { id: 'flux-schnell', name: 'Flux Schnell', desc: 'Ultra rápido' },
+    { id: 'flux-dev', name: 'Flux Dev', desc: 'Equilibrado' },
+    { id: 'flux-pro', name: 'Flux Pro 1.1', desc: 'Topo de linha' },
+    { id: 'sdxl', name: 'SDXL Fast', desc: 'Clássico rápido' },
+    { id: 'stable-diffusion-3', name: 'SD 3 Medium', desc: 'Detalhes finos' },
+  ];
+  const [falPrompt, setFalPrompt] = useState('');
+  const [falModel, setFalModel] = useState(FAL_MODELS[0].id);
+  const [falAspect, setFalAspect] = useState('1:1');
+  const [falImageSrc, setFalImageSrc] = useState('');
+  const [isFalLoading, setIsFalLoading] = useState(false);
+
+  // SVG generator state
+  const [svgPrompt, setSvgPrompt] = useState('');
+  const [svgCode, setSvgCode] = useState('');
+  const [svgImageUrl, setSvgImageUrl] = useState('');
+  const [isSvgLoading, setIsSvgLoading] = useState(false);
+
   // APIs pagination
   const [apiPage, setApiPage] = useState(1);
   const apisPerPage = 4;
