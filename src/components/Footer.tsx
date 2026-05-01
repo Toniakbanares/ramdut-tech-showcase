@@ -97,7 +97,7 @@ const Footer = () => {
             </h4>
             <div className="space-y-2 text-sm">
               <p className="text-muted-foreground">
-                📧 jaques.dutra@example.com
+                📧 <a href="mailto:protonramdut2026@proton.me" className="hover:text-primary transition-colors">protonramdut2026@proton.me</a>
               </p>
               <p className="text-muted-foreground">
                 📍 Novo Hamburgo, RS - Brasil

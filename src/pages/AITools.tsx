@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
@@ -6,15 +6,12 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Pagination, PaginationContent, PaginationItem,
-  PaginationLink, PaginationNext, PaginationPrevious,
-} from '@/components/ui/pagination';
 import { useToast } from '@/hooks/use-toast';
 import {
   Send, Bot, User, Loader2, Sparkles, MessageSquare,
   ArrowLeft, Trash2, ImagePlus, Eye, Wand2, ThermometerSun, Volume2,
-  Laugh, Download, RefreshCw, Settings2, Zap, Crown, ExternalLink
+  Laugh, Download, RefreshCw, Settings2, Zap, Crown, ExternalLink,
+  Activity, FileCode, Palette,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -22,7 +19,7 @@ import ReactMarkdown from 'react-markdown';
 import mascotImg from '@/assets/mascot-ramu.png';
 import kingBg from '@/assets/king-hearts-bg.jpg';
 import { useGenerationLimit } from '@/hooks/use-generation-limit';
-import { applyWatermark, truncateForFree } from '@/lib/watermark';
+import { truncateForFree } from '@/lib/watermark';
 import { PaywallModal } from '@/components/PaywallModal';
 import { Progress } from '@/components/ui/progress';
 
@@ -83,31 +80,6 @@ interface ApiResource {
   url: string;
   free: string;
 }
-
-const EXTERNAL_APIS: ApiResource[] = [
-  { name: 'Google Gemini', desc: 'Geração de imagens HD e chat multimodal', url: 'https://ai.google.dev/', free: '50 imagens/dia por chave' },
-  { name: 'Pollinations.ai', desc: 'Geração de imagens sem chave, fallback aberto', url: 'https://pollinations.ai/', free: 'Aberto, com rate limit suave' },
-  { name: 'Puter.js', desc: 'Chat Grok, TTS e visão diretamente no browser', url: 'https://puter.com/', free: 'Cota generosa por usuário' },
-  { name: 'QVAC SDK (Tether)', desc: 'OCR, RAG, embeddings, TTS e transcrição local', url: 'https://docs.qvac.tether.io/sdk/api/', free: 'Local, sem cota de rede' },
-  { name: 'RapidAPI Hub', desc: 'Catálogo de APIs (clima, busca, notícias, OCR)', url: 'https://rapidapi.com/hub', free: 'Tier free por API' },
-  { name: 'Hugging Face Inference', desc: 'Milhares de modelos open-source via API', url: 'https://huggingface.co/inference-api', free: 'Cota grátis com conta' },
-  { name: 'Groq', desc: 'Inferência ultra-rápida de Llama 3.1 / Mixtral', url: 'https://console.groq.com/', free: 'Tier grátis com chave' },
-  { name: 'OpenRouter', desc: 'Roteador unificado para vários LLMs', url: 'https://openrouter.ai/', free: 'Modelos :free disponíveis' },
-];
-
-const EXTERNAL_AI_RESOURCES = {
-  qvac: [
-    'completion() para respostas locais e workflows de texto',
-    'ocr() para leitura de texto em imagens',
-    'embed() + ragIngest() + ragSearch() para busca semântica',
-    'textToSpeech() e transcribe()/transcribeStream() para voz',
-  ],
-  rapidApi: [
-    'APIs de OCR, busca, notícias e clima para enriquecer prompts',
-    'Catálogo grande para prototipar sem backend customizado',
-    'Bom antes de fixar um provedor principal',
-  ],
-};
 
 const AITools = () => {
   const { toast } = useToast();
@@ -171,14 +143,27 @@ const AITools = () => {
   const [isTtsLoading, setIsTtsLoading] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // APIs pagination
-  const [apiPage, setApiPage] = useState(1);
-  const apisPerPage = 4;
-  const totalApiPages = Math.ceil(EXTERNAL_APIS.length / apisPerPage);
-  const paginatedApis = useMemo(
-    () => EXTERNAL_APIS.slice((apiPage - 1) * apisPerPage, apiPage * apisPerPage),
-    [apiPage]
-  );
+  // fal.ai (Pro Image) state
+  const FAL_MODELS = [
+    { id: 'flux-schnell', name: 'Flux Schnell', desc: 'Ultra rápido' },
+    { id: 'flux-dev', name: 'Flux Dev', desc: 'Equilibrado' },
+    { id: 'flux-pro', name: 'Flux Pro 1.1', desc: 'Topo de linha' },
+    { id: 'sdxl', name: 'SDXL Fast', desc: 'Clássico rápido' },
+    { id: 'stable-diffusion-3', name: 'SD 3 Medium', desc: 'Detalhes finos' },
+  ];
+  const [falPrompt, setFalPrompt] = useState('');
+  const [falModel, setFalModel] = useState(FAL_MODELS[0].id);
+  const [falAspect, setFalAspect] = useState('1:1');
+  const [falImageSrc, setFalImageSrc] = useState('');
+  const [isFalLoading, setIsFalLoading] = useState(false);
+
+  // SVG generator state
+  const [svgPrompt, setSvgPrompt] = useState('');
+  const [svgCode, setSvgCode] = useState('');
+  const [svgImageUrl, setSvgImageUrl] = useState('');
+  const [isSvgLoading, setIsSvgLoading] = useState(false);
+
+
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -274,15 +259,8 @@ const AITools = () => {
       const fullPrompt = `Generate a high-quality image: ${imagePrompt}. Style: ${style?.prompt || ''}`;
       const src = await generateImage(fullPrompt, selectedImageModel, selectedAspectRatio);
       if (src) {
-        // Aplica marca d'água nas contas grátis (hook de conversão)
-        const finalSrc = limit.isPro ? src : await applyWatermark(src, 'RAMU.AI');
-        setGeneratedImageSrc(finalSrc);
+        setGeneratedImageSrc(src);
         limit.increment();
-
-        // Após 2ª geração, aquece o paywall
-        if (!limit.isPro && limit.count + 1 >= 2) {
-          setTimeout(() => triggerPaywall('watermark'), 1500);
-        }
       } else {
         toast({ title: 'Aviso', description: 'Nenhuma imagem retornada. Tente outro prompt ou modelo.', variant: 'destructive' });
       }
@@ -309,12 +287,8 @@ const AITools = () => {
       
       const src = await generateImage(fullPrompt, selectedImageModel, '1:1');
       if (src) {
-        const finalSrc = limit.isPro ? src : await applyWatermark(src, 'RAMU.AI');
-        setGeneratedMemeSrc(finalSrc);
+        setGeneratedMemeSrc(src);
         limit.increment();
-        if (!limit.isPro && limit.count + 1 >= 2) {
-          setTimeout(() => triggerPaywall('watermark'), 1500);
-        }
       } else {
         toast({ title: 'Aviso', description: 'Nenhum meme gerado. Tente outro prompt.', variant: 'destructive' });
       }
@@ -438,12 +412,68 @@ const AITools = () => {
     }
   };
 
-  const handleDownloadImage = (src: string, filename: string) => {
-    // Hook de conversão: download força paywall em conta grátis
-    if (!limit.isPro) {
-      triggerPaywall('watermark');
-      return;
+  // --- FAL.AI IMAGE PRO ---
+  const handleGenerateFal = async () => {
+    if (!falPrompt.trim() || isFalLoading) return;
+    if (!checkLimit()) return;
+    setIsFalLoading(true);
+    setFalImageSrc('');
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-fal', {
+        body: { prompt: falPrompt, model: falModel, aspect_ratio: falAspect },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      if (data?.imageUrl) {
+        setFalImageSrc(data.imageUrl);
+        limit.increment();
+        toast({ title: 'Imagem gerada ✨', description: data.provider || 'fal.ai' });
+      } else {
+        toast({ title: 'Sem imagem', variant: 'destructive' });
+      }
+    } catch (e: any) {
+      toast({ title: 'Erro fal.ai', description: e.message || 'Falha', variant: 'destructive' });
+    } finally {
+      setIsFalLoading(false);
     }
+  };
+
+  // --- SVG GENERATOR (Recraft via fal.ai) ---
+  const handleGenerateSvg = async () => {
+    if (!svgPrompt.trim() || isSvgLoading) return;
+    if (!checkLimit()) return;
+    setIsSvgLoading(true);
+    setSvgCode('');
+    setSvgImageUrl('');
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-fal', {
+        body: { prompt: svgPrompt, svg: true, aspect_ratio: '1:1' },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      if (data?.svg) setSvgCode(data.svg);
+      if (data?.imageUrl) setSvgImageUrl(data.imageUrl);
+      limit.increment();
+      toast({ title: 'SVG gerado 🎨', description: data?.provider || 'Recraft via fal.ai' });
+    } catch (e: any) {
+      toast({ title: 'Erro SVG', description: e.message || 'Falha', variant: 'destructive' });
+    } finally {
+      setIsSvgLoading(false);
+    }
+  };
+
+  const handleDownloadSvg = () => {
+    if (!svgCode && !svgImageUrl) return;
+    const blob = svgCode
+      ? new Blob([svgCode], { type: 'image/svg+xml' })
+      : null;
+    const link = document.createElement('a');
+    link.href = blob ? URL.createObjectURL(blob) : svgImageUrl;
+    link.download = blob ? 'ramdut-vector.svg' : 'ramdut-vector.png';
+    link.click();
+  };
+
+  const handleDownloadImage = (src: string, filename: string) => {
     const link = document.createElement('a');
     link.href = src;
     link.download = filename;
@@ -502,9 +532,15 @@ const AITools = () => {
                 <Crown className="h-3 w-3" /> Creator
               </Badge>
             )}
+            <Link to="/api-status">
+              <Button variant="outline" size="sm" className="gap-1.5">
+                <Activity className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">APIs</span>
+              </Button>
+            </Link>
             <Badge variant="secondary" className="hidden lg:flex gap-1">
               <Sparkles className="h-3 w-3" />
-              Grok + Gemini
+              fal · Gemini · Grok
             </Badge>
           </div>
         </div>
@@ -572,95 +608,48 @@ const AITools = () => {
           </motion.div>
         )}
 
-        <Card className="border-border/70 bg-card/85 backdrop-blur-sm mb-8">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Sparkles className="h-5 w-5 text-primary" />
-              APIs e ferramentas integradas
-            </CardTitle>
-            <CardDescription>
-              Provedores que alimentam o Lab e candidatos para próximas integrações.
-              Página {apiPage} de {totalApiPages}.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-3 md:grid-cols-2">
-              {paginatedApis.map((api) => (
-                <a
-                  key={api.name}
-                  href={api.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group flex flex-col gap-1 rounded-lg border border-border bg-card/60 p-4 hover:border-primary/60 transition-all"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
-                      {api.name}
-                    </h3>
-                    <ExternalLink className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary" />
-                  </div>
-                  <p className="text-sm text-muted-foreground">{api.desc}</p>
-                  <Badge variant="secondary" className="mt-1 w-fit text-[10px]">
-                    {api.free}
-                  </Badge>
-                </a>
-              ))}
-            </div>
-
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setApiPage((p) => Math.max(1, p - 1));
-                    }}
-                    aria-disabled={apiPage === 1}
-                    className={apiPage === 1 ? 'pointer-events-none opacity-50' : ''}
-                  />
-                </PaginationItem>
-                {Array.from({ length: totalApiPages }, (_, i) => i + 1).map((n) => (
-                  <PaginationItem key={n}>
-                    <PaginationLink
-                      href="#"
-                      isActive={apiPage === n}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setApiPage(n);
-                      }}
-                    >
-                      {n}
-                    </PaginationLink>
-                  </PaginationItem>
-                ))}
-                <PaginationItem>
-                  <PaginationNext
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setApiPage((p) => Math.min(totalApiPages, p + 1));
-                    }}
-                    aria-disabled={apiPage === totalApiPages}
-                    className={apiPage === totalApiPages ? 'pointer-events-none opacity-50' : ''}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </CardContent>
-        </Card>
+        <Link to="/api-status" className="block mb-8">
+          <Card className="border-primary/30 bg-card/85 backdrop-blur-sm hover:border-primary/60 transition-all group">
+            <CardContent className="flex items-center justify-between gap-4 py-5">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary/25 to-accent/25 flex items-center justify-center">
+                  <Activity className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="font-semibold text-foreground group-hover:text-primary transition-colors">
+                    Status & Relatório das APIs
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Veja todas as integrações: fal.ai, Gemini, Pollinations, Puter, Recraft SVG…
+                  </p>
+                </div>
+              </div>
+              <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
+            </CardContent>
+          </Card>
+        </Link>
 
         <Tabs defaultValue="chat" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 h-auto">
+          <TabsList className="grid w-full grid-cols-4 md:grid-cols-8 h-auto">
             <TabsTrigger value="chat" className="flex items-center gap-1.5 py-3 text-xs sm:text-sm">
               <MessageSquare className="h-4 w-4" />
-              <span className="hidden sm:inline">Chat IA</span>
+              <span className="hidden sm:inline">Chat</span>
               <span className="sm:hidden">Chat</span>
             </TabsTrigger>
             <TabsTrigger value="image-gen" className="flex items-center gap-1.5 py-3 text-xs sm:text-sm">
               <ImagePlus className="h-4 w-4" />
               <span className="hidden sm:inline">Imagens</span>
               <span className="sm:hidden">Img</span>
+            </TabsTrigger>
+            <TabsTrigger value="fal-pro" className="flex items-center gap-1.5 py-3 text-xs sm:text-sm">
+              <Crown className="h-4 w-4" />
+              <span className="hidden sm:inline">Pro fal</span>
+              <span className="sm:hidden">Pro</span>
+            </TabsTrigger>
+            <TabsTrigger value="svg" className="flex items-center gap-1.5 py-3 text-xs sm:text-sm">
+              <FileCode className="h-4 w-4" />
+              <span className="hidden sm:inline">SVG</span>
+              <span className="sm:hidden">SVG</span>
             </TabsTrigger>
             <TabsTrigger value="meme" className="flex items-center gap-1.5 py-3 text-xs sm:text-sm">
               <Laugh className="h-4 w-4" />
@@ -900,6 +889,175 @@ const AITools = () => {
                         <RefreshCw className="h-4 w-4 mr-2" /> Regenerar
                       </Button>
                     </div>
+                  </motion.div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* ========== FAL.AI PRO IMAGE ========== */}
+          <TabsContent value="fal-pro">
+            <Card className="border-border">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Crown className="h-5 w-5 text-primary" />
+                  Imagem Pro · Flux & SDXL (fal.ai)
+                </CardTitle>
+                <CardDescription>
+                  Geração premium com Flux Schnell/Dev/Pro, SDXL Fast e Stable Diffusion 3 — direto do fal.ai.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                    <Settings2 className="h-4 w-4" /> Modelo fal
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {FAL_MODELS.map((m) => (
+                      <Badge
+                        key={m.id}
+                        variant={falModel === m.id ? 'default' : 'outline'}
+                        className="cursor-pointer transition-all hover:scale-105 gap-1"
+                        onClick={() => setFalModel(m.id)}
+                      >
+                        <Crown className="h-3 w-3" /> {m.name}
+                      </Badge>
+                    ))}
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    {FAL_MODELS.find((m) => m.id === falModel)?.desc}
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">📐 Proporção</label>
+                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                    {ASPECT_RATIOS.map((a) => (
+                      <button
+                        key={a.id}
+                        onClick={() => setFalAspect(a.id)}
+                        className={`text-xs rounded-lg py-2 px-2 border transition-all text-center ${
+                          falAspect === a.id
+                            ? 'border-primary bg-primary/10 text-foreground font-medium'
+                            : 'border-border bg-card text-muted-foreground hover:border-primary/50'
+                        }`}
+                      >
+                        <div>{a.label}</div>
+                        <div className="text-[10px] text-muted-foreground">{a.desc}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <Textarea
+                  value={falPrompt}
+                  onChange={(e) => setFalPrompt(e.target.value)}
+                  placeholder="Ex: cinematic portrait of a cyberpunk samurai, neon Tokyo, 85mm, ultra detailed"
+                  rows={3}
+                />
+                <Button onClick={handleGenerateFal} disabled={isFalLoading || !falPrompt.trim()} className="w-full">
+                  {isFalLoading ? (
+                    <><Loader2 className="h-4 w-4 animate-spin mr-2" />Gerando com fal.ai...</>
+                  ) : (
+                    <><Crown className="h-4 w-4 mr-2" />Gerar Imagem Pro</>
+                  )}
+                </Button>
+
+                {falImageSrc && (
+                  <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-3">
+                    <div className="rounded-lg overflow-hidden border border-border">
+                      <img src={falImageSrc} alt="Imagem fal.ai" className="w-full" loading="lazy" />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" className="flex-1" onClick={() => handleDownloadImage(falImageSrc, 'ramdut-fal.png')}>
+                        <Download className="h-4 w-4 mr-2" /> Baixar
+                      </Button>
+                      <Button variant="outline" className="flex-1" onClick={handleGenerateFal}>
+                        <RefreshCw className="h-4 w-4 mr-2" /> Regenerar
+                      </Button>
+                    </div>
+                  </motion.div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* ========== SVG GENERATOR ========== */}
+          <TabsContent value="svg">
+            <Card className="border-border">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileCode className="h-5 w-5 text-primary" />
+                  Gerador de SVG Vetorial
+                </CardTitle>
+                <CardDescription>
+                  Crie ilustrações vetoriais e ícones SVG editáveis com Recraft v3 via fal.ai.
+                  Perfeito para logos, ícones e assets do site.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {[
+                    { label: '🎯 Ícone app', text: 'minimalist app icon, rounded square, single color, modern' },
+                    { label: '🦊 Mascote', text: 'cute fox mascot, vector illustration, friendly, flat colors' },
+                    { label: '🚀 Logo', text: 'tech startup logo, abstract rocket, geometric, two colors' },
+                    { label: '🌈 Ilustração', text: 'flat illustration of person coding on laptop, vibrant colors' },
+                  ].map((p, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setSvgPrompt(p.text)}
+                      className="text-xs rounded-lg py-2 px-3 border border-border bg-card text-muted-foreground hover:border-primary/50 transition-all"
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+
+                <Textarea
+                  value={svgPrompt}
+                  onChange={(e) => setSvgPrompt(e.target.value)}
+                  placeholder="Descreva o vetor SVG... Ex: minimalist mountain logo, two colors, geometric"
+                  rows={3}
+                />
+                <Button onClick={handleGenerateSvg} disabled={isSvgLoading || !svgPrompt.trim()} className="w-full">
+                  {isSvgLoading ? (
+                    <><Loader2 className="h-4 w-4 animate-spin mr-2" />Vetorizando...</>
+                  ) : (
+                    <><Palette className="h-4 w-4 mr-2" />Gerar SVG</>
+                  )}
+                </Button>
+
+                {(svgCode || svgImageUrl) && (
+                  <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-3">
+                    <div className="rounded-lg overflow-hidden border border-border bg-white p-4 flex items-center justify-center">
+                      {svgCode ? (
+                        <div
+                          className="max-w-full max-h-[420px] [&_svg]:max-w-full [&_svg]:h-auto"
+                          dangerouslySetInnerHTML={{ __html: svgCode }}
+                        />
+                      ) : (
+                        <img src={svgImageUrl} alt="SVG gerado" className="max-w-full max-h-[420px]" />
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" className="flex-1" onClick={handleDownloadSvg}>
+                        <Download className="h-4 w-4 mr-2" />
+                        Baixar {svgCode ? 'SVG' : 'PNG'}
+                      </Button>
+                      <Button variant="outline" className="flex-1" onClick={handleGenerateSvg}>
+                        <RefreshCw className="h-4 w-4 mr-2" /> Regenerar
+                      </Button>
+                    </div>
+                    {svgCode && (
+                      <details className="rounded-lg border border-border bg-muted/30 p-3">
+                        <summary className="text-xs font-medium text-muted-foreground cursor-pointer">
+                          Ver código SVG
+                        </summary>
+                        <pre className="text-[10px] text-foreground mt-2 overflow-x-auto max-h-48">
+                          {svgCode}
+                        </pre>
+                      </details>
+                    )}
                   </motion.div>
                 )}
               </CardContent>

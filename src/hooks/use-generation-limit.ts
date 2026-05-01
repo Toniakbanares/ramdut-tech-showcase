@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 
-const FREE_DAILY_LIMIT = 3;
+const FREE_DAILY_LIMIT = 100;
 const STORAGE_KEY = 'ramu_generations';
 const PRO_KEY = 'ramu_pro';
 
