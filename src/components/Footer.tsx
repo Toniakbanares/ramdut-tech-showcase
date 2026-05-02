@@ -145,6 +145,29 @@ const Footer = () => {
               </a>
             </div>
           </div>
+
+          <div className="mt-4 pt-4 border-t border-muted/50 text-center">
+            <a
+              href="https://ramdut-tech-showcase.vercel.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-neutral-600 hover:text-foreground transition-colors"
+            >
+              Tecnologia Ramdut
+            </a>
+          </div>
+        </div>
+      </div>
+            
+            <div className="flex items-center gap-6 text-xs text-muted-foreground">
+              <a href="#" className="hover:text-primary transition-colors duration-300">
+                Política de Privacidade
+              </a>
+              <a href="#" className="hover:text-primary transition-colors duration-300">
+                Termos de Uso
+              </a>
+            </div>
+          </div>
         </div>
       </div>
     </footer>
