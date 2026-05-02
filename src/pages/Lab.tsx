@@ -88,7 +88,7 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
 
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [paywallOpen, setPaywallOpen] = useState(false);
-  const [paywallReason, setPaywallReason] = useState<'limit' | 'hd' | 'download'>('limit');
+  const [paywallReason, setPaywallReason] = useState<'limit' | 'hd' | 'watermark' | 'truncated' | 'tts'>('limit');
   const [generating, setGenerating] = useState(false);
   const [sharingId, setSharingId] = useState<string | null>(null);
   const [cooldownTick, setCooldownTick] = useState(0);
@@ -210,7 +210,7 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
   // ---- Download ----
   const handleDownload = (c: LabCard) => {
     if (!isPro && (c.imageUrl || c.svg)) {
-      setPaywallReason('download');
+      setPaywallReason('hd');
       setPaywallOpen(true);
       return;
     }
@@ -391,8 +391,8 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
       />
 
       <PaywallModal
-        isOpen={paywallOpen}
-        onClose={() => setPaywallOpen(false)}
+        open={paywallOpen}
+        onOpenChange={setPaywallOpen}
         reason={paywallReason}
         onUpgrade={() => {
           setPro(true);
