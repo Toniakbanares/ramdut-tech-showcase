@@ -158,18 +158,6 @@ const Footer = () => {
           </div>
         </div>
       </div>
-            
-            <div className="flex items-center gap-6 text-xs text-muted-foreground">
-              <a href="#" className="hover:text-primary transition-colors duration-300">
-                Política de Privacidade
-              </a>
-              <a href="#" className="hover:text-primary transition-colors duration-300">
-                Termos de Uso
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
     </footer>
   );
 };
