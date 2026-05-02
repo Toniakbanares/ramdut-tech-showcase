@@ -41,6 +41,48 @@ export type Database = {
         }
         Relationships: []
       }
+      lab_generations: {
+        Row: {
+          created_at: string
+          device_id: string
+          id: string
+          model: string | null
+          og_image_url: string | null
+          prompt: string
+          result_svg: string | null
+          result_text: string | null
+          result_url: string | null
+          type: string
+          view_count: number
+        }
+        Insert: {
+          created_at?: string
+          device_id: string
+          id?: string
+          model?: string | null
+          og_image_url?: string | null
+          prompt: string
+          result_svg?: string | null
+          result_text?: string | null
+          result_url?: string | null
+          type: string
+          view_count?: number
+        }
+        Update: {
+          created_at?: string
+          device_id?: string
+          id?: string
+          model?: string | null
+          og_image_url?: string | null
+          prompt?: string
+          result_svg?: string | null
+          result_text?: string | null
+          result_url?: string | null
+          type?: string
+          view_count?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

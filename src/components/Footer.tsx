@@ -145,6 +145,17 @@ const Footer = () => {
               </a>
             </div>
           </div>
+
+          <div className="mt-4 pt-4 border-t border-muted/50 text-center">
+            <a
+              href="https://ramdut-tech-showcase.vercel.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-neutral-600 hover:text-foreground transition-colors"
+            >
+              Tecnologia Ramdut
+            </a>
+          </div>
         </div>
       </div>
     </footer>
