@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Download, Share2, GitFork, Trash2, Lock, Loader2 } from 'lucide-react';
+import { Download, Share2, GitFork, Trash2, Lock, Loader2, Wand2 } from 'lucide-react';
 import { Handle, Position } from 'reactflow';
 import type { LabCard } from '@/store/lab-store';
 import { MODE_META } from '@/lib/lab-helpers';
@@ -14,13 +14,15 @@ interface Props {
     onShare: () => void;
     onDownload: () => void;
     onDelete: () => void;
+    onEdit: () => void;
     sharing?: boolean;
   };
 }
 
 export const GenerationCard = ({ data }: Props) => {
-  const { card, isPro, selected, onSelect, onFork, onShare, onDownload, onDelete, sharing } = data;
+  const { card, isPro, selected, onSelect, onFork, onShare, onDownload, onDelete, onEdit, sharing } = data;
   const meta = MODE_META[card.type];
+  const isImage = !!card.imageUrl;
 
   return (
     <motion.div
@@ -29,7 +31,7 @@ export const GenerationCard = ({ data }: Props) => {
       animate={{ opacity: 1, scale: 1 }}
       transition={{ type: 'spring', stiffness: 400, damping: 40 }}
       onClick={onSelect}
-      className={`w-[300px] rounded-xl overflow-hidden ramu-glass cursor-pointer transition-all ${
+      className={`w-[280px] sm:w-[300px] rounded-xl overflow-hidden ramu-glass cursor-pointer transition-all ${
         selected ? 'ring-2 ring-[#8B5CF6]' : 'ramu-card-border'
       }`}
     >
@@ -70,7 +72,7 @@ export const GenerationCard = ({ data }: Props) => {
               <Lock className="h-6 w-6 text-white mx-auto mb-1" />
               <button
                 onClick={(e) => { e.stopPropagation(); onShare(); }}
-                className="px-3 py-1.5 rounded-md ramu-accent-bg text-white text-xs font-medium"
+                className="px-3 py-2 min-h-[44px] rounded-md ramu-accent-bg text-white text-xs font-medium"
               >
                 Ver em HD
               </button>
@@ -83,34 +85,47 @@ export const GenerationCard = ({ data }: Props) => {
         {card.prompt}
       </div>
 
-      <div className="flex items-center justify-between p-2 gap-1">
+      <div className="grid grid-cols-5 gap-1 p-2">
+        {isImage && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onEdit(); }}
+            className="min-h-[44px] text-xs text-neutral-300 hover:text-white hover:bg-white/5 rounded flex flex-col items-center justify-center gap-0.5"
+            title="Editar no Fabric"
+          >
+            <Wand2 className="h-3.5 w-3.5" />
+            <span className="text-[10px]">Editar</span>
+          </button>
+        )}
         <button
           onClick={(e) => { e.stopPropagation(); onFork(); }}
-          className="flex-1 px-2 py-1.5 text-xs text-neutral-300 hover:text-white hover:bg-white/5 rounded flex items-center justify-center gap-1"
-          title="Fork (regerar)"
+          className="min-h-[44px] text-xs text-neutral-300 hover:text-white hover:bg-white/5 rounded flex flex-col items-center justify-center gap-0.5"
         >
-          <GitFork className="h-3 w-3" /> Fork
+          <GitFork className="h-3.5 w-3.5" />
+          <span className="text-[10px]">Fork</span>
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); onShare(); }}
           disabled={sharing}
-          className="flex-1 px-2 py-1.5 text-xs text-neutral-300 hover:text-white hover:bg-white/5 rounded flex items-center justify-center gap-1 disabled:opacity-50"
+          className="min-h-[44px] text-xs text-neutral-300 hover:text-white hover:bg-white/5 rounded flex flex-col items-center justify-center gap-0.5 disabled:opacity-50"
         >
-          {sharing ? <Loader2 className="h-3 w-3 animate-spin" /> : <Share2 className="h-3 w-3" />} Share
+          {sharing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Share2 className="h-3.5 w-3.5" />}
+          <span className="text-[10px]">Share</span>
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); onDownload(); }}
           disabled={!isPro && !!(card.imageUrl || card.svg)}
-          className="flex-1 px-2 py-1.5 text-xs text-neutral-300 hover:text-white hover:bg-white/5 rounded flex items-center justify-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed"
-          title={!isPro && (card.imageUrl || card.svg) ? 'Upgrade para baixar' : 'Download'}
+          className="min-h-[44px] text-xs text-neutral-300 hover:text-white hover:bg-white/5 rounded flex flex-col items-center justify-center gap-0.5 disabled:opacity-30"
+          title={!isPro && (card.imageUrl || card.svg) ? 'Pro pra baixar' : 'Download'}
         >
-          <Download className="h-3 w-3" /> Get
+          <Download className="h-3.5 w-3.5" />
+          <span className="text-[10px]">Get</span>
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); onDelete(); }}
-          className="px-2 py-1.5 text-xs text-neutral-500 hover:text-red-400 hover:bg-white/5 rounded"
+          className="min-h-[44px] text-xs text-neutral-500 hover:text-red-400 hover:bg-white/5 rounded flex flex-col items-center justify-center gap-0.5"
         >
-          <Trash2 className="h-3 w-3" />
+          <Trash2 className="h-3.5 w-3.5" />
+          <span className="text-[10px]">Del</span>
         </button>
       </div>
 
