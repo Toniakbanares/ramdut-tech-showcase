@@ -158,7 +158,7 @@ export const PaywallModal = ({ open, onOpenChange, reason = 'limit', onUpgrade }
 
                 {/* Prova social */}
                 <p className="text-center text-xs text-muted-foreground">
-                  🔥 +2.847 criadores usaram o Ramu hoje
+                  +2.847 criadores usaram o Lumis hoje
                 </p>
               </div>
             </motion.div>

@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import mascotImg from '@/assets/mascot-ramu.png';
 import type { LabCard } from '@/store/lab-store';
+import { LumisIcon } from './LumisIcon';
 
 interface Props {
   selectedCard: LabCard | null;
@@ -36,7 +37,7 @@ export const RamuAssistant = ({ selectedCard, totalCards }: Props) => {
       ? 'Memes ficam melhor 1:1 com texto curto.'
       : 'Posso transformar esse texto em poema ou roteiro.'
     : totalCards === 0
-    ? 'Oi! Sou o Lumis ✨ Aperta o + ali embaixo e me manda uma ideia.'
+    ? 'Oi! Sou o Lumis. Aperta o + ali embaixo e me manda uma ideia.'
     : TIPS[tipIdx];
 
   return (
@@ -53,7 +54,9 @@ export const RamuAssistant = ({ selectedCard, totalCards }: Props) => {
             transition={{ type: 'spring', stiffness: 400, damping: 40 }}
             className="mb-3 max-w-[280px] rounded-2xl ramu-glass ramu-card-border p-3 text-sm text-neutral-200"
           >
-            <div className="text-[10px] uppercase tracking-widest text-[#06B6D4] mb-1">Lumis</div>
+            <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-[#06B6D4] mb-1">
+              <LumisIcon size={14} /> Lumis
+            </div>
             {contextual}
           </motion.div>
         )}

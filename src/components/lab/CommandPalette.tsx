@@ -22,9 +22,22 @@ const MODES: { id: LabMode; label: string; desc: string; icon: any }[] = [
   { id: 'meme', label: 'Meme', desc: 'Templates e personalizados', icon: Laugh },
 ];
 
+// Chips de estilo — clicáveis e mescláveis. Vão concatenados ao prompt.
+const STYLE_CHIPS: { id: string; label: string; suffix: string }[] = [
+  { id: 'photo', label: 'Photorealistic', suffix: 'photorealistic' },
+  { id: 'cyber', label: 'Cyberpunk', suffix: 'cyberpunk style' },
+  { id: 'anime', label: 'Anime', suffix: 'anime style' },
+  { id: 'mini', label: 'Minimalista', suffix: 'minimalist, clean' },
+  { id: '3d', label: '3D Render', suffix: '3d render, octane' },
+  { id: 'water', label: 'Aquarela', suffix: 'watercolor painting' },
+  { id: 'pixel', label: 'Pixel Art', suffix: 'pixel art, 16-bit' },
+  { id: 'noir', label: 'Noir', suffix: 'film noir, high contrast' },
+];
+
 export const CommandPalette = ({ open, onClose, onSubmit, onMix, defaultMode = 'image', cooldownRemaining }: Props) => {
   const [mode, setMode] = useState<LabMode>(defaultMode);
   const [prompt, setPrompt] = useState('');
+  const [styles, setStyles] = useState<string[]>([]);
 
   useEffect(() => { if (open) setMode(defaultMode); }, [open, defaultMode]);
 
@@ -36,6 +49,15 @@ export const CommandPalette = ({ open, onClose, onSubmit, onMix, defaultMode = '
     return () => window.removeEventListener('keydown', onKey);
   }, [open, onClose]);
 
+  const toggleStyle = (id: string) =>
+    setStyles((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+
+  const buildFinalPrompt = (base: string) => {
+    if (!styles.length) return base;
+    const suffixes = STYLE_CHIPS.filter((c) => styles.includes(c.id)).map((c) => c.suffix);
+    return `${base}, ${suffixes.join(', ')}`;
+  };
+
   const submit = () => {
     if (cooldownRemaining > 0) return;
     const trimmed = prompt.trim();
@@ -46,13 +68,14 @@ export const CommandPalette = ({ open, onClose, onSubmit, onMix, defaultMode = '
       return;
     }
     if (!trimmed) return;
-    onSubmit(mode, trimmed);
+    onSubmit(mode, buildFinalPrompt(trimmed));
     setPrompt('');
     onClose();
   };
 
   if (!open) return null;
   const cur = MODES.find((m) => m.id === mode)!;
+  const showChips = mode === 'image' || mode === 'svg' || mode === 'pro-fal' || mode === 'meme';
 
   return (
     <div
@@ -107,6 +130,33 @@ export const CommandPalette = ({ open, onClose, onSubmit, onMix, defaultMode = '
           </Command.List>
         </div>
 
+        {showChips && (
+          <div className="border-t border-white/5 px-3 py-2">
+            <div className="text-[10px] uppercase tracking-widest text-neutral-500 mb-2">
+              Estilos (clique pra mesclar)
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {STYLE_CHIPS.map((c) => {
+                const active = styles.includes(c.id);
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => toggleStyle(c.id)}
+                    className={`h-9 min-h-[36px] px-3 rounded-full text-xs font-medium transition-colors ${
+                      active
+                        ? 'bg-purple-600 text-white border border-purple-400'
+                        : 'bg-white/5 text-neutral-300 border border-white/10 hover:bg-white/10'
+                    }`}
+                  >
+                    {c.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         <div className="border-t border-white/5 p-3">
           <div className="text-[10px] uppercase tracking-widest text-neutral-500 mb-1">
             {cur.label}
@@ -128,7 +178,7 @@ export const CommandPalette = ({ open, onClose, onSubmit, onMix, defaultMode = '
           <div className="flex items-center justify-between gap-2 mt-2">
             <div className="text-[11px] text-neutral-500">
               {cooldownRemaining > 0
-                ? `⏳ ${Math.ceil(cooldownRemaining / 1000)}s`
+                ? `${Math.ceil(cooldownRemaining / 1000)}s de cooldown`
                 : 'Enter envia · Esc fecha'}
             </div>
             <button
@@ -136,7 +186,7 @@ export const CommandPalette = ({ open, onClose, onSubmit, onMix, defaultMode = '
               disabled={(!prompt.trim() && true) || cooldownRemaining > 0}
               className="h-11 px-5 rounded-lg ramu-accent-bg text-white text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              Gerar ✨
+              Gerar
             </button>
           </div>
         </div>

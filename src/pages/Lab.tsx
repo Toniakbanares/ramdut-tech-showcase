@@ -207,7 +207,7 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
         imageUrl: dataUrl,
         model: 'fabric-editor',
       });
-      toast({ title: 'Salvo no Canvas ✨', description: 'Novo card criado a partir da edição.' });
+      toast({ title: 'Salvo no Canvas', description: 'Novo card criado a partir da edição.' });
     },
     [addCard, editor.sourcePrompt, toast],
   );
@@ -328,7 +328,7 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
         {/* Search/command — escondido no mobile (vai pro bottom) */}
         <button
           onClick={() => setPaletteOpen(true)}
-          className="hidden sm:flex flex-1 max-w-md mx-auto h-9 px-3 rounded-lg bg-black/30 border border-white/10 hover:border-[#8B5CF6]/40 text-left text-sm text-neutral-400 items-center gap-2"
+          className="hidden lg:flex flex-1 max-w-md mx-auto h-9 px-3 rounded-lg bg-black/30 border border-white/10 hover:border-[#8B5CF6]/40 text-left text-sm text-neutral-400 items-center gap-2"
         >
           <CmdIcon className="h-4 w-4" />
           <span>Buscar / Gerar...</span>
@@ -360,7 +360,7 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
       </header>
 
       {/* Canvas */}
-      <main className="pt-14 pb-24 sm:pb-0 h-screen">
+      <main className="pt-14 pb-24 lg:pb-0 h-screen">
         {cards.length === 0 && !generating && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none px-4">
             <motion.div
@@ -424,7 +424,7 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
 
       {/* Bottom command bar — mobile/tablet */}
       <div
-        className="sm:hidden fixed bottom-0 inset-x-0 z-40 ramu-glass border-t border-white/5 px-3 pt-2 pb-3"
+        className="lg:hidden fixed bottom-0 inset-x-0 z-40 ramu-glass border-t border-white/5 px-3 pt-2 pb-3"
         style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 12px)' }}
       >
         <div className="flex items-center gap-2">
@@ -490,7 +490,7 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
         onConfirmed={() => {
           setPro(true);
           limit.setPro(true);
-          toast({ title: '👑 Pro desbloqueado!', description: 'Tudo em HD, sem blur, sem limite.' });
+          toast({ title: 'Pro desbloqueado', description: 'Tudo em HD, sem blur, sem limite.' });
         }}
       />
     </div>
