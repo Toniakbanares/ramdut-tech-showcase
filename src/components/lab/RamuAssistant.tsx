@@ -37,7 +37,7 @@ export const RamuAssistant = ({ selectedCard, totalCards }: Props) => {
       ? 'Memes ficam melhor 1:1 com texto curto.'
       : 'Posso transformar esse texto em poema ou roteiro.'
     : totalCards === 0
-    ? 'Oi! Sou o Lumis ✨ Aperta o + ali embaixo e me manda uma ideia.'
+    ? 'Oi! Sou o Lumis. Aperta o + ali embaixo e me manda uma ideia.'
     : TIPS[tipIdx];
 
   return (
