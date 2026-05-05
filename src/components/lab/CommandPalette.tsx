@@ -130,6 +130,33 @@ export const CommandPalette = ({ open, onClose, onSubmit, onMix, defaultMode = '
           </Command.List>
         </div>
 
+        {showChips && (
+          <div className="border-t border-white/5 px-3 py-2">
+            <div className="text-[10px] uppercase tracking-widest text-neutral-500 mb-2">
+              Estilos (clique pra mesclar)
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {STYLE_CHIPS.map((c) => {
+                const active = styles.includes(c.id);
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => toggleStyle(c.id)}
+                    className={`h-9 min-h-[36px] px-3 rounded-full text-xs font-medium transition-colors ${
+                      active
+                        ? 'bg-purple-600 text-white border border-purple-400'
+                        : 'bg-white/5 text-neutral-300 border border-white/10 hover:bg-white/10'
+                    }`}
+                  >
+                    {c.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         <div className="border-t border-white/5 p-3">
           <div className="text-[10px] uppercase tracking-widest text-neutral-500 mb-1">
             {cur.label}
