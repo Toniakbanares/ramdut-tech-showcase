@@ -22,6 +22,18 @@ const MODES: { id: LabMode; label: string; desc: string; icon: any }[] = [
   { id: 'meme', label: 'Meme', desc: 'Templates e personalizados', icon: Laugh },
 ];
 
+// Chips de estilo — clicáveis e mescláveis. Vão concatenados ao prompt.
+const STYLE_CHIPS: { id: string; label: string; suffix: string }[] = [
+  { id: 'photo', label: 'Photorealistic', suffix: 'photorealistic' },
+  { id: 'cyber', label: 'Cyberpunk', suffix: 'cyberpunk style' },
+  { id: 'anime', label: 'Anime', suffix: 'anime style' },
+  { id: 'mini', label: 'Minimalista', suffix: 'minimalist, clean' },
+  { id: '3d', label: '3D Render', suffix: '3d render, octane' },
+  { id: 'water', label: 'Aquarela', suffix: 'watercolor painting' },
+  { id: 'pixel', label: 'Pixel Art', suffix: 'pixel art, 16-bit' },
+  { id: 'noir', label: 'Noir', suffix: 'film noir, high contrast' },
+];
+
 export const CommandPalette = ({ open, onClose, onSubmit, onMix, defaultMode = 'image', cooldownRemaining }: Props) => {
   const [mode, setMode] = useState<LabMode>(defaultMode);
   const [prompt, setPrompt] = useState('');
