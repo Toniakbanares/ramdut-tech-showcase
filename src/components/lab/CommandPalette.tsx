@@ -178,7 +178,7 @@ export const CommandPalette = ({ open, onClose, onSubmit, onMix, defaultMode = '
           <div className="flex items-center justify-between gap-2 mt-2">
             <div className="text-[11px] text-neutral-500">
               {cooldownRemaining > 0
-                ? `⏳ ${Math.ceil(cooldownRemaining / 1000)}s`
+                ? `${Math.ceil(cooldownRemaining / 1000)}s de cooldown`
                 : 'Enter envia · Esc fecha'}
             </div>
             <button
@@ -186,7 +186,7 @@ export const CommandPalette = ({ open, onClose, onSubmit, onMix, defaultMode = '
               disabled={(!prompt.trim() && true) || cooldownRemaining > 0}
               className="h-11 px-5 rounded-lg ramu-accent-bg text-white text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              Gerar ✨
+              Gerar
             </button>
           </div>
         </div>
