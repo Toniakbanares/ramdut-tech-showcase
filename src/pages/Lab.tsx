@@ -490,7 +490,7 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
         onConfirmed={() => {
           setPro(true);
           limit.setPro(true);
-          toast({ title: '👑 Pro desbloqueado!', description: 'Tudo em HD, sem blur, sem limite.' });
+          toast({ title: 'Pro desbloqueado', description: 'Tudo em HD, sem blur, sem limite.' });
         }}
       />
     </div>
