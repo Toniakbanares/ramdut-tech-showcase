@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Lab from "./pages/Lab";
+import Imagine from "./pages/Imagine";
 import SharePage from "./pages/SharePage";
 import ApiStatus from "./pages/ApiStatus";
 import NotFound from "./pages/NotFound";
@@ -19,6 +20,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/imagine" element={<Imagine />} />
 
           {/* RAMU Lab V3 — canvas único, rotas SEO-friendly */}
           <Route path="/lab" element={<Lab metaKey="default" />} />
