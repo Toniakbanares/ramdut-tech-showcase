@@ -37,6 +37,7 @@ const STYLE_CHIPS: { id: string; label: string; suffix: string }[] = [
 export const CommandPalette = ({ open, onClose, onSubmit, onMix, defaultMode = 'image', cooldownRemaining }: Props) => {
   const [mode, setMode] = useState<LabMode>(defaultMode);
   const [prompt, setPrompt] = useState('');
+  const [styles, setStyles] = useState<string[]>([]);
 
   useEffect(() => { if (open) setMode(defaultMode); }, [open, defaultMode]);
 
@@ -48,6 +49,15 @@ export const CommandPalette = ({ open, onClose, onSubmit, onMix, defaultMode = '
     return () => window.removeEventListener('keydown', onKey);
   }, [open, onClose]);
 
+  const toggleStyle = (id: string) =>
+    setStyles((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+
+  const buildFinalPrompt = (base: string) => {
+    if (!styles.length) return base;
+    const suffixes = STYLE_CHIPS.filter((c) => styles.includes(c.id)).map((c) => c.suffix);
+    return `${base}, ${suffixes.join(', ')}`;
+  };
+
   const submit = () => {
     if (cooldownRemaining > 0) return;
     const trimmed = prompt.trim();
@@ -58,13 +68,14 @@ export const CommandPalette = ({ open, onClose, onSubmit, onMix, defaultMode = '
       return;
     }
     if (!trimmed) return;
-    onSubmit(mode, trimmed);
+    onSubmit(mode, buildFinalPrompt(trimmed));
     setPrompt('');
     onClose();
   };
 
   if (!open) return null;
   const cur = MODES.find((m) => m.id === mode)!;
+  const showChips = mode === 'image' || mode === 'svg' || mode === 'pro-fal' || mode === 'meme';
 
   return (
     <div
