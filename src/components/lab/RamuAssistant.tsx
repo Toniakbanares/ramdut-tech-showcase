@@ -54,7 +54,9 @@ export const RamuAssistant = ({ selectedCard, totalCards }: Props) => {
             transition={{ type: 'spring', stiffness: 400, damping: 40 }}
             className="mb-3 max-w-[280px] rounded-2xl ramu-glass ramu-card-border p-3 text-sm text-neutral-200"
           >
-            <div className="text-[10px] uppercase tracking-widest text-[#06B6D4] mb-1">Lumis</div>
+            <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-[#06B6D4] mb-1">
+              <LumisIcon size={14} /> Lumis
+            </div>
             {contextual}
           </motion.div>
         )}
