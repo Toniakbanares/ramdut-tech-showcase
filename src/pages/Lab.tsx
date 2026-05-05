@@ -207,7 +207,7 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
         imageUrl: dataUrl,
         model: 'fabric-editor',
       });
-      toast({ title: 'Salvo no Canvas ✨', description: 'Novo card criado a partir da edição.' });
+      toast({ title: 'Salvo no Canvas', description: 'Novo card criado a partir da edição.' });
     },
     [addCard, editor.sourcePrompt, toast],
   );
