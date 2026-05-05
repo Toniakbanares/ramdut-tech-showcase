@@ -328,7 +328,7 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
         {/* Search/command — escondido no mobile (vai pro bottom) */}
         <button
           onClick={() => setPaletteOpen(true)}
-          className="hidden sm:flex flex-1 max-w-md mx-auto h-9 px-3 rounded-lg bg-black/30 border border-white/10 hover:border-[#8B5CF6]/40 text-left text-sm text-neutral-400 items-center gap-2"
+          className="hidden lg:flex flex-1 max-w-md mx-auto h-9 px-3 rounded-lg bg-black/30 border border-white/10 hover:border-[#8B5CF6]/40 text-left text-sm text-neutral-400 items-center gap-2"
         >
           <CmdIcon className="h-4 w-4" />
           <span>Buscar / Gerar...</span>
