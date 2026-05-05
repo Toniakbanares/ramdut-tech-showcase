@@ -360,7 +360,7 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
       </header>
 
       {/* Canvas */}
-      <main className="pt-14 pb-24 sm:pb-0 h-screen">
+      <main className="pt-14 pb-24 lg:pb-0 h-screen">
         {cards.length === 0 && !generating && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none px-4">
             <motion.div
