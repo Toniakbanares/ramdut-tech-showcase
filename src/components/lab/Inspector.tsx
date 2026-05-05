@@ -26,7 +26,7 @@ export const Inspector = ({ card, isPro, onClose, onRegenerate }: Props) => {
           animate={{ x: 0, opacity: 1 }}
           exit={{ x: 400, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 400, damping: 40 }}
-          className="fixed top-16 right-4 bottom-4 w-[360px] z-30 rounded-2xl ramu-glass ramu-card-border flex flex-col overflow-hidden"
+          className="fixed top-16 right-2 sm:right-4 bottom-2 sm:bottom-4 w-[80vw] max-w-[360px] z-30 rounded-2xl ramu-glass ramu-card-border flex flex-col overflow-hidden"
         >
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
             <div className="flex items-center gap-2">
