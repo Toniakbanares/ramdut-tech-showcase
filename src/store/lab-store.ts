@@ -13,6 +13,7 @@ export interface LabCard {
   position: { x: number; y: number };
   createdAt: number;
   shareId?: string;      // id no banco quando compartilhado
+  parentId?: string;     // referência ao card pai (fork)
 }
 
 interface LabState {

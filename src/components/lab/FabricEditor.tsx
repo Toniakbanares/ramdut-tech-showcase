@@ -13,7 +13,7 @@ interface Props {
   onSave: (dataUrl: string) => void;
 }
 
-const STICKERS = ['✨', '🔥', '💜', '🚀', '🌈', '⚡', '🎨', '🤖', '👑', '💎', '🦄', '🍀'];
+const STICKERS = ['✨', '🔥', '💜', '🚀', '🌈', '⚡', '🎨', '⭐', '👑', '💎', '🦄', '🍀'];
 const FILTERS = [
   { id: 'none', label: 'Original' },
   { id: 'grayscale', label: 'P&B' },

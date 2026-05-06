@@ -6,8 +6,12 @@ import {
   Controls,
   MiniMap,
   useNodesState,
+  useEdgesState,
+  addEdge,
   type Node,
+  type Edge,
   type NodeTypes,
+  type Connection,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { Helmet } from 'react-helmet-async';
@@ -117,10 +121,16 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
 
   const initialNodes = useMemo<Node[]>(() => [], []);
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge[]>([]);
+  const onConnect = useCallback(
+    (params: Connection) =>
+      setEdges((eds) => addEdge({ ...params, type: 'smoothstep', animated: true, style: { stroke: '#8B5CF6', strokeWidth: 2 } }, eds)),
+    [setEdges],
+  );
 
   // Geração — declarada antes do useEffect que a referencia
   const handleGenerate = useCallback(
-    async (mode: LabMode, prompt: string) => {
+    async (mode: LabMode, prompt: string, parentId?: string) => {
       if (limit.limitReached) {
         setPixReason('Você usou seu limite diário grátis (100 gerações). Desbloqueie ilimitado.');
         setPixOpen(true);
@@ -141,7 +151,7 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
           });
           if (error) throw error;
           const text = data?.message || data?.text || JSON.stringify(data);
-          addCard({ type: 'chat', prompt, text, model: 'gemini' });
+          addCard({ type: 'chat', prompt, text, model: 'gemini', parentId });
         } else if (mode === 'svg') {
           const { data, error } = await supabase.functions.invoke('generate-fal', {
             body: { prompt, svg: true },
@@ -149,9 +159,9 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
           if (error) throw error;
           if (data?.error) throw new Error(data.error);
           if (data?.svg) {
-            addCard({ type: 'svg', prompt, svg: enrichSvg(data.svg, prompt), model: data.provider });
+            addCard({ type: 'svg', prompt, svg: enrichSvg(data.svg, prompt), model: data.provider, parentId });
           } else if (data?.imageUrl) {
-            addCard({ type: 'svg', prompt, imageUrl: data.imageUrl, model: data.provider });
+            addCard({ type: 'svg', prompt, imageUrl: data.imageUrl, model: data.provider, parentId });
           } else {
             throw new Error('Sem resultado');
           }
@@ -161,7 +171,7 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
           });
           if (error) throw error;
           if (data?.error) throw new Error(data.error);
-          addCard({ type: 'pro-fal', prompt, imageUrl: data.imageUrl, model: data.provider });
+          addCard({ type: 'pro-fal', prompt, imageUrl: data.imageUrl, model: data.provider, parentId });
         } else {
           const finalPrompt =
             mode === 'meme' ? `Meme estilo internet, engraçado, sobre: ${prompt}` : prompt;
@@ -170,7 +180,7 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
           });
           if (error) throw error;
           if (data?.error) throw new Error(data.error);
-          addCard({ type: mode, prompt, imageUrl: data.imageUrl, model: 'gemini' });
+          addCard({ type: mode, prompt, imageUrl: data.imageUrl, model: 'gemini', parentId });
         }
         limit.increment();
       } catch (e: any) {
@@ -260,7 +270,7 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
     setEditor({ open: true, imageUrl: c.imageUrl, sourcePrompt: c.prompt });
   };
 
-  // Sincroniza cards -> nodes
+  // Sincroniza cards -> nodes + edges (parentId)
   useEffect(() => {
     setNodes(
       cards.map((c) => ({
@@ -272,7 +282,7 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
           isPro,
           selected: selectedId === c.id,
           onSelect: () => select(c.id),
-          onFork: () => handleGenerate(c.type, c.prompt),
+          onFork: () => handleGenerate(c.type, c.prompt, c.id),
           onShare: () => handleShare(c),
           onDownload: () => handleDownload(c),
           onDelete: () => removeCard(c.id),
@@ -282,6 +292,24 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
         draggable: true,
       })),
     );
+    setEdges((prev) => {
+      const fromParent: Edge[] = cards
+        .filter((c) => c.parentId && cards.some((p) => p.id === c.parentId))
+        .map((c) => ({
+          id: `e-${c.parentId}-${c.id}`,
+          source: c.parentId!,
+          target: c.id,
+          type: 'smoothstep',
+          animated: true,
+          style: { stroke: '#8B5CF6', strokeWidth: 2 },
+        }));
+      // mantém edges manuais (criadas via onConnect) que não envolvem cards removidos
+      const ids = new Set(cards.map((c) => c.id));
+      const manual = prev.filter(
+        (e) => !e.id.startsWith('e-') && ids.has(e.source) && ids.has(e.target),
+      );
+      return [...fromParent, ...manual];
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cards, isPro, selectedId, sharingId]);
 
@@ -402,7 +430,10 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
 
         <ReactFlow
           nodes={nodes}
+          edges={edges}
           onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
           nodeTypes={nodeTypes}
           fitView={cards.length > 0}
           minZoom={0.2}
@@ -410,6 +441,7 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
           panOnScroll
           panOnDrag
           zoomOnPinch
+          defaultEdgeOptions={{ type: 'smoothstep', animated: true, style: { stroke: '#8B5CF6', strokeWidth: 2 } }}
           proOptions={{ hideAttribution: true }}
         >
           <Background variant={BackgroundVariant.Dots} color="#1a1a1a" gap={20} size={1} />
