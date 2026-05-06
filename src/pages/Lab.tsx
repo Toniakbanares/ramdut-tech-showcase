@@ -124,7 +124,7 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
 
   // Geração — declarada antes do useEffect que a referencia
   const handleGenerate = useCallback(
-    async (mode: LabMode, prompt: string) => {
+    async (mode: LabMode, prompt: string, parentId?: string) => {
       if (limit.limitReached) {
         setPixReason('Você usou seu limite diário grátis (100 gerações). Desbloqueie ilimitado.');
         setPixOpen(true);
@@ -145,7 +145,7 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
           });
           if (error) throw error;
           const text = data?.message || data?.text || JSON.stringify(data);
-          addCard({ type: 'chat', prompt, text, model: 'gemini' });
+          addCard({ type: 'chat', prompt, text, model: 'gemini', parentId });
         } else if (mode === 'svg') {
           const { data, error } = await supabase.functions.invoke('generate-fal', {
             body: { prompt, svg: true },
@@ -153,9 +153,9 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
           if (error) throw error;
           if (data?.error) throw new Error(data.error);
           if (data?.svg) {
-            addCard({ type: 'svg', prompt, svg: enrichSvg(data.svg, prompt), model: data.provider });
+            addCard({ type: 'svg', prompt, svg: enrichSvg(data.svg, prompt), model: data.provider, parentId });
           } else if (data?.imageUrl) {
-            addCard({ type: 'svg', prompt, imageUrl: data.imageUrl, model: data.provider });
+            addCard({ type: 'svg', prompt, imageUrl: data.imageUrl, model: data.provider, parentId });
           } else {
             throw new Error('Sem resultado');
           }
@@ -165,7 +165,7 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
           });
           if (error) throw error;
           if (data?.error) throw new Error(data.error);
-          addCard({ type: 'pro-fal', prompt, imageUrl: data.imageUrl, model: data.provider });
+          addCard({ type: 'pro-fal', prompt, imageUrl: data.imageUrl, model: data.provider, parentId });
         } else {
           const finalPrompt =
             mode === 'meme' ? `Meme estilo internet, engraçado, sobre: ${prompt}` : prompt;
@@ -174,7 +174,7 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
           });
           if (error) throw error;
           if (data?.error) throw new Error(data.error);
-          addCard({ type: mode, prompt, imageUrl: data.imageUrl, model: 'gemini' });
+          addCard({ type: mode, prompt, imageUrl: data.imageUrl, model: 'gemini', parentId });
         }
         limit.increment();
       } catch (e: any) {
