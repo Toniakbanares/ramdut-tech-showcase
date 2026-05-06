@@ -130,7 +130,8 @@ export const GenerationCard = ({ data }: Props) => {
         </button>
       </div>
 
-      <Handle type="source" position={Position.Bottom} className="!bg-[#06B6D4] !border-2 !border-white/30 !w-5 !h-5 md:!w-4 md:!h-4 hover:!scale-125 transition-transform" />
+      <Handle type="source" position={Position.Bottom} id="out-bottom" className="!bg-[#06B6D4] !border-2 !border-white/30 !w-5 !h-5 md:!w-4 md:!h-4 hover:!scale-125 transition-transform" />
+      <Handle type="source" position={Position.Right} id="out-right" className="!bg-[#06B6D4] !border-2 !border-white/30 !w-5 !h-5 md:!w-4 md:!h-4 hover:!scale-125 transition-transform" />
     </motion.div>
   );
 };
