@@ -430,7 +430,10 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
 
         <ReactFlow
           nodes={nodes}
+          edges={edges}
           onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
           nodeTypes={nodeTypes}
           fitView={cards.length > 0}
           minZoom={0.2}
@@ -438,6 +441,7 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
           panOnScroll
           panOnDrag
           zoomOnPinch
+          defaultEdgeOptions={{ type: 'smoothstep', animated: true, style: { stroke: '#8B5CF6', strokeWidth: 2 } }}
           proOptions={{ hideAttribution: true }}
         >
           <Background variant={BackgroundVariant.Dots} color="#1a1a1a" gap={20} size={1} />
