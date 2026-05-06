@@ -197,7 +197,7 @@ serve(async (req) => {
     if (geminiKeys.length > 0) {
       try {
         const { text, keyIndex } = await generateTextWithGeminiRotating(
-          messages,
+          finalMessages,
           geminiKeys,
           aiModel,
           temperature,
