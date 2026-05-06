@@ -6,8 +6,12 @@ import {
   Controls,
   MiniMap,
   useNodesState,
+  useEdgesState,
+  addEdge,
   type Node,
+  type Edge,
   type NodeTypes,
+  type Connection,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { Helmet } from 'react-helmet-async';
