@@ -165,7 +165,7 @@ serve(async (req) => {
           },
           body: JSON.stringify({
             model: aiModel,
-            messages,
+            messages: finalMessages,
             temperature: typeof temperature === "number" ? temperature : 0.7,
             max_tokens: typeof max_tokens === "number" ? max_tokens : 2048,
           }),
