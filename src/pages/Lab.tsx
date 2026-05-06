@@ -121,6 +121,12 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
 
   const initialNodes = useMemo<Node[]>(() => [], []);
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge[]>([]);
+  const onConnect = useCallback(
+    (params: Connection) =>
+      setEdges((eds) => addEdge({ ...params, type: 'smoothstep', animated: true, style: { stroke: '#8B5CF6', strokeWidth: 2 } }, eds)),
+    [setEdges],
+  );
 
   // Geração — declarada antes do useEffect que a referencia
   const handleGenerate = useCallback(
