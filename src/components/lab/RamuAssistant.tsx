@@ -18,7 +18,7 @@ const TIPS = [
   'Toque num card e abra o Inspector pra editar o prompt.',
 ];
 
-// Lumis: rebrand do antigo Ramu, com idle (float + piscar)
+// Ramu: mascote oficial com idle (float + piscar)
 export const RamuAssistant = ({ selectedCard, totalCards }: Props) => {
   const [open, setOpen] = useState(false);
   const [tipIdx, setTipIdx] = useState(0);
