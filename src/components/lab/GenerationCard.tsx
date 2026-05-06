@@ -35,7 +35,7 @@ export const GenerationCard = ({ data }: Props) => {
         selected ? 'ring-2 ring-[#8B5CF6]' : 'ramu-card-border'
       }`}
     >
-      <Handle type="target" position={Position.Top} className="!bg-[#8B5CF6] !border-0 !w-2 !h-2" />
+      <Handle type="target" position={Position.Top} className="!bg-[#8B5CF6] !border-2 !border-white/30 !w-5 !h-5 md:!w-4 md:!h-4 hover:!scale-125 transition-transform" />
 
       <div className="px-3 py-2 flex items-center gap-2 border-b border-white/5">
         <span className="text-sm">{meta.icon}</span>
@@ -129,7 +129,7 @@ export const GenerationCard = ({ data }: Props) => {
         </button>
       </div>
 
-      <Handle type="source" position={Position.Bottom} className="!bg-[#06B6D4] !border-0 !w-2 !h-2" />
+      <Handle type="source" position={Position.Bottom} className="!bg-[#06B6D4] !border-2 !border-white/30 !w-5 !h-5 md:!w-4 md:!h-4 hover:!scale-125 transition-transform" />
     </motion.div>
   );
 };

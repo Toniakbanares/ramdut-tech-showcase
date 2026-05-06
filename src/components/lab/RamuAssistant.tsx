@@ -18,7 +18,7 @@ const TIPS = [
   'Toque num card e abra o Inspector pra editar o prompt.',
 ];
 
-// Lumis: rebrand do antigo Ramu, com idle (float + piscar)
+// Ramu: mascote oficial com idle (float + piscar)
 export const RamuAssistant = ({ selectedCard, totalCards }: Props) => {
   const [open, setOpen] = useState(false);
   const [tipIdx, setTipIdx] = useState(0);
@@ -37,7 +37,7 @@ export const RamuAssistant = ({ selectedCard, totalCards }: Props) => {
       ? 'Memes ficam melhor 1:1 com texto curto.'
       : 'Posso transformar esse texto em poema ou roteiro.'
     : totalCards === 0
-    ? 'Oi! Sou o Lumis. Aperta o + ali embaixo e me manda uma ideia.'
+    ? 'Oi! Sou o Ramu. Aperta o + ali embaixo e me manda uma ideia.'
     : TIPS[tipIdx];
 
   return (
@@ -55,7 +55,7 @@ export const RamuAssistant = ({ selectedCard, totalCards }: Props) => {
             className="mb-3 max-w-[280px] rounded-2xl ramu-glass ramu-card-border p-3 text-sm text-neutral-200"
           >
             <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-[#06B6D4] mb-1">
-              <LumisIcon size={14} /> Lumis
+              <LumisIcon size={14} /> Ramu
             </div>
             {contextual}
           </motion.div>
@@ -71,9 +71,9 @@ export const RamuAssistant = ({ selectedCard, totalCards }: Props) => {
           y: { duration: 3.4, repeat: Infinity, ease: 'easeInOut' },
         }}
         className="relative w-14 h-14 min-w-[44px] min-h-[44px] rounded-full ramu-card-border ramu-glass overflow-hidden"
-        aria-label="Abrir Lumis"
+        aria-label="Abrir Ramu"
       >
-        <img src={mascotImg} alt="Lumis mascote" className="w-full h-full object-cover" />
+        <img src={mascotImg} alt="Ramu mascote" className="w-full h-full object-cover" />
         <motion.span
           animate={{ opacity: [1, 0.4, 1], scale: [1, 1.2, 1] }}
           transition={{ duration: 1.6, repeat: Infinity }}

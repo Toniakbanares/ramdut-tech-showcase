@@ -435,7 +435,7 @@ const Imagine = () => {
                     <div className="flex flex-col items-center gap-3 p-6 text-center">
                       <LumisIcon size={56} />
                       <h2 className={`text-lg font-semibold ${isLight ? 'text-neutral-800' : 'text-white'}`}>
-                        Sou o Lumis. Vamos criar?
+                        Sou o Ramu. Vamos criar?
                       </h2>
                       <p className={`text-sm max-w-sm ${t.sub}`}>
                         Escreva uma ideia, escolha estilos e a proporção. Eu cuido do resto.

@@ -140,6 +140,16 @@ serve(async (req) => {
       });
     }
 
+    // Garante que o assistente sempre responda no MESMO idioma do usuário.
+    const LANG_RULE =
+      "IMPORTANTE: Detecte automaticamente o idioma da última mensagem do usuário e responda SEMPRE no mesmo idioma (português, inglês, espanhol etc). Nunca troque de idioma sem que o usuário peça.";
+    const hasSystem = messages.some((m: any) => m?.role === "system");
+    const finalMessages = hasSystem
+      ? messages.map((m: any) =>
+          m.role === "system" ? { ...m, content: `${m.content}\n\n${LANG_RULE}` } : m,
+        )
+      : [{ role: "system", content: LANG_RULE }, ...messages];
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const geminiKeys = collectGeminiKeys();
     const aiModel = model || "google/gemini-2.5-flash";
@@ -155,7 +165,7 @@ serve(async (req) => {
           },
           body: JSON.stringify({
             model: aiModel,
-            messages,
+            messages: finalMessages,
             temperature: typeof temperature === "number" ? temperature : 0.7,
             max_tokens: typeof max_tokens === "number" ? max_tokens : 2048,
           }),
@@ -187,7 +197,7 @@ serve(async (req) => {
     if (geminiKeys.length > 0) {
       try {
         const { text, keyIndex } = await generateTextWithGeminiRotating(
-          messages,
+          finalMessages,
           geminiKeys,
           aiModel,
           temperature,
