@@ -270,7 +270,7 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
     setEditor({ open: true, imageUrl: c.imageUrl, sourcePrompt: c.prompt });
   };
 
-  // Sincroniza cards -> nodes
+  // Sincroniza cards -> nodes + edges (parentId)
   useEffect(() => {
     setNodes(
       cards.map((c) => ({
@@ -282,7 +282,7 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
           isPro,
           selected: selectedId === c.id,
           onSelect: () => select(c.id),
-          onFork: () => handleGenerate(c.type, c.prompt),
+          onFork: () => handleGenerate(c.type, c.prompt, c.id),
           onShare: () => handleShare(c),
           onDownload: () => handleDownload(c),
           onDelete: () => removeCard(c.id),
@@ -292,6 +292,24 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
         draggable: true,
       })),
     );
+    setEdges((prev) => {
+      const fromParent: Edge[] = cards
+        .filter((c) => c.parentId && cards.some((p) => p.id === c.parentId))
+        .map((c) => ({
+          id: `e-${c.parentId}-${c.id}`,
+          source: c.parentId!,
+          target: c.id,
+          type: 'smoothstep',
+          animated: true,
+          style: { stroke: '#8B5CF6', strokeWidth: 2 },
+        }));
+      // mantém edges manuais (criadas via onConnect) que não envolvem cards removidos
+      const ids = new Set(cards.map((c) => c.id));
+      const manual = prev.filter(
+        (e) => !e.id.startsWith('e-') && ids.has(e.source) && ids.has(e.target),
+      );
+      return [...fromParent, ...manual];
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cards, isPro, selectedId, sharingId]);
 
