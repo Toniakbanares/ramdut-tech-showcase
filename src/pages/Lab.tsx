@@ -130,7 +130,7 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
 
   // Geração — declarada antes do useEffect que a referencia
   const handleGenerate = useCallback(
-    async (mode: LabMode, prompt: string, parentId?: string) => {
+    async (mode: LabMode, prompt: string, parentId?: string, referenceImages?: string[]) => {
       if (limit.limitReached) {
         setPixReason('Você usou seu limite diário grátis (100 gerações). Desbloqueie ilimitado.');
         setPixOpen(true);
@@ -176,7 +176,11 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
           const finalPrompt =
             mode === 'meme' ? `Meme estilo internet, engraçado, sobre: ${prompt}` : prompt;
           const { data, error } = await supabase.functions.invoke('generate-image', {
-            body: { prompt: finalPrompt, model: 'google/gemini-2.5-flash-image' },
+            body: {
+              prompt: finalPrompt,
+              model: 'google/gemini-2.5-flash-image',
+              reference_images: referenceImages && referenceImages.length ? referenceImages : undefined,
+            },
           });
           if (error) throw error;
           if (data?.error) throw new Error(data.error);
@@ -196,13 +200,12 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
     [limit, addCard, markGenerated, cooldownRemaining, toast],
   );
 
-  // Mix: gera 4 variações sequenciais
+  // Mix: gera N variações com as mesmas referências
   const handleMix = useCallback(
-    async (prompt: string, count = 4) => {
+    async (prompt: string, references: string[], count = 1) => {
       for (let i = 0; i < count; i++) {
-        // pequena variação pra evitar cache
-        const seeded = `${prompt} (variação ${i + 1})`;
-        await handleGenerate('image', seeded);
+        const seeded = count > 1 ? `${prompt} (variação ${i + 1})` : prompt;
+        await handleGenerate('image', seeded, undefined, references);
       }
     },
     [handleGenerate],
