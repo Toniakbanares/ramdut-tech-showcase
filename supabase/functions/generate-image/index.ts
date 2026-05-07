@@ -150,7 +150,15 @@ serve(async (req) => {
           },
           body: JSON.stringify({
             model: aiModel,
-            messages: [{ role: "user", content: fullPrompt }],
+            messages: [{
+              role: "user",
+              content: refImages.length
+                ? [
+                    { type: "text", text: fullPrompt },
+                    ...refImages.map((url) => ({ type: "image_url", image_url: { url } })),
+                  ]
+                : fullPrompt,
+            }],
             modalities: ["image", "text"],
           }),
         });
