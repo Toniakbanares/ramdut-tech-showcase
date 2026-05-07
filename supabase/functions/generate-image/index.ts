@@ -72,7 +72,7 @@ async function callGeminiOnce(prompt: string, key: string, model: string, refIma
 }
 
 // Tenta cada chave em sequência. Se uma falhar por quota/auth, passa pra próxima.
-async function generateWithGeminiRotating(prompt: string, keys: string[], model?: string) {
+async function generateWithGeminiRotating(prompt: string, keys: string[], model?: string, refImages: string[] = []) {
   const geminiModel = resolveGeminiModel(model);
   const errors: string[] = [];
 
@@ -80,7 +80,7 @@ async function generateWithGeminiRotating(prompt: string, keys: string[], model?
     const key = keys[i];
     const masked = `key#${i + 1}(...${key.slice(-4)})`;
     try {
-      const res = await callGeminiOnce(prompt, key, geminiModel);
+      const res = await callGeminiOnce(prompt, key, geminiModel, refImages);
 
       if (res.ok) {
         const json = await res.json();
