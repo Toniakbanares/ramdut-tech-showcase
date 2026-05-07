@@ -508,7 +508,7 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
       <MixModal
         open={mixOpen}
         onOpenChange={setMixOpen}
-        onGenerate={(p, n) => handleMix(p, n)}
+        onGenerate={(p, refs, n) => handleMix(p, refs, n)}
       />
 
       <FabricEditor
