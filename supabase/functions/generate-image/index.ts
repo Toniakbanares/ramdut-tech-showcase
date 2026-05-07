@@ -126,7 +126,8 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { prompt, model, aspect_ratio } = await req.json();
+    const { prompt, model, aspect_ratio, reference_images } = await req.json();
+    const refImages: string[] = Array.isArray(reference_images) ? reference_images.filter((s: any) => typeof s === 'string' && s.startsWith('data:')) : [];
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const geminiKeys = collectGeminiKeys();
 
