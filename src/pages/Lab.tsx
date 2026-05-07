@@ -100,6 +100,13 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
   const [generating, setGenerating] = useState(false);
   const [sharingId, setSharingId] = useState<string | null>(null);
   const [, setCooldownTick] = useState(0);
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    if (typeof window === 'undefined') return 'dark';
+    return (localStorage.getItem('ramu-lab-theme') as 'dark' | 'light') || 'dark';
+  });
+  useEffect(() => {
+    localStorage.setItem('ramu-lab-theme', theme);
+  }, [theme]);
 
   useEffect(() => {
     const i = setInterval(() => setCooldownTick((v) => v + 1), 500);
