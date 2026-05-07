@@ -387,6 +387,15 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
             <Crown className="h-3.5 w-3.5" /> {isPro ? 'Pro' : 'PIX'}
           </button>
 
+          <button
+            onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
+            className="h-10 w-10 rounded-lg border border-white/10 hover:border-[#8B5CF6]/40 flex items-center justify-center text-neutral-400 hover:text-white"
+            title={theme === 'dark' ? 'Modo claro' : 'Modo escuro'}
+            aria-label="Alternar tema"
+          >
+            {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </button>
+
           <Link
             to="/api-status"
             className="h-10 w-10 rounded-lg border border-white/10 hover:border-[#06B6D4]/40 flex items-center justify-center text-neutral-400 hover:text-[#06B6D4]"
