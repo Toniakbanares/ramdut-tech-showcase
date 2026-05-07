@@ -17,7 +17,7 @@ import 'reactflow/dist/style.css';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Command as CmdIcon, Crown, ArrowLeft, Activity, Sparkles, Plus, Zap, Wand2 } from 'lucide-react';
+import { Command as CmdIcon, Crown, ArrowLeft, Activity, Sparkles, Plus, Zap, Wand2, Sun, Moon } from 'lucide-react';
 
 import { useLabStore, type LabCard } from '@/store/lab-store';
 import { useGenerationLimit } from '@/hooks/use-generation-limit';
@@ -100,6 +100,13 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
   const [generating, setGenerating] = useState(false);
   const [sharingId, setSharingId] = useState<string | null>(null);
   const [, setCooldownTick] = useState(0);
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    if (typeof window === 'undefined') return 'dark';
+    return (localStorage.getItem('ramu-lab-theme') as 'dark' | 'light') || 'dark';
+  });
+  useEffect(() => {
+    localStorage.setItem('ramu-lab-theme', theme);
+  }, [theme]);
 
   useEffect(() => {
     const i = setInterval(() => setCooldownTick((v) => v + 1), 500);
@@ -334,7 +341,7 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
   };
 
   return (
-    <div className="min-h-screen ramu-canvas-bg text-white relative overflow-hidden">
+    <div className={`min-h-screen ramu-canvas-bg text-white relative overflow-hidden ${theme === 'light' ? 'ramu-light' : ''}`}>
       <Helmet>
         <title>{meta.title}</title>
         <meta name="description" content={meta.description} />
@@ -378,6 +385,15 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
             className="h-10 px-3 min-w-[44px] rounded-lg ramu-accent-bg text-white text-xs font-medium flex items-center gap-1"
           >
             <Crown className="h-3.5 w-3.5" /> {isPro ? 'Pro' : 'PIX'}
+          </button>
+
+          <button
+            onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
+            className="h-10 w-10 rounded-lg border border-white/10 hover:border-[#8B5CF6]/40 flex items-center justify-center text-neutral-400 hover:text-white"
+            title={theme === 'dark' ? 'Modo claro' : 'Modo escuro'}
+            aria-label="Alternar tema"
+          >
+            {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
 
           <Link
