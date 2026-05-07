@@ -188,7 +188,7 @@ serve(async (req) => {
     let geminiError: string | null = null;
     if (geminiKeys.length > 0) {
       try {
-        const { imageUrl, keyIndex } = await generateWithGeminiRotating(fullPrompt, geminiKeys, aiModel);
+        const { imageUrl, keyIndex } = await generateWithGeminiRotating(fullPrompt, geminiKeys, aiModel, refImages);
         return new Response(
           JSON.stringify({
             imageUrl,
