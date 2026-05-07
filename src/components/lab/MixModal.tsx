@@ -22,21 +22,9 @@ interface Slot {
 }
 
 const SLOT_META: Record<SlotKey, { label: string; placeholder: string; hint: string }> = {
-  objeto: {
-    label: 'Objeto',
-    placeholder: 'um robô meditando',
-    hint: 'O sujeito principal da imagem',
-  },
-  local: {
-    label: 'Local',
-    placeholder: 'floresta de bambu ao amanhecer',
-    hint: 'O cenário / background',
-  },
-  estilo: {
-    label: 'Estilo',
-    placeholder: 'aquarela suave, traços orgânicos',
-    hint: 'Estética visual / técnica',
-  },
+  objeto: { label: 'Objeto', placeholder: '', hint: 'O sujeito principal da imagem' },
+  local: { label: 'Local', placeholder: '', hint: 'O cenário / background' },
+  estilo: { label: 'Estilo', placeholder: '', hint: 'Estética visual / técnica' },
 };
 
 async function fileToDataUrl(file: File): Promise<string> {
