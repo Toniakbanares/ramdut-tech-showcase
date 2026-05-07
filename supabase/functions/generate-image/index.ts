@@ -46,13 +46,25 @@ function collectGeminiKeys(): string[] {
   return keys;
 }
 
-async function callGeminiOnce(prompt: string, key: string, model: string) {
+function dataUrlToInlinePart(dataUrl: string) {
+  const m = /^data:([^;]+);base64,(.+)$/.exec(dataUrl);
+  if (!m) return null;
+  return { inlineData: { mimeType: m[1], data: m[2] } };
+}
+
+async function callGeminiOnce(prompt: string, key: string, model: string, refImages: string[] = []) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+  const parts: any[] = [];
+  for (const img of refImages) {
+    const p = dataUrlToInlinePart(img);
+    if (p) parts.push(p);
+  }
+  parts.push({ text: prompt });
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
+      contents: [{ parts }],
       generationConfig: { responseModalities: ["IMAGE", "TEXT"] },
     }),
   });
@@ -60,7 +72,7 @@ async function callGeminiOnce(prompt: string, key: string, model: string) {
 }
 
 // Tenta cada chave em sequência. Se uma falhar por quota/auth, passa pra próxima.
-async function generateWithGeminiRotating(prompt: string, keys: string[], model?: string) {
+async function generateWithGeminiRotating(prompt: string, keys: string[], model?: string, refImages: string[] = []) {
   const geminiModel = resolveGeminiModel(model);
   const errors: string[] = [];
 
@@ -68,7 +80,7 @@ async function generateWithGeminiRotating(prompt: string, keys: string[], model?
     const key = keys[i];
     const masked = `key#${i + 1}(...${key.slice(-4)})`;
     try {
-      const res = await callGeminiOnce(prompt, key, geminiModel);
+      const res = await callGeminiOnce(prompt, key, geminiModel, refImages);
 
       if (res.ok) {
         const json = await res.json();
@@ -114,7 +126,8 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { prompt, model, aspect_ratio } = await req.json();
+    const { prompt, model, aspect_ratio, reference_images } = await req.json();
+    const refImages: string[] = Array.isArray(reference_images) ? reference_images.filter((s: any) => typeof s === 'string' && s.startsWith('data:')) : [];
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const geminiKeys = collectGeminiKeys();
 
@@ -137,7 +150,15 @@ serve(async (req) => {
           },
           body: JSON.stringify({
             model: aiModel,
-            messages: [{ role: "user", content: fullPrompt }],
+            messages: [{
+              role: "user",
+              content: refImages.length
+                ? [
+                    { type: "text", text: fullPrompt },
+                    ...refImages.map((url) => ({ type: "image_url", image_url: { url } })),
+                  ]
+                : fullPrompt,
+            }],
             modalities: ["image", "text"],
           }),
         });
@@ -167,7 +188,7 @@ serve(async (req) => {
     let geminiError: string | null = null;
     if (geminiKeys.length > 0) {
       try {
-        const { imageUrl, keyIndex } = await generateWithGeminiRotating(fullPrompt, geminiKeys, aiModel);
+        const { imageUrl, keyIndex } = await generateWithGeminiRotating(fullPrompt, geminiKeys, aiModel, refImages);
         return new Response(
           JSON.stringify({
             imageUrl,
