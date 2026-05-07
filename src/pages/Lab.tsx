@@ -17,7 +17,7 @@ import 'reactflow/dist/style.css';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Command as CmdIcon, Crown, ArrowLeft, Activity, Sparkles, Plus, Zap, Wand2 } from 'lucide-react';
+import { Command as CmdIcon, Crown, ArrowLeft, Activity, Sparkles, Plus, Zap, Wand2, Sun, Moon } from 'lucide-react';
 
 import { useLabStore, type LabCard } from '@/store/lab-store';
 import { useGenerationLimit } from '@/hooks/use-generation-limit';
