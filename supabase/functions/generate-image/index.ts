@@ -46,13 +46,25 @@ function collectGeminiKeys(): string[] {
   return keys;
 }
 
-async function callGeminiOnce(prompt: string, key: string, model: string) {
+function dataUrlToInlinePart(dataUrl: string) {
+  const m = /^data:([^;]+);base64,(.+)$/.exec(dataUrl);
+  if (!m) return null;
+  return { inlineData: { mimeType: m[1], data: m[2] } };
+}
+
+async function callGeminiOnce(prompt: string, key: string, model: string, refImages: string[] = []) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+  const parts: any[] = [];
+  for (const img of refImages) {
+    const p = dataUrlToInlinePart(img);
+    if (p) parts.push(p);
+  }
+  parts.push({ text: prompt });
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
+      contents: [{ parts }],
       generationConfig: { responseModalities: ["IMAGE", "TEXT"] },
     }),
   });
