@@ -341,7 +341,7 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
   };
 
   return (
-    <div className="min-h-screen ramu-canvas-bg text-white relative overflow-hidden">
+    <div className={`min-h-screen ramu-canvas-bg text-white relative overflow-hidden ${theme === 'light' ? 'ramu-light' : ''}`}>
       <Helmet>
         <title>{meta.title}</title>
         <meta name="description" content={meta.description} />
