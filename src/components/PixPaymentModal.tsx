@@ -3,22 +3,26 @@ import QRCode from 'qrcode';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Copy, Check, Crown, ShieldCheck } from 'lucide-react';
+import { Copy, Check, Coffee, Heart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { buildPixPayload, PIX_AMOUNT, PIX_KEY } from '@/config/pix';
+import { buildPixPayload, PIX_KEY } from '@/config/pix';
 
 interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  onConfirmed: () => void;
+  /** Compat: chamado quando o usuário fecha o modal. Não é mais obrigatório. */
+  onConfirmed?: () => void;
   reason?: string;
 }
 
+/**
+ * Modal "Me pague um café" — 100% opcional.
+ * Todas as funções do Lab funcionam de graça; isto é só um apoio ao dev.
+ */
 export const PixPaymentModal = ({ open, onOpenChange, onConfirmed, reason }: Props) => {
   const { toast } = useToast();
   const [qrUrl, setQrUrl] = useState<string>('');
   const [copied, setCopied] = useState(false);
-  const [confirming, setConfirming] = useState(false);
 
   const payload = buildPixPayload();
 
@@ -33,25 +37,21 @@ export const PixPaymentModal = ({ open, onOpenChange, onConfirmed, reason }: Pro
     try {
       await navigator.clipboard.writeText(payload);
       setCopied(true);
-      toast({ title: 'PIX copiado!', description: 'Cole no seu app do banco.' });
+      toast({ title: 'PIX copiado!', description: 'Cole no app do banco e escolha o valor.' });
       setTimeout(() => setCopied(false), 2500);
     } catch {
       toast({ title: 'Não consegui copiar', variant: 'destructive' });
     }
   };
 
-  const handleConfirm = () => {
-    setConfirming(true);
-    setTimeout(() => {
-      onConfirmed();
-      setConfirming(false);
-      onOpenChange(false);
-    }, 600);
+  const close = () => {
+    onConfirmed?.();
+    onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md p-0 overflow-hidden bg-[#0F0F11] border-[#8B5CF6]/30 text-white">
+      <DialogContent className="max-w-md w-[calc(100vw-1.5rem)] p-0 overflow-hidden bg-[#0F0F11] border-[#8B5CF6]/30 text-white">
         <AnimatePresence>
           {open && (
             <motion.div
@@ -62,27 +62,31 @@ export const PixPaymentModal = ({ open, onOpenChange, onConfirmed, reason }: Pro
             >
               <div className="bg-gradient-to-br from-[#8B5CF6] to-[#06B6D4] p-5">
                 <div className="flex items-center gap-2 mb-1 text-white/90">
-                  <Crown className="h-5 w-5" />
-                  <span className="text-xs uppercase tracking-widest font-bold">RAMU Pro</span>
+                  <Coffee className="h-5 w-5" />
+                  <span className="text-xs uppercase tracking-widest font-bold">Apoie o RAMU</span>
                 </div>
                 <DialogTitle className="text-xl font-bold leading-tight text-white">
-                  Pague R$ {PIX_AMOUNT.toFixed(2).replace('.', ',')} via PIX
+                  Me pague um café ☕
                 </DialogTitle>
                 <DialogDescription className="text-white/85 text-sm mt-1">
-                  {reason || 'Desbloqueia HD, sem blur, sem limite diário.'}
+                  {reason || 'Tudo aqui é grátis e continua grátis. Se curtir, um cafezinho ajuda a manter as APIs no ar.'}
                 </DialogDescription>
               </div>
 
               <div className="p-5 space-y-4">
                 <div className="bg-white rounded-xl p-3 mx-auto w-fit">
                   {qrUrl ? (
-                    <img src={qrUrl} alt="QR Code PIX" width={240} height={240} className="block" />
+                    <img src={qrUrl} alt="QR Code PIX" width={220} height={220} className="block max-w-full h-auto" />
                   ) : (
-                    <div className="w-[240px] h-[240px] grid place-items-center text-xs text-neutral-500">
+                    <div className="w-[220px] h-[220px] grid place-items-center text-xs text-neutral-500">
                       Gerando QR…
                     </div>
                   )}
                 </div>
+
+                <p className="text-center text-xs text-neutral-400">
+                  Valor livre — você escolhe no app do banco. R$ 1, R$ 5, o que der.
+                </p>
 
                 <div>
                   <label className="text-[10px] uppercase tracking-widest text-neutral-400">
@@ -96,7 +100,7 @@ export const PixPaymentModal = ({ open, onOpenChange, onConfirmed, reason }: Pro
                     />
                     <button
                       onClick={copy}
-                      className="shrink-0 h-10 w-10 rounded-lg bg-[#8B5CF6] hover:bg-[#7c3aed] grid place-items-center transition-colors"
+                      className="shrink-0 h-11 w-11 rounded-lg bg-[#8B5CF6] hover:bg-[#7c3aed] grid place-items-center transition-colors"
                       aria-label="Copiar PIX"
                     >
                       {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
@@ -107,23 +111,16 @@ export const PixPaymentModal = ({ open, onOpenChange, onConfirmed, reason }: Pro
                   </p>
                 </div>
 
-                <ol className="text-xs text-neutral-300 space-y-1 list-decimal list-inside">
-                  <li>Abra seu app do banco e escolha PIX → Ler QR / Copia e cola</li>
-                  <li>Confirme o pagamento de R$ {PIX_AMOUNT.toFixed(2).replace('.', ',')}</li>
-                  <li>Volte aqui e clique em "Já paguei" — eu confirmo no meu app</li>
-                </ol>
-
                 <Button
-                  onClick={handleConfirm}
-                  disabled={confirming}
+                  onClick={close}
                   className="w-full h-12 bg-gradient-to-r from-[#8B5CF6] to-[#06B6D4] hover:opacity-90 text-white font-bold"
                 >
-                  <ShieldCheck className="h-4 w-4 mr-2" />
-                  {confirming ? 'Liberando…' : 'Já paguei — desbloquear Pro'}
+                  <Heart className="h-4 w-4 mr-2" />
+                  Voltar pro Lab
                 </Button>
 
                 <p className="text-[10px] text-center text-neutral-500">
-                  Pagamento confirmado direto no app do meu banco. Sem intermediários.
+                  Sem obrigação. Sem cadastro. Sem paywall. Só código aberto e um dev humano.
                 </p>
               </div>
             </motion.div>
