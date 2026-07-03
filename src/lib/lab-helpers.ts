@@ -15,7 +15,7 @@ export const getDeviceId = (): string => {
   }
 };
 
-export type LabMode = 'image' | 'svg' | 'pro-fal' | 'chat' | 'meme';
+export type LabMode = 'image' | 'svg' | 'pro-fal' | 'chat' | 'meme' | 'pollinations';
 
 export const MODE_META: Record<LabMode, { label: string; icon: string; placeholder: string }> = {
   image: { label: 'Imagem', icon: '🎨', placeholder: 'Descreva a imagem que quer gerar...' },
@@ -23,6 +23,7 @@ export const MODE_META: Record<LabMode, { label: string; icon: string; placehold
   'pro-fal': { label: 'Pro (fal.ai)', icon: '👑', placeholder: 'Imagem em alta qualidade Flux/SDXL...' },
   chat: { label: 'Chat / Texto', icon: '💬', placeholder: 'Pergunte ou peça um texto criativo...' },
   meme: { label: 'Meme', icon: '😂', placeholder: 'Tema do meme (ex: programador no Monday)...' },
+  pollinations: { label: 'Pollinations (grátis)', icon: '🌻', placeholder: 'Imagem gratuita ilimitada via Pollinations.ai...' },
 };
 
 // Insere <title> e <desc> no SVG para SEO/acessibilidade
