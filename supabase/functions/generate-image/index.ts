@@ -126,10 +126,11 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { prompt, model, aspect_ratio, reference_images } = await req.json();
+    const { prompt, model, aspect_ratio, reference_images, provider } = await req.json();
     const refImages: string[] = Array.isArray(reference_images) ? reference_images.filter((s: any) => typeof s === 'string' && s.startsWith('data:')) : [];
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const geminiKeys = collectGeminiKeys();
+    const forcePollinations = provider === 'pollinations';
 
     const aiModel = model || "google/gemini-2.5-flash-image";
 
@@ -138,6 +139,37 @@ serve(async (req) => {
       sizeInstruction = ` The image should have a ${aspect_ratio} aspect ratio.`;
     }
     const fullPrompt = prompt + sizeInstruction;
+
+    // Se forçou Pollinations, pula direto pro fallback gratuito
+    if (forcePollinations) {
+      try {
+        const ratioMap: Record<string, { w: number; h: number }> = {
+          "1:1": { w: 1024, h: 1024 },
+          "16:9": { w: 1280, h: 720 },
+          "9:16": { w: 720, h: 1280 },
+          "4:3": { w: 1024, h: 768 },
+          "3:2": { w: 1080, h: 720 },
+          "21:9": { w: 1280, h: 548 },
+        };
+        const dims = ratioMap[aspect_ratio || "1:1"] || ratioMap["1:1"];
+        const seed = Math.floor(Math.random() * 1000000);
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(fullPrompt)}?width=${dims.w}&height=${dims.h}&nologo=true&seed=${seed}&model=flux`;
+        const imgRes = await fetch(url);
+        if (!imgRes.ok) throw new Error(`Pollinations ${imgRes.status}`);
+        const buf = await imgRes.arrayBuffer();
+        const base64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+        return new Response(
+          JSON.stringify({ imageUrl: `data:image/jpeg;base64,${base64}`, provider: "pollinations" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      } catch (e) {
+        return new Response(
+          JSON.stringify({ error: `Pollinations falhou: ${e instanceof Error ? e.message : e}` }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
 
     // 1) Tenta Lovable AI Gateway primeiro
     if (LOVABLE_API_KEY) {
