@@ -138,11 +138,6 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
   // Geração — declarada antes do useEffect que a referencia
   const handleGenerate = useCallback(
     async (mode: LabMode, prompt: string, parentId?: string, referenceImages?: string[]) => {
-      if (limit.limitReached) {
-        setPixReason('Você usou seu limite diário grátis (100 gerações). Desbloqueie ilimitado.');
-        setPixOpen(true);
-        return;
-      }
       if (cooldownRemaining() > 0) {
         toast({ title: 'Cooldown ativo', description: `Aguarde ${Math.ceil(cooldownRemaining() / 1000)}s.` });
         return;
