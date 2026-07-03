@@ -76,7 +76,7 @@ export const CommandPalette = ({ open, onClose, onSubmit, onMix, defaultMode = '
 
   if (!open) return null;
   const cur = MODES.find((m) => m.id === mode)!;
-  const showChips = mode === 'image' || mode === 'svg' || mode === 'pro-fal' || mode === 'meme';
+  const showChips = mode === 'image' || mode === 'svg' || mode === 'pro-fal' || mode === 'meme' || mode === 'pollinations';
 
   return (
     <div
