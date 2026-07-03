@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Command } from 'cmdk';
 import {
-  Image as ImageIcon, FileCode, Crown, MessageSquare, Laugh, Sparkles, X, Wand2,
+  Image as ImageIcon, FileCode, Crown, MessageSquare, Laugh, Sparkles, X, Wand2, Flower2,
 } from 'lucide-react';
 import type { LabMode } from '@/lib/lab-helpers';
 
@@ -16,6 +16,7 @@ interface Props {
 
 const MODES: { id: LabMode; label: string; desc: string; icon: any }[] = [
   { id: 'image', label: 'Gerar Imagem', desc: 'Nano Banana / Gemini', icon: ImageIcon },
+  { id: 'pollinations', label: 'Pollinations (grátis)', desc: 'Flux ilimitado, sem chave', icon: Flower2 },
   { id: 'svg', label: 'SVG vetorial', desc: 'Recraft v3 — vetor editável', icon: FileCode },
   { id: 'pro-fal', label: 'Pro fal.ai', desc: 'Flux / SDXL / SD 3', icon: Crown },
   { id: 'chat', label: 'Chat / Texto', desc: 'Conversa, poemas, código', icon: MessageSquare },
