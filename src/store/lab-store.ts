@@ -51,7 +51,7 @@ export const useLabStore = create<LabState>()(
     (set, get) => ({
       cards: [],
       selectedId: null,
-      isPro: false,
+      isPro: true, // Todas as funções liberadas — apoio é opcional (café)
       lastGenerationAt: 0,
       cooldownMs: COOLDOWN,
       addCard: (card) => {
@@ -82,7 +82,7 @@ export const useLabStore = create<LabState>()(
     }),
     {
       name: 'ramu-lab-store',
-      partialize: (s) => ({ cards: s.cards, isPro: s.isPro }),
+      partialize: (s) => ({ cards: s.cards }),
     },
   ),
 );
