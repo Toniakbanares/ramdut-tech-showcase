@@ -230,11 +230,6 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
   );
 
   const handleDownload = (c: LabCard) => {
-    if (!isPro && (c.imageUrl || c.svg)) {
-      setPixReason('Downloads em HD são exclusivos Pro.');
-      setPixOpen(true);
-      return;
-    }
     if (c.svg) downloadText(c.svg, `ramu-${c.id.slice(0, 8)}.svg`, 'image/svg+xml');
     else if (c.imageUrl) downloadDataUrl(c.imageUrl, `ramu-${c.id.slice(0, 8)}.png`);
     else if (c.text) downloadText(c.text, `ramu-${c.id.slice(0, 8)}.txt`);
