@@ -366,17 +366,16 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
         </button>
 
         <div className="ml-auto flex items-center gap-1 sm:gap-2">
-          {!isPro && (
-            <span className="hidden md:inline text-xs text-neutral-400">
-              <span className="text-white font-medium">{limit.remaining}</span> hoje
-            </span>
-          )}
+          <span className="hidden md:inline text-xs text-neutral-400">
+            <span className="text-white font-medium">grátis</span> · sem limite
+          </span>
 
           <button
-            onClick={() => openPaywall('Desbloqueia HD, sem blur, sem limite diário.')}
+            onClick={() => openPaywall('Tudo funciona de graça. Se curtir, um cafezinho ajuda.')}
             className="h-10 px-3 min-w-[44px] rounded-lg ramu-accent-bg text-white text-xs font-medium flex items-center gap-1"
+            aria-label="Me pague um café"
           >
-            <Crown className="h-3.5 w-3.5" /> {isPro ? 'Pro' : 'PIX'}
+            <Coffee className="h-3.5 w-3.5" /> Café
           </button>
 
           <button
