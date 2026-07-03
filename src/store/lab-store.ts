@@ -82,7 +82,7 @@ export const useLabStore = create<LabState>()(
     }),
     {
       name: 'ramu-lab-store',
-      partialize: (s) => ({ cards: s.cards, isPro: s.isPro }),
+      partialize: (s) => ({ cards: s.cards }),
     },
   ),
 );
