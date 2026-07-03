@@ -46,12 +46,13 @@ export function buildPixPayload(
 ): string {
   const gui = emv('00', 'br.gov.bcb.pix') + emv('01', key) + emv('02', description.slice(0, 50));
   const merchantAccountInfo = emv('26', gui);
+  const amountField = amount > 0 ? emv('54', amount.toFixed(2)) : '';
   const payload =
     emv('00', '01') +
     merchantAccountInfo +
     emv('52', '0000') +
     emv('53', '986') +
-    emv('54', amount.toFixed(2)) +
+    amountField +
     emv('58', 'BR') +
     emv('59', sanitize(merchant, 25)) +
     emv('60', sanitize(city, 15)) +
