@@ -182,16 +182,18 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
         } else {
           const finalPrompt =
             mode === 'meme' ? `Meme estilo internet, engraçado, sobre: ${prompt}` : prompt;
+          const isPollinations = mode === 'pollinations';
           const { data, error } = await supabase.functions.invoke('generate-image', {
             body: {
               prompt: finalPrompt,
-              model: 'google/gemini-2.5-flash-image',
+              model: isPollinations ? undefined : 'google/gemini-2.5-flash-image',
+              provider: isPollinations ? 'pollinations' : undefined,
               reference_images: referenceImages && referenceImages.length ? referenceImages : undefined,
             },
           });
           if (error) throw error;
           if (data?.error) throw new Error(data.error);
-          addCard({ type: mode, prompt, imageUrl: data.imageUrl, model: 'gemini', parentId });
+          addCard({ type: mode, prompt, imageUrl: data.imageUrl, model: data.provider || (isPollinations ? 'pollinations' : 'gemini'), parentId });
         }
         limit.increment();
       } catch (e: any) {
