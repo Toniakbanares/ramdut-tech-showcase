@@ -7,8 +7,8 @@ export const PIX_KEY: string =
 
 export const PIX_MERCHANT_NAME = 'JAQUES DUTRA';
 export const PIX_MERCHANT_CITY = 'NOVO HAMBURGO';
-export const PIX_AMOUNT = 9.9; // R$
-export const PIX_DESCRIPTION = 'RAMU Lab Pro';
+export const PIX_AMOUNT = 0; // R$ 0 = valor livre (usuário escolhe no app do banco)
+export const PIX_DESCRIPTION = 'Cafe pro Ramu';
 
 // Gera string EMV BR Code (PIX copia-e-cola) estática.
 // Implementa o padrão do Banco Central (formato BR Code).
