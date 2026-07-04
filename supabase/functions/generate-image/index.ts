@@ -262,7 +262,7 @@ serve(async (req) => {
       const imgRes = await fetch(url);
       if (!imgRes.ok) throw new Error(`Pollinations ${imgRes.status}`);
       const buf = await imgRes.arrayBuffer();
-      const base64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+      const base64 = bufToBase64(buf);
       console.log("Pollinations OK (fallback gratuito)");
       return new Response(
         JSON.stringify({
