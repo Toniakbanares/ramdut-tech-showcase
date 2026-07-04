@@ -164,7 +164,7 @@ serve(async (req) => {
         };
         const dims = ratioMap[aspect_ratio || "1:1"] || ratioMap["1:1"];
         const seed = Math.floor(Math.random() * 1000000);
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(fullPrompt)}?width=${dims.w}&height=${dims.h}&nologo=true&seed=${seed}&model=flux`;
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(fullPrompt)}?width=${dims.w}&height=${dims.h}&nologo=true&enhance=true&seed=${seed}&model=flux`;
         const imgRes = await fetch(url);
         if (!imgRes.ok) throw new Error(`Pollinations ${imgRes.status}`);
         const buf = await imgRes.arrayBuffer();
