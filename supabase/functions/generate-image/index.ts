@@ -122,7 +122,18 @@ async function generateWithGeminiRotating(prompt: string, keys: string[], model?
   );
 }
 
+function bufToBase64(buf: ArrayBuffer): string {
+  const bytes = new Uint8Array(buf);
+  let binary = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk) as unknown as number[]);
+  }
+  return btoa(binary);
+}
+
 serve(async (req) => {
+
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
@@ -157,7 +168,8 @@ serve(async (req) => {
         const imgRes = await fetch(url);
         if (!imgRes.ok) throw new Error(`Pollinations ${imgRes.status}`);
         const buf = await imgRes.arrayBuffer();
-        const base64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+        const base64 = bufToBase64(buf);
+
         return new Response(
           JSON.stringify({ imageUrl: `data:image/jpeg;base64,${base64}`, provider: "pollinations" }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -250,7 +262,7 @@ serve(async (req) => {
       const imgRes = await fetch(url);
       if (!imgRes.ok) throw new Error(`Pollinations ${imgRes.status}`);
       const buf = await imgRes.arrayBuffer();
-      const base64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+      const base64 = bufToBase64(buf);
       console.log("Pollinations OK (fallback gratuito)");
       return new Response(
         JSON.stringify({

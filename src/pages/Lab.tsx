@@ -177,19 +177,22 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
         } else {
           const finalPrompt =
             mode === 'meme' ? `Meme estilo internet, engraçado, sobre: ${prompt}` : prompt;
-          const isPollinations = mode === 'pollinations';
+          // Por padrão TODAS as imagens usam Pollinations (grátis, ilimitado).
+          // Só usa Lovable/Gemini se o usuário explicitamente escolher outro modo no futuro.
+          const usePollinations = true;
           const { data, error } = await supabase.functions.invoke('generate-image', {
             body: {
               prompt: finalPrompt,
-              model: isPollinations ? undefined : 'google/gemini-2.5-flash-image',
-              provider: isPollinations ? 'pollinations' : undefined,
+              model: usePollinations ? undefined : 'google/gemini-2.5-flash-image',
+              provider: usePollinations ? 'pollinations' : undefined,
               reference_images: referenceImages && referenceImages.length ? referenceImages : undefined,
             },
           });
           if (error) throw error;
           if (data?.error) throw new Error(data.error);
-          addCard({ type: mode, prompt, imageUrl: data.imageUrl, model: data.provider || (isPollinations ? 'pollinations' : 'gemini'), parentId });
+          addCard({ type: mode, prompt, imageUrl: data.imageUrl, model: data.provider || 'pollinations', parentId });
         }
+
         limit.increment();
       } catch (e: any) {
         toast({
