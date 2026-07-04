@@ -155,16 +155,17 @@ serve(async (req) => {
     if (forcePollinations) {
       try {
         const ratioMap: Record<string, { w: number; h: number }> = {
-          "1:1": { w: 1024, h: 1024 },
-          "16:9": { w: 1280, h: 720 },
-          "9:16": { w: 720, h: 1280 },
-          "4:3": { w: 1024, h: 768 },
-          "3:2": { w: 1080, h: 720 },
-          "21:9": { w: 1280, h: 548 },
+          "1:1": { w: 1280, h: 1280 },
+          "16:9": { w: 1536, h: 864 },
+          "9:16": { w: 864, h: 1536 },
+          "4:3": { w: 1280, h: 960 },
+          "3:2": { w: 1440, h: 960 },
+          "21:9": { w: 1536, h: 656 },
         };
+
         const dims = ratioMap[aspect_ratio || "1:1"] || ratioMap["1:1"];
         const seed = Math.floor(Math.random() * 1000000);
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(fullPrompt)}?width=${dims.w}&height=${dims.h}&nologo=true&seed=${seed}&model=flux`;
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(fullPrompt)}?width=${dims.w}&height=${dims.h}&nologo=true&enhance=true&seed=${seed}&model=flux`;
         const imgRes = await fetch(url);
         if (!imgRes.ok) throw new Error(`Pollinations ${imgRes.status}`);
         const buf = await imgRes.arrayBuffer();

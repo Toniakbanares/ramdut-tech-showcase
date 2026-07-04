@@ -177,21 +177,23 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
         } else {
           const finalPrompt =
             mode === 'meme' ? `Meme estilo internet, engraçado, sobre: ${prompt}` : prompt;
-          // Por padrão TODAS as imagens usam Pollinations (grátis, ilimitado).
-          // Só usa Lovable/Gemini se o usuário explicitamente escolher outro modo no futuro.
-          const usePollinations = true;
+          const hasRefs = !!(referenceImages && referenceImages.length);
+          // Sem referências: Pollinations (grátis, ilimitado, alta qualidade Flux).
+          // Com referências (mix): Gemini, que entende imagens de input.
+          const usePollinations = !hasRefs;
           const { data, error } = await supabase.functions.invoke('generate-image', {
             body: {
               prompt: finalPrompt,
               model: usePollinations ? undefined : 'google/gemini-2.5-flash-image',
               provider: usePollinations ? 'pollinations' : undefined,
-              reference_images: referenceImages && referenceImages.length ? referenceImages : undefined,
+              reference_images: hasRefs ? referenceImages : undefined,
             },
           });
           if (error) throw error;
           if (data?.error) throw new Error(data.error);
-          addCard({ type: mode, prompt, imageUrl: data.imageUrl, model: data.provider || 'pollinations', parentId });
+          addCard({ type: mode, prompt, imageUrl: data.imageUrl, model: data.provider || (usePollinations ? 'pollinations' : 'gemini'), parentId });
         }
+
 
         limit.increment();
       } catch (e: any) {
@@ -374,12 +376,15 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
           </span>
 
           <button
-            onClick={() => openPaywall('Tudo funciona de graça. Se curtir, um cafezinho ajuda.')}
-            className="h-10 px-3 min-w-[44px] rounded-lg ramu-accent-bg text-white text-xs font-medium flex items-center gap-1"
+            onClick={() => openPaywall('Contribua com o nosso trabalho ❤️')}
+            className="h-10 px-3 min-w-[44px] rounded-lg ramu-accent-bg text-white text-xs font-medium flex items-center gap-1.5 whitespace-nowrap"
             aria-label="Me pague um café"
           >
-            <Coffee className="h-3.5 w-3.5" /> Café
+            <Coffee className="h-3.5 w-3.5" />
+            <span className="hidden xs:inline sm:inline">Me pague um café</span>
+            <span className="inline xs:hidden sm:hidden">Café</span>
           </button>
+
 
           <button
             onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
@@ -469,33 +474,34 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
 
       {/* Bottom command bar — mobile/tablet */}
       <div
-        className="lg:hidden fixed bottom-0 inset-x-0 z-40 ramu-glass border-t border-white/5 px-3 pt-2 pb-3"
+        className="lg:hidden fixed bottom-0 inset-x-0 z-40 ramu-glass border-t border-white/5 px-3 pt-3 pb-3"
         style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 12px)' }}
       >
         <div className="flex items-center gap-2">
           <button
             onClick={() => setPaletteOpen(true)}
-            className="flex-1 min-h-[48px] h-12 px-3 rounded-xl bg-black/40 border border-white/10 text-left text-sm text-neutral-400 flex items-center gap-2"
+            className="flex-1 min-h-[56px] h-14 px-4 rounded-2xl bg-black/40 border border-white/10 text-left text-sm text-neutral-300 flex items-center gap-2.5"
           >
-            <CmdIcon className="h-4 w-4" />
-            <span>Gerar com IA…</span>
+            <CmdIcon className="h-5 w-5 text-[#8B5CF6]" />
+            <span className="font-medium">Gerar com IA…</span>
           </button>
           <button
             onClick={() => setMixOpen(true)}
-            className="h-12 w-12 min-w-[44px] rounded-xl border border-[#8B5CF6]/40 grid place-items-center text-[#06B6D4]"
-            aria-label="Modo /mix"
+            className="h-14 w-14 min-w-[56px] rounded-2xl border border-[#8B5CF6]/40 bg-[#8B5CF6]/10 grid place-items-center text-[#06B6D4] active:scale-95 transition-transform"
+            aria-label="Modo mix"
           >
-            <Wand2 className="h-5 w-5" />
+            <Wand2 className="h-6 w-6" />
           </button>
           <button
             onClick={() => setPaletteOpen(true)}
-            className="h-12 w-12 min-w-[44px] rounded-xl ramu-accent-bg grid place-items-center text-white"
+            className="h-14 w-14 min-w-[56px] rounded-2xl ramu-accent-bg grid place-items-center text-white shadow-lg shadow-[#8B5CF6]/30 active:scale-95 transition-transform"
             aria-label="Nova geração"
           >
-            <Plus className="h-5 w-5" />
+            <Plus className="h-6 w-6" />
           </button>
         </div>
       </div>
+
 
       <Inspector
         card={selectedCard}
