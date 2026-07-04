@@ -376,12 +376,15 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
           </span>
 
           <button
-            onClick={() => openPaywall('Tudo funciona de graça. Se curtir, um cafezinho ajuda.')}
-            className="h-10 px-3 min-w-[44px] rounded-lg ramu-accent-bg text-white text-xs font-medium flex items-center gap-1"
+            onClick={() => openPaywall('Contribua com o nosso trabalho ❤️')}
+            className="h-10 px-3 min-w-[44px] rounded-lg ramu-accent-bg text-white text-xs font-medium flex items-center gap-1.5 whitespace-nowrap"
             aria-label="Me pague um café"
           >
-            <Coffee className="h-3.5 w-3.5" /> Café
+            <Coffee className="h-3.5 w-3.5" />
+            <span className="hidden xs:inline sm:inline">Me pague um café</span>
+            <span className="inline xs:hidden sm:hidden">Café</span>
           </button>
+
 
           <button
             onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
