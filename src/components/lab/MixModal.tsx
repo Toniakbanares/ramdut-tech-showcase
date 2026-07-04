@@ -68,11 +68,12 @@ export const MixModal = ({ open, onOpenChange, onGenerate }: Props) => {
     update(key, { generating: true });
     try {
       const promptByKey =
-        key === 'objeto' ? `${txt}, isolated subject, clean background, product shot reference`
-        : key === 'local' ? `${txt}, empty scene background reference, wide shot, no people`
-        : `style reference: ${txt}, abstract texture sample, no subject`;
+        key === 'objeto' ? `${txt}, isolated subject, clean background, product shot reference, high detail`
+        : key === 'local' ? `${txt}, empty scene background reference, wide shot, no people, cinematic`
+        : `style reference: ${txt}, abstract texture sample, no subject, high detail`;
+      // Referências usam Pollinations (grátis, ilimitado, rápido)
       const { data, error } = await supabase.functions.invoke('generate-image', {
-        body: { prompt: promptByKey, model: 'google/gemini-2.5-flash-image' },
+        body: { prompt: promptByKey, provider: 'pollinations' },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -84,6 +85,7 @@ export const MixModal = ({ open, onOpenChange, onGenerate }: Props) => {
       update(key, { generating: false });
     }
   };
+
 
   const buildPrompt = () => {
     const parts: string[] = [];
