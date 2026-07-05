@@ -129,19 +129,6 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
   const initialNodes = useMemo<Node[]>(() => [], []);
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge[]>([]);
-  const onConnect = useCallback(
-    (params: Connection) => {
-      setEdges((eds) => addEdge({ ...params, type: 'smoothstep', animated: true, style: { stroke: '#8B5CF6', strokeWidth: 2 } }, eds));
-      const source = cards.find((c) => c.id === params.source);
-      const target = cards.find((c) => c.id === params.target);
-      if (!source || !target) return;
-      const refs = [source.imageUrl, target.imageUrl].filter(Boolean) as string[];
-      const prompt = `Misture em uma imagem única e profissional: ${source.prompt}; ${target.prompt}. Alta qualidade, composição coerente, detalhes nítidos, sem texto e sem logo.`;
-      handleGenerate('image', prompt, source.id, refs);
-    },
-    [cards, setEdges],
-  );
-
   // Geração — declarada antes do useEffect que a referencia
   const handleGenerate = useCallback(
     async (mode: LabMode, prompt: string, parentId?: string, referenceImages?: string[]) => {
@@ -211,6 +198,19 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
       }
     },
     [limit, addCard, markGenerated, cooldownRemaining, toast],
+  );
+
+  const onConnect = useCallback(
+    (params: Connection) => {
+      setEdges((eds) => addEdge({ ...params, type: 'smoothstep', animated: true, style: { stroke: '#8B5CF6', strokeWidth: 2 } }, eds));
+      const source = cards.find((c) => c.id === params.source);
+      const target = cards.find((c) => c.id === params.target);
+      if (!source || !target) return;
+      const refs = [source.imageUrl, target.imageUrl].filter(Boolean) as string[];
+      const prompt = `Misture em uma imagem única e profissional: ${source.prompt}; ${target.prompt}. Alta qualidade, composição coerente, detalhes nítidos, sem texto e sem logo.`;
+      handleGenerate('image', prompt, source.id, refs);
+    },
+    [cards, handleGenerate, setEdges],
   );
 
   // Mix: gera N variações com as mesmas referências
