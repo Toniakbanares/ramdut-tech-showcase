@@ -32,7 +32,7 @@ interface LabState {
   clear: () => void;
 }
 
-const COOLDOWN = 10_000;
+const COOLDOWN = 0;
 
 // Posiciona em grid suave a partir de uma seed aleatória
 let nextPos = { x: 80, y: 80 };
@@ -61,7 +61,7 @@ export const useLabStore = create<LabState>()(
           position: advance(),
           createdAt: Date.now(),
         };
-        set((s) => ({ cards: [...s.cards, newCard], selectedId: newCard.id }));
+        set((s) => ({ cards: [...s.cards, newCard] }));
         return newCard;
       },
       updateCard: (id, patch) =>

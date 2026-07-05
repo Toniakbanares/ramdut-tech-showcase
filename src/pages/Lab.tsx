@@ -17,7 +17,7 @@ import 'reactflow/dist/style.css';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Command as CmdIcon, Coffee, ArrowLeft, Activity, Sparkles, Plus, Zap, Wand2, Sun, Moon } from 'lucide-react';
+import { Command as CmdIcon, Coffee, ArrowLeft, Activity, Sparkles, Plus, Zap, Wand2, Sun, Moon, MessageCircle } from 'lucide-react';
 
 import { useLabStore, type LabCard } from '@/store/lab-store';
 import { useGenerationLimit } from '@/hooks/use-generation-limit';
@@ -129,12 +129,6 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
   const initialNodes = useMemo<Node[]>(() => [], []);
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge[]>([]);
-  const onConnect = useCallback(
-    (params: Connection) =>
-      setEdges((eds) => addEdge({ ...params, type: 'smoothstep', animated: true, style: { stroke: '#8B5CF6', strokeWidth: 2 } }, eds)),
-    [setEdges],
-  );
-
   // Geração — declarada antes do useEffect que a referencia
   const handleGenerate = useCallback(
     async (mode: LabMode, prompt: string, parentId?: string, referenceImages?: string[]) => {
@@ -178,14 +172,11 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
           const finalPrompt =
             mode === 'meme' ? `Meme estilo internet, engraçado, sobre: ${prompt}` : prompt;
           const hasRefs = !!(referenceImages && referenceImages.length);
-          // Sem referências: Pollinations (grátis, ilimitado, alta qualidade Flux).
-          // Com referências (mix): Gemini, que entende imagens de input.
-          const usePollinations = !hasRefs;
+          const usePollinations = true;
           const { data, error } = await supabase.functions.invoke('generate-image', {
             body: {
               prompt: finalPrompt,
-              model: usePollinations ? undefined : 'google/gemini-2.5-flash-image',
-              provider: usePollinations ? 'pollinations' : undefined,
+              provider: 'pollinations',
               reference_images: hasRefs ? referenceImages : undefined,
             },
           });
@@ -207,6 +198,19 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
       }
     },
     [limit, addCard, markGenerated, cooldownRemaining, toast],
+  );
+
+  const onConnect = useCallback(
+    (params: Connection) => {
+      setEdges((eds) => addEdge({ ...params, type: 'smoothstep', animated: true, style: { stroke: '#8B5CF6', strokeWidth: 2 } }, eds));
+      const source = cards.find((c) => c.id === params.source);
+      const target = cards.find((c) => c.id === params.target);
+      if (!source || !target) return;
+      const refs = [source.imageUrl, target.imageUrl].filter(Boolean) as string[];
+      const prompt = `Misture em uma imagem única e profissional: ${source.prompt}; ${target.prompt}. Alta qualidade, composição coerente, detalhes nítidos, sem texto e sem logo.`;
+      handleGenerate('image', prompt, source.id, refs);
+    },
+    [cards, handleGenerate, setEdges],
   );
 
   // Mix: gera N variações com as mesmas referências
@@ -381,9 +385,18 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
             aria-label="Me pague um café"
           >
             <Coffee className="h-3.5 w-3.5" />
-            <span className="hidden xs:inline sm:inline">Me pague um café</span>
+            <span className="hidden sm:inline">Me colabore, me pague um café</span>
             <span className="inline xs:hidden sm:hidden">Café</span>
           </button>
+
+          <Link
+            to="/lab/ramon"
+            className="h-10 px-3 rounded-lg border border-white/10 hover:border-[#06B6D4]/40 flex items-center gap-1.5 text-neutral-400 hover:text-[#06B6D4] text-xs font-medium"
+            title="Chat com Ramon"
+          >
+            <MessageCircle className="h-4 w-4" />
+            <span className="hidden sm:inline">Ramon</span>
+          </Link>
 
 
           <button
@@ -492,6 +505,13 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
           >
             <Wand2 className="h-6 w-6" />
           </button>
+          <Link
+            to="/lab/ramon"
+            className="h-14 w-14 min-w-[56px] rounded-2xl border border-[#06B6D4]/40 bg-[#06B6D4]/10 grid place-items-center text-[#06B6D4] active:scale-95 transition-transform"
+            aria-label="Chat com Ramon"
+          >
+            <MessageCircle className="h-6 w-6" />
+          </Link>
           <button
             onClick={() => setPaletteOpen(true)}
             className="h-14 w-14 min-w-[56px] rounded-2xl ramu-accent-bg grid place-items-center text-white shadow-lg shadow-[#8B5CF6]/30 active:scale-95 transition-transform"

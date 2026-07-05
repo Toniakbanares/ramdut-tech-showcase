@@ -8,6 +8,7 @@ import Lab from "./pages/Lab";
 import Imagine from "./pages/Imagine";
 import SharePage from "./pages/SharePage";
 import ApiStatus from "./pages/ApiStatus";
+import RamonChat from "./pages/RamonChat";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,8 @@ const App = () => (
           <Route path="/lab/svg" element={<Lab metaKey="svg" initialMode="svg" />} />
           <Route path="/lab/pro-fal" element={<Lab metaKey="pro-fal" initialMode="pro-fal" />} />
           <Route path="/lab/chat" element={<Lab metaKey="chat" initialMode="chat" />} />
+          <Route path="/lab/ramon" element={<RamonChat />} />
+          <Route path="/lab/ramon/:threadId" element={<RamonChat />} />
           <Route path="/lab/share/:id" element={<SharePage />} />
 
           {/* Rota antiga continua apontando pro novo Lab */}
