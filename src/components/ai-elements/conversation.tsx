@@ -1,5 +1,5 @@
 import { ArrowDownIcon } from 'lucide-react';
-import type { ComponentProps } from 'react';
+import { forwardRef, type ComponentProps } from 'react';
 import { cn } from '@/lib/utils';
 
 export type ConversationProps = ComponentProps<'section'>;
@@ -10,9 +10,10 @@ export const Conversation = ({ className, ...props }: ConversationProps) => (
 
 export type ConversationContentProps = ComponentProps<'div'>;
 
-export const ConversationContent = ({ className, ...props }: ConversationContentProps) => (
-  <div className={cn('flex h-full flex-col gap-5 overflow-y-auto p-4 sm:p-5', className)} {...props} />
-);
+export const ConversationContent = forwardRef<HTMLDivElement, ConversationContentProps>(({ className, ...props }, ref) => (
+  <div ref={ref} className={cn('flex h-full flex-col gap-5 overflow-y-auto p-4 sm:p-5', className)} data-chat-scroll {...props} />
+));
+ConversationContent.displayName = 'ConversationContent';
 
 export type ConversationEmptyStateProps = ComponentProps<'div'> & {
   title?: string;
@@ -39,7 +40,10 @@ export const ConversationScrollButton = ({ className, ...props }: ComponentProps
       'absolute bottom-3 right-3 grid h-10 w-10 place-items-center rounded-full border border-border bg-background/90 text-foreground shadow-sm backdrop-blur',
       className,
     )}
-    onClick={() => props.onClick?.({} as never) ?? document.querySelector('[role="log"] [data-chat-scroll]')?.scrollTo({ top: 999999, behavior: 'smooth' })}
+    onClick={(event) => {
+      props.onClick?.(event);
+      document.querySelector('[role="log"] [data-chat-scroll]')?.scrollTo({ top: 999999, behavior: 'smooth' });
+    }}
     aria-label="Ir para o fim"
     {...props}
   >

@@ -1,5 +1,5 @@
 import { CornerDownLeftIcon, SquareIcon } from 'lucide-react';
-import type { ComponentProps, FormEvent } from 'react';
+import { forwardRef, type ComponentProps, type FormEvent } from 'react';
 import { cn } from '@/lib/utils';
 
 export type PromptInputMessage = { text: string };
@@ -23,14 +23,16 @@ export const PromptInput = ({ className, onSubmit, children, ...props }: PromptI
   );
 };
 
-export const PromptInputTextarea = ({ className, ...props }: ComponentProps<'textarea'>) => (
+export const PromptInputTextarea = forwardRef<HTMLTextAreaElement, ComponentProps<'textarea'>>(({ className, ...props }, ref) => (
   <textarea
+    ref={ref}
     name="message"
     rows={2}
     className={cn('min-h-[56px] w-full resize-none bg-transparent px-3 py-2 text-base text-foreground outline-none placeholder:text-muted-foreground', className)}
     {...props}
   />
-);
+));
+PromptInputTextarea.displayName = 'PromptInputTextarea';
 
 export const PromptInputFooter = ({ className, ...props }: ComponentProps<'div'>) => (
   <div className={cn('flex items-center justify-end gap-2 px-1 pt-1', className)} {...props} />
