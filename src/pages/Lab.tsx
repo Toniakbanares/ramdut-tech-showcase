@@ -17,7 +17,7 @@ import 'reactflow/dist/style.css';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Command as CmdIcon, Coffee, ArrowLeft, Activity, Sparkles, Plus, Zap, Wand2, Sun, Moon } from 'lucide-react';
+import { Command as CmdIcon, Coffee, ArrowLeft, Activity, Sparkles, Plus, Zap, Wand2, Sun, Moon, MessageCircle } from 'lucide-react';
 
 import { useLabStore, type LabCard } from '@/store/lab-store';
 import { useGenerationLimit } from '@/hooks/use-generation-limit';
@@ -130,9 +130,16 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge[]>([]);
   const onConnect = useCallback(
-    (params: Connection) =>
-      setEdges((eds) => addEdge({ ...params, type: 'smoothstep', animated: true, style: { stroke: '#8B5CF6', strokeWidth: 2 } }, eds)),
-    [setEdges],
+    (params: Connection) => {
+      setEdges((eds) => addEdge({ ...params, type: 'smoothstep', animated: true, style: { stroke: '#8B5CF6', strokeWidth: 2 } }, eds));
+      const source = cards.find((c) => c.id === params.source);
+      const target = cards.find((c) => c.id === params.target);
+      if (!source || !target) return;
+      const refs = [source.imageUrl, target.imageUrl].filter(Boolean) as string[];
+      const prompt = `Misture em uma imagem única e profissional: ${source.prompt}; ${target.prompt}. Alta qualidade, composição coerente, detalhes nítidos, sem texto e sem logo.`;
+      handleGenerate('image', prompt, source.id, refs);
+    },
+    [cards, setEdges],
   );
 
   // Geração — declarada antes do useEffect que a referencia
@@ -178,14 +185,11 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
           const finalPrompt =
             mode === 'meme' ? `Meme estilo internet, engraçado, sobre: ${prompt}` : prompt;
           const hasRefs = !!(referenceImages && referenceImages.length);
-          // Sem referências: Pollinations (grátis, ilimitado, alta qualidade Flux).
-          // Com referências (mix): Gemini, que entende imagens de input.
-          const usePollinations = !hasRefs;
+          const usePollinations = true;
           const { data, error } = await supabase.functions.invoke('generate-image', {
             body: {
               prompt: finalPrompt,
-              model: usePollinations ? undefined : 'google/gemini-2.5-flash-image',
-              provider: usePollinations ? 'pollinations' : undefined,
+              provider: 'pollinations',
               reference_images: hasRefs ? referenceImages : undefined,
             },
           });
