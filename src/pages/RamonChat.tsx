@@ -23,9 +23,6 @@ type Thread = {
 
 const CHAT_ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ramon-chat`;
 
-const textFromMessage = (message: UIMessage) =>
-  message.parts.map((part) => (part.type === 'text' ? part.text : '')).join('');
-
 const toMessage = (row: { id: string; role: string; parts: unknown; content: string }): UIMessage => ({
   id: row.id,
   role: row.role as UIMessage['role'],
@@ -169,6 +166,7 @@ const RamonChat = () => {
     supabase.auth.getSession().then(({ data }) => {
       if (!active) return;
       setIsAuthed(!!data.session);
+      if (!data.session) setLoading(false);
       setSessionReady(true);
     });
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {

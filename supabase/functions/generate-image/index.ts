@@ -149,7 +149,10 @@ serve(async (req) => {
     if (aspect_ratio && aspect_ratio !== "1:1") {
       sizeInstruction = ` The image should have a ${aspect_ratio} aspect ratio.`;
     }
-    const fullPrompt = prompt + sizeInstruction;
+    const mixInstruction = refImages.length
+      ? " Blend the referenced ideas into one coherent final image. Do not create a collage."
+      : "";
+    const fullPrompt = `${prompt}${sizeInstruction}${mixInstruction} Masterpiece quality, sharp focus, rich detail, professional composition, no watermark, no text, no logo.`;
 
     // Se forçou Pollinations, pula direto pro fallback gratuito
     if (forcePollinations) {
@@ -165,7 +168,7 @@ serve(async (req) => {
 
         const dims = ratioMap[aspect_ratio || "1:1"] || ratioMap["1:1"];
         const seed = Math.floor(Math.random() * 1000000);
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(fullPrompt)}?width=${dims.w}&height=${dims.h}&nologo=true&enhance=true&seed=${seed}&model=flux`;
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(fullPrompt)}?width=${dims.w}&height=${dims.h}&nologo=true&private=true&enhance=true&safe=true&seed=${seed}&model=flux`;
         const imgRes = await fetch(url);
         if (!imgRes.ok) throw new Error(`Pollinations ${imgRes.status}`);
         const buf = await imgRes.arrayBuffer();
@@ -259,7 +262,7 @@ serve(async (req) => {
       };
       const dims = ratioMap[aspect_ratio || "1:1"] || ratioMap["1:1"];
       const seed = Math.floor(Math.random() * 1000000);
-      const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(fullPrompt)}?width=${dims.w}&height=${dims.h}&nologo=true&seed=${seed}`;
+      const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(fullPrompt)}?width=${dims.w}&height=${dims.h}&nologo=true&private=true&enhance=true&safe=true&seed=${seed}&model=flux`;
       const imgRes = await fetch(url);
       if (!imgRes.ok) throw new Error(`Pollinations ${imgRes.status}`);
       const buf = await imgRes.arrayBuffer();

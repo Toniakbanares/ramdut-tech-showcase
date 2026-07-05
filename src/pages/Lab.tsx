@@ -385,9 +385,18 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
             aria-label="Me pague um café"
           >
             <Coffee className="h-3.5 w-3.5" />
-            <span className="hidden xs:inline sm:inline">Me pague um café</span>
+            <span className="hidden sm:inline">Me colabore, me pague um café</span>
             <span className="inline xs:hidden sm:hidden">Café</span>
           </button>
+
+          <Link
+            to="/lab/ramon"
+            className="h-10 px-3 rounded-lg border border-white/10 hover:border-[#06B6D4]/40 flex items-center gap-1.5 text-neutral-400 hover:text-[#06B6D4] text-xs font-medium"
+            title="Chat com Ramon"
+          >
+            <MessageCircle className="h-4 w-4" />
+            <span className="hidden sm:inline">Ramon</span>
+          </Link>
 
 
           <button
@@ -496,6 +505,13 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
           >
             <Wand2 className="h-6 w-6" />
           </button>
+          <Link
+            to="/lab/ramon"
+            className="h-14 w-14 min-w-[56px] rounded-2xl border border-[#06B6D4]/40 bg-[#06B6D4]/10 grid place-items-center text-[#06B6D4] active:scale-95 transition-transform"
+            aria-label="Chat com Ramon"
+          >
+            <MessageCircle className="h-6 w-6" />
+          </Link>
           <button
             onClick={() => setPaletteOpen(true)}
             className="h-14 w-14 min-w-[56px] rounded-2xl ramu-accent-bg grid place-items-center text-white shadow-lg shadow-[#8B5CF6]/30 active:scale-95 transition-transform"
