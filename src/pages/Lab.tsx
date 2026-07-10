@@ -131,7 +131,13 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge[]>([]);
   // Geração — declarada antes do useEffect que a referencia
   const handleGenerate = useCallback(
-    async (mode: LabMode, prompt: string, parentId?: string, referenceImages?: string[]) => {
+    async (
+      mode: LabMode,
+      prompt: string,
+      parentId?: string,
+      referenceImages?: string[],
+      opts?: { aspect_ratio?: string; quality?: 'fast' | 'standard' | 'hd' | 'ultra' },
+    ) => {
       if (cooldownRemaining() > 0) {
         toast({ title: 'Cooldown ativo', description: `Aguarde ${Math.ceil(cooldownRemaining() / 1000)}s.` });
         return;
@@ -172,17 +178,18 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
           const finalPrompt =
             mode === 'meme' ? `Meme estilo internet, engraçado, sobre: ${prompt}` : prompt;
           const hasRefs = !!(referenceImages && referenceImages.length);
-          const usePollinations = true;
           const { data, error } = await supabase.functions.invoke('generate-image', {
             body: {
               prompt: finalPrompt,
               provider: 'pollinations',
+              aspect_ratio: opts?.aspect_ratio,
+              quality: opts?.quality,
               reference_images: hasRefs ? referenceImages : undefined,
             },
           });
           if (error) throw error;
           if (data?.error) throw new Error(data.error);
-          addCard({ type: mode, prompt, imageUrl: data.imageUrl, model: data.provider || (usePollinations ? 'pollinations' : 'gemini'), parentId });
+          addCard({ type: mode, prompt, imageUrl: data.imageUrl, model: data.provider || 'pollinations', parentId });
         }
 
 
@@ -199,6 +206,7 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
     },
     [limit, addCard, markGenerated, cooldownRemaining, toast],
   );
+
 
   const onConnect = useCallback(
     (params: Connection) => {
