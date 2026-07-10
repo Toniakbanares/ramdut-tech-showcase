@@ -5,14 +5,20 @@ import {
 } from 'lucide-react';
 import type { LabMode } from '@/lib/lab-helpers';
 
+export interface GenerateOptions {
+  aspect_ratio?: string;
+  quality?: 'fast' | 'standard' | 'hd' | 'ultra';
+}
+
 interface Props {
   open: boolean;
   onClose: () => void;
-  onSubmit: (mode: LabMode, prompt: string) => void;
+  onSubmit: (mode: LabMode, prompt: string, opts?: GenerateOptions) => void;
   onMix: () => void;
   defaultMode?: LabMode;
   cooldownRemaining: number;
 }
+
 
 const MODES: { id: LabMode; label: string; desc: string; icon: any }[] = [
   { id: 'image', label: 'Gerar Imagem', desc: 'Nano Banana / Gemini', icon: ImageIcon },
@@ -39,6 +45,8 @@ export const CommandPalette = ({ open, onClose, onSubmit, onMix, defaultMode = '
   const [mode, setMode] = useState<LabMode>(defaultMode);
   const [prompt, setPrompt] = useState('');
   const [styles, setStyles] = useState<string[]>([]);
+  const [aspect, setAspect] = useState<string>('1:1');
+  const [quality, setQuality] = useState<'fast' | 'standard' | 'hd' | 'ultra'>('standard');
 
   useEffect(() => { if (open) setMode(defaultMode); }, [open, defaultMode]);
 
@@ -69,7 +77,11 @@ export const CommandPalette = ({ open, onClose, onSubmit, onMix, defaultMode = '
       return;
     }
     if (!trimmed) return;
-    onSubmit(mode, buildFinalPrompt(trimmed));
+    const opts: GenerateOptions =
+      mode === 'pollinations' || mode === 'image' || mode === 'pro-fal'
+        ? { aspect_ratio: aspect, quality }
+        : {};
+    onSubmit(mode, buildFinalPrompt(trimmed), opts);
     setPrompt('');
     onClose();
   };
@@ -77,6 +89,16 @@ export const CommandPalette = ({ open, onClose, onSubmit, onMix, defaultMode = '
   if (!open) return null;
   const cur = MODES.find((m) => m.id === mode)!;
   const showChips = mode === 'image' || mode === 'svg' || mode === 'pro-fal' || mode === 'meme' || mode === 'pollinations';
+  const showQuality = mode === 'pollinations' || mode === 'image' || mode === 'pro-fal';
+
+  const ASPECTS = ['1:1', '16:9', '9:16', '4:3', '3:2', '21:9'];
+  const QUALITIES: { id: 'fast' | 'standard' | 'hd' | 'ultra'; label: string; hint: string }[] = [
+    { id: 'fast', label: 'Rápido', hint: '~768px' },
+    { id: 'standard', label: 'Padrão', hint: '~1024px' },
+    { id: 'hd', label: 'HD', hint: '~1536px' },
+    { id: 'ultra', label: 'Ultra', hint: '~2048px' },
+  ];
+
 
   return (
     <div
@@ -157,6 +179,54 @@ export const CommandPalette = ({ open, onClose, onSubmit, onMix, defaultMode = '
             </div>
           </div>
         )}
+
+        {showQuality && (
+          <div className="border-t border-white/5 px-3 py-2 space-y-2">
+            <div>
+              <div className="text-[10px] uppercase tracking-widest text-neutral-500 mb-1.5">Proporção</div>
+              <div className="flex flex-wrap gap-1.5">
+                {ASPECTS.map((a) => (
+                  <button
+                    key={a}
+                    type="button"
+                    onClick={() => setAspect(a)}
+                    className={`h-9 min-h-[36px] px-3 rounded-lg text-xs font-mono transition-colors ${
+                      aspect === a
+                        ? 'bg-purple-600 text-white border border-purple-400'
+                        : 'bg-white/5 text-neutral-300 border border-white/10 hover:bg-white/10'
+                    }`}
+                  >
+                    {a}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <div className="text-[10px] uppercase tracking-widest text-neutral-500 mb-1.5">Qualidade</div>
+              <div className="grid grid-cols-4 gap-1.5">
+                {QUALITIES.map((q) => (
+                  <button
+                    key={q.id}
+                    type="button"
+                    onClick={() => setQuality(q.id)}
+                    className={`h-11 rounded-lg text-xs font-medium transition-colors flex flex-col items-center justify-center ${
+                      quality === q.id
+                        ? 'bg-gradient-to-br from-[#8B5CF6] to-[#06B6D4] text-white border border-purple-400'
+                        : 'bg-white/5 text-neutral-300 border border-white/10 hover:bg-white/10'
+                    }`}
+                  >
+                    <span>{q.label}</span>
+                    <span className="text-[9px] opacity-70">{q.hint}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+
+
+
 
         <div className="border-t border-white/5 p-3">
           <div className="text-[10px] uppercase tracking-widest text-neutral-500 mb-1">
