@@ -45,6 +45,8 @@ export const CommandPalette = ({ open, onClose, onSubmit, onMix, defaultMode = '
   const [mode, setMode] = useState<LabMode>(defaultMode);
   const [prompt, setPrompt] = useState('');
   const [styles, setStyles] = useState<string[]>([]);
+  const [aspect, setAspect] = useState<string>('1:1');
+  const [quality, setQuality] = useState<'fast' | 'standard' | 'hd' | 'ultra'>('standard');
 
   useEffect(() => { if (open) setMode(defaultMode); }, [open, defaultMode]);
 
@@ -75,7 +77,11 @@ export const CommandPalette = ({ open, onClose, onSubmit, onMix, defaultMode = '
       return;
     }
     if (!trimmed) return;
-    onSubmit(mode, buildFinalPrompt(trimmed));
+    const opts: GenerateOptions =
+      mode === 'pollinations' || mode === 'image' || mode === 'pro-fal'
+        ? { aspect_ratio: aspect, quality }
+        : {};
+    onSubmit(mode, buildFinalPrompt(trimmed), opts);
     setPrompt('');
     onClose();
   };
@@ -83,6 +89,16 @@ export const CommandPalette = ({ open, onClose, onSubmit, onMix, defaultMode = '
   if (!open) return null;
   const cur = MODES.find((m) => m.id === mode)!;
   const showChips = mode === 'image' || mode === 'svg' || mode === 'pro-fal' || mode === 'meme' || mode === 'pollinations';
+  const showQuality = mode === 'pollinations' || mode === 'image' || mode === 'pro-fal';
+
+  const ASPECTS = ['1:1', '16:9', '9:16', '4:3', '3:2', '21:9'];
+  const QUALITIES: { id: 'fast' | 'standard' | 'hd' | 'ultra'; label: string; hint: string }[] = [
+    { id: 'fast', label: 'Rápido', hint: '~768px' },
+    { id: 'standard', label: 'Padrão', hint: '~1024px' },
+    { id: 'hd', label: 'HD', hint: '~1536px' },
+    { id: 'ultra', label: 'Ultra', hint: '~2048px' },
+  ];
+
 
   return (
     <div
