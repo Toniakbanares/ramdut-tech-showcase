@@ -5,14 +5,20 @@ import {
 } from 'lucide-react';
 import type { LabMode } from '@/lib/lab-helpers';
 
+export interface GenerateOptions {
+  aspect_ratio?: string;
+  quality?: 'fast' | 'standard' | 'hd' | 'ultra';
+}
+
 interface Props {
   open: boolean;
   onClose: () => void;
-  onSubmit: (mode: LabMode, prompt: string) => void;
+  onSubmit: (mode: LabMode, prompt: string, opts?: GenerateOptions) => void;
   onMix: () => void;
   defaultMode?: LabMode;
   cooldownRemaining: number;
 }
+
 
 const MODES: { id: LabMode; label: string; desc: string; icon: any }[] = [
   { id: 'image', label: 'Gerar Imagem', desc: 'Nano Banana / Gemini', icon: ImageIcon },
