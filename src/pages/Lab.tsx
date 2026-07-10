@@ -543,11 +543,12 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
       <CommandPalette
         open={paletteOpen}
         onClose={() => setPaletteOpen(false)}
-        onSubmit={handleGenerate}
+        onSubmit={(mode, prompt, opts) => handleGenerate(mode, prompt, undefined, undefined, opts)}
         onMix={() => setMixOpen(true)}
         defaultMode={initialMode || meta.mode}
         cooldownRemaining={cdRem}
       />
+
 
       <MixModal
         open={mixOpen}
