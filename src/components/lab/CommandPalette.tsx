@@ -174,6 +174,12 @@ export const CommandPalette = ({ open, onClose, onSubmit, onMix, defaultMode = '
                   >
                     {c.label}
                   </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {showQuality && (
           <div className="border-t border-white/5 px-3 py-2 space-y-2">
             <div>
@@ -217,6 +223,8 @@ export const CommandPalette = ({ open, onClose, onSubmit, onMix, defaultMode = '
             </div>
           </div>
         )}
+
+
 
 
 
