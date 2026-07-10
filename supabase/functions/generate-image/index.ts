@@ -191,22 +191,7 @@ serve(async (req) => {
       }
     }
 
-        const imgRes = await fetch(url);
-        if (!imgRes.ok) throw new Error(`Pollinations ${imgRes.status}`);
-        const buf = await imgRes.arrayBuffer();
-        const base64 = bufToBase64(buf);
 
-        return new Response(
-          JSON.stringify({ imageUrl: `data:image/jpeg;base64,${base64}`, provider: "pollinations" }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      } catch (e) {
-        return new Response(
-          JSON.stringify({ error: `Pollinations falhou: ${e instanceof Error ? e.message : e}` }),
-          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-    }
 
 
     // 1) Tenta Lovable AI Gateway primeiro
