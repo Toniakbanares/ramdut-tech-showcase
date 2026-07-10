@@ -137,11 +137,12 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { prompt, model, aspect_ratio, reference_images, provider } = await req.json();
+    const { prompt, model, aspect_ratio, reference_images, provider, quality } = await req.json();
     const refImages: string[] = Array.isArray(reference_images) ? reference_images.filter((s: any) => typeof s === 'string' && s.startsWith('data:')) : [];
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const geminiKeys = collectGeminiKeys();
     const forcePollinations = provider === 'pollinations';
+    const q: 'fast' | 'standard' | 'hd' | 'ultra' = ['fast','standard','hd','ultra'].includes(quality) ? quality : 'standard';
 
     const aiModel = model || "google/gemini-2.5-flash-image";
 
@@ -157,18 +158,39 @@ serve(async (req) => {
     // Se forçou Pollinations, pula direto pro fallback gratuito
     if (forcePollinations) {
       try {
-        const ratioMap: Record<string, { w: number; h: number }> = {
-          "1:1": { w: 1280, h: 1280 },
-          "16:9": { w: 1536, h: 864 },
-          "9:16": { w: 864, h: 1536 },
-          "4:3": { w: 1280, h: 960 },
-          "3:2": { w: 1440, h: 960 },
-          "21:9": { w: 1536, h: 656 },
+        const baseByQuality: Record<string, number> = { fast: 768, standard: 1152, hd: 1536, ultra: 2048 };
+        const base = baseByQuality[q];
+        const ratios: Record<string, [number, number]> = {
+          "1:1": [1, 1], "16:9": [16, 9], "9:16": [9, 16],
+          "4:3": [4, 3], "3:2": [3, 2], "21:9": [21, 9],
         };
+        const [rw, rh] = ratios[aspect_ratio || "1:1"] || [1, 1];
+        // scale so the longer side equals `base`
+        const scale = base / Math.max(rw, rh);
+        const w = Math.round(rw * scale);
+        const h = Math.round(rh * scale);
 
-        const dims = ratioMap[aspect_ratio || "1:1"] || ratioMap["1:1"];
         const seed = Math.floor(Math.random() * 1000000);
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(fullPrompt)}?width=${dims.w}&height=${dims.h}&nologo=true&private=true&enhance=true&safe=true&seed=${seed}&model=flux`;
+        const modelName = q === 'fast' ? 'turbo' : 'flux';
+        const enhance = q === 'hd' || q === 'ultra';
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(fullPrompt)}?width=${w}&height=${h}&nologo=true&private=true&enhance=${enhance}&safe=true&seed=${seed}&model=${modelName}`;
+        const imgRes = await fetch(url);
+        if (!imgRes.ok) throw new Error(`Pollinations ${imgRes.status}`);
+        const buf = await imgRes.arrayBuffer();
+        const base64 = bufToBase64(buf);
+
+        return new Response(
+          JSON.stringify({ imageUrl: `data:image/jpeg;base64,${base64}`, provider: `pollinations-${q}` }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      } catch (e) {
+        return new Response(
+          JSON.stringify({ error: `Pollinations falhou: ${e instanceof Error ? e.message : e}` }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
         const imgRes = await fetch(url);
         if (!imgRes.ok) throw new Error(`Pollinations ${imgRes.status}`);
         const buf = await imgRes.arrayBuffer();
