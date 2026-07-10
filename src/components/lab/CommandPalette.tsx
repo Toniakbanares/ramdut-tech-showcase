@@ -174,11 +174,51 @@ export const CommandPalette = ({ open, onClose, onSubmit, onMix, defaultMode = '
                   >
                     {c.label}
                   </button>
-                );
-              })}
+        {showQuality && (
+          <div className="border-t border-white/5 px-3 py-2 space-y-2">
+            <div>
+              <div className="text-[10px] uppercase tracking-widest text-neutral-500 mb-1.5">Proporção</div>
+              <div className="flex flex-wrap gap-1.5">
+                {ASPECTS.map((a) => (
+                  <button
+                    key={a}
+                    type="button"
+                    onClick={() => setAspect(a)}
+                    className={`h-9 min-h-[36px] px-3 rounded-lg text-xs font-mono transition-colors ${
+                      aspect === a
+                        ? 'bg-purple-600 text-white border border-purple-400'
+                        : 'bg-white/5 text-neutral-300 border border-white/10 hover:bg-white/10'
+                    }`}
+                  >
+                    {a}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <div className="text-[10px] uppercase tracking-widest text-neutral-500 mb-1.5">Qualidade</div>
+              <div className="grid grid-cols-4 gap-1.5">
+                {QUALITIES.map((q) => (
+                  <button
+                    key={q.id}
+                    type="button"
+                    onClick={() => setQuality(q.id)}
+                    className={`h-11 rounded-lg text-xs font-medium transition-colors flex flex-col items-center justify-center ${
+                      quality === q.id
+                        ? 'bg-gradient-to-br from-[#8B5CF6] to-[#06B6D4] text-white border border-purple-400'
+                        : 'bg-white/5 text-neutral-300 border border-white/10 hover:bg-white/10'
+                    }`}
+                  >
+                    <span>{q.label}</span>
+                    <span className="text-[9px] opacity-70">{q.hint}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         )}
+
+
 
         <div className="border-t border-white/5 p-3">
           <div className="text-[10px] uppercase tracking-widest text-neutral-500 mb-1">
