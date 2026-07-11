@@ -22,6 +22,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/chat" element={<Chat />} />
           <Route path="/imagine" element={<Imagine />} />
 
           {/* RAMU Lab V3 — canvas único, rotas SEO-friendly */}
