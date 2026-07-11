@@ -9,6 +9,7 @@ import Imagine from "./pages/Imagine";
 import SharePage from "./pages/SharePage";
 import ApiStatus from "./pages/ApiStatus";
 import RamonChat from "./pages/RamonChat";
+import Chat from "./pages/Chat";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
