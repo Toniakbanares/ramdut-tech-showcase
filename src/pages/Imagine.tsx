@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useLabStore } from '@/store/lab-store';
 import { useGenerationLimit } from '@/hooks/use-generation-limit';
 import { PixPaymentModal } from '@/components/PixPaymentModal';
+import { MobileBottomNav } from '@/components/MobileBottomNav';
 import { LumisIcon } from '@/components/lab/LumisIcon';
 import {
   getDeviceId, downloadDataUrl, type LabMode,
@@ -394,7 +395,7 @@ const Imagine = () => {
       </header>
 
       {/* Layout principal */}
-      <div className="max-w-[1600px] mx-auto px-4 py-4 lg:py-6">
+      <div className="max-w-[1600px] mx-auto px-4 py-4 lg:py-6 pb-40 lg:pb-6">
         <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4 lg:gap-6">
           {/* Sidebar — desktop */}
           <aside className={`hidden lg:flex flex-col gap-5 p-5 rounded-2xl ${t.glass} h-fit sticky top-20`}>
@@ -502,8 +503,8 @@ const Imagine = () => {
 
       {/* Bottom bar mobile/tablet */}
       <div
-        className={`lg:hidden fixed bottom-0 inset-x-0 z-30 ${t.glass} border-t ${t.border} px-3 pt-2`}
-        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 8px)' }}
+        className={`lg:hidden fixed inset-x-0 z-30 ${t.glass} border-t ${t.border} px-3 pt-2 pb-3`}
+        style={{ bottom: 'calc(env(safe-area-inset-bottom) + 64px)' }}
       >
         <div className="flex items-center gap-2">
           <button
@@ -601,6 +602,8 @@ const Imagine = () => {
           toast({ title: 'Pro ativado!', description: 'Geração ilimitada e HD liberados.' });
         }}
       />
+
+      <MobileBottomNav />
     </div>
   );
 };

@@ -3,7 +3,7 @@ import { MessageSquare, Wand2, Image as ImageIcon, Activity, Home } from 'lucide
 import { cn } from '@/lib/utils';
 
 const items = [
-  { to: '/chat', label: 'Chat IA', icon: MessageSquare },
+  { to: '/chat', label: 'Chat Ramu', icon: MessageSquare },
   { to: '/lab', label: 'Ferramentas', icon: Wand2 },
   { to: '/imagine', label: 'Imagens', icon: ImageIcon },
   { to: '/api-status', label: 'Status', icon: Activity },

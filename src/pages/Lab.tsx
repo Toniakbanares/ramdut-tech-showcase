@@ -27,6 +27,7 @@ import { CommandPalette } from '@/components/lab/CommandPalette';
 import { GenerationCard } from '@/components/lab/GenerationCard';
 import { Inspector } from '@/components/lab/Inspector';
 import { RamuAssistant } from '@/components/lab/RamuAssistant';
+import { MobileBottomNav } from '@/components/MobileBottomNav';
 import { MixModal } from '@/components/lab/MixModal';
 import { FabricEditor } from '@/components/lab/FabricEditor';
 import { PixPaymentModal } from '@/components/PixPaymentModal';
@@ -427,7 +428,7 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
       </header>
 
       {/* Canvas */}
-      <main className="pt-14 pb-24 lg:pb-0 h-screen">
+      <main className="pt-14 pb-40 lg:pb-0 h-screen">
         {cards.length === 0 && !generating && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none px-4">
             <motion.div
@@ -495,8 +496,8 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
 
       {/* Bottom command bar — mobile/tablet */}
       <div
-        className="lg:hidden fixed bottom-0 inset-x-0 z-40 ramu-glass border-t border-white/5 px-3 pt-3 pb-3"
-        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 12px)' }}
+        className="lg:hidden fixed inset-x-0 z-40 ramu-glass border-t border-white/5 px-3 pt-3 pb-3"
+        style={{ bottom: 'calc(env(safe-area-inset-bottom) + 64px)' }}
       >
         <div className="flex items-center gap-2">
           <button
@@ -573,6 +574,8 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
           toast({ title: 'Pro desbloqueado', description: 'Tudo em HD, sem blur, sem limite.' });
         }}
       />
+
+      <MobileBottomNav />
     </div>
   );
 };
