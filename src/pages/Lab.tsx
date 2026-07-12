@@ -574,6 +574,8 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
           toast({ title: 'Pro desbloqueado', description: 'Tudo em HD, sem blur, sem limite.' });
         }}
       />
+
+      <MobileBottomNav />
     </div>
   );
 };
