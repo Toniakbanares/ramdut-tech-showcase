@@ -496,7 +496,7 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
 
       {/* Bottom command bar — mobile/tablet */}
       <div
-        className="lg:hidden fixed inset-x-0 z-40 ramu-glass border-t border-white/5 px-3 pt-3 pb-3"
+        className="lg:hidden fixed inset-x-0 z-50 ramu-glass border-t border-white/5 px-3 pt-3 pb-3"
         style={{ bottom: 'calc(env(safe-area-inset-bottom) + 64px)' }}
       >
         <div className="flex items-center gap-2">

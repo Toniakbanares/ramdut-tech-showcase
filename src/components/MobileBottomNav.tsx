@@ -13,8 +13,13 @@ const items = [
 export const MobileBottomNav = () => {
   return (
     <nav
-      className="lg:hidden fixed bottom-0 inset-x-0 z-40 h-16 ramu-glass border-t border-white/10 flex items-stretch"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      className="lg:hidden fixed bottom-0 inset-x-0 z-[60] ramu-glass border-t border-white/10 flex items-stretch"
+      style={{
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        paddingLeft: 'env(safe-area-inset-left, 0px)',
+        paddingRight: 'env(safe-area-inset-right, 0px)',
+        minHeight: 'calc(64px + env(safe-area-inset-bottom, 0px))',
+      }}
       aria-label="Navegação principal"
     >
       {items.map(({ to, label, icon: Icon }) => (

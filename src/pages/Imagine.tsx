@@ -503,7 +503,7 @@ const Imagine = () => {
 
       {/* Bottom bar mobile/tablet */}
       <div
-        className={`lg:hidden fixed inset-x-0 z-30 ${t.glass} border-t ${t.border} px-3 pt-2 pb-3`}
+        className={`lg:hidden fixed inset-x-0 z-50 ${t.glass} border-t ${t.border} px-3 pt-2 pb-3`}
         style={{ bottom: 'calc(env(safe-area-inset-bottom) + 64px)' }}
       >
         <div className="flex items-center gap-2">
