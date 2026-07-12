@@ -27,6 +27,7 @@ import { CommandPalette } from '@/components/lab/CommandPalette';
 import { GenerationCard } from '@/components/lab/GenerationCard';
 import { Inspector } from '@/components/lab/Inspector';
 import { RamuAssistant } from '@/components/lab/RamuAssistant';
+import { MobileBottomNav } from '@/components/MobileBottomNav';
 import { MixModal } from '@/components/lab/MixModal';
 import { FabricEditor } from '@/components/lab/FabricEditor';
 import { PixPaymentModal } from '@/components/PixPaymentModal';
