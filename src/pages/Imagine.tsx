@@ -395,7 +395,7 @@ const Imagine = () => {
       </header>
 
       {/* Layout principal */}
-      <div className="max-w-[1600px] mx-auto px-4 py-4 lg:py-6">
+      <div className="max-w-[1600px] mx-auto px-4 py-4 lg:py-6 pb-40 lg:pb-6">
         <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4 lg:gap-6">
           {/* Sidebar — desktop */}
           <aside className={`hidden lg:flex flex-col gap-5 p-5 rounded-2xl ${t.glass} h-fit sticky top-20`}>
