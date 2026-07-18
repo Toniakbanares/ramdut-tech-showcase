@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Command } from 'cmdk';
 import {
-  Image as ImageIcon, FileCode, Crown, MessageSquare, Laugh, Sparkles, X, Wand2, Flower2,
+  Image as ImageIcon, FileCode, Crown, MessageSquare, Laugh, Sparkles, X, Wand2, Flower2, Music, Clapperboard,
 } from 'lucide-react';
 import type { LabMode } from '@/lib/lab-helpers';
 
@@ -25,6 +25,8 @@ const MODES: { id: LabMode; label: string; desc: string; icon: any }[] = [
   { id: 'pollinations', label: 'Pollinations (grátis)', desc: 'Flux ilimitado, sem chave', icon: Flower2 },
   { id: 'svg', label: 'SVG vetorial', desc: 'Recraft v3 — vetor editável', icon: FileCode },
   { id: 'pro-fal', label: 'Pro fal.ai', desc: 'Flux / SDXL / SD 3', icon: Crown },
+  { id: 'music', label: 'Compositor de Músicas', desc: 'Letra, acordes e estrutura', icon: Music },
+  { id: 'story', label: 'Roteiro de Vídeo', desc: 'História em cenas para vídeo', icon: Clapperboard },
   { id: 'chat', label: 'Chat / Texto', desc: 'Conversa, poemas, código', icon: MessageSquare },
   { id: 'meme', label: 'Meme', desc: 'Templates e personalizados', icon: Laugh },
 ];
