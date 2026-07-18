@@ -148,13 +148,23 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
       markGenerated();
 
       try {
-        if (mode === 'chat') {
+        if (mode === 'chat' || mode === 'music' || mode === 'story') {
+          const systemByMode: Record<string, string> = {
+            chat: 'Você é o Ramu, assistente criativo do RAMDUT AI Lab. Responda no idioma do usuário, seja claro e útil.',
+            music: 'Você é um compositor musical profissional. Dado um tema/estilo, produza: 1) Título, 2) Gênero e BPM sugerido, 3) Estrutura (Intro, Verso 1, Refrão, Verso 2, Refrão, Ponte, Refrão final), 4) Letra completa em português (ou no idioma do pedido) com métrica cantável, 5) Sugestão de acordes por seção (ex: Am F C G) e 6) Dicas de instrumentação e mood. Use markdown com títulos e listas.',
+            story: 'Você é um roteirista de vídeos curtos e longos. Dado uma ideia, entregue: 1) Logline em 1 frase, 2) Personagens principais, 3) Tom e estilo visual, 4) Estrutura em 3 atos, 5) Cenas numeradas com: LOCAL, DURAÇÃO estimada, AÇÃO/DESCRIÇÃO, DIÁLOGO, PROMPT DE IMAGEM (para gerar cada cena em IA), 6) Sugestão de trilha sonora. Português por padrão, markdown com títulos claros.',
+          };
           const { data, error } = await supabase.functions.invoke('ai-chat', {
-            body: { messages: [{ role: 'user', content: prompt }] },
+            body: {
+              messages: [
+                { role: 'system', content: systemByMode[mode] },
+                { role: 'user', content: prompt },
+              ],
+            },
           });
           if (error) throw error;
           const text = data?.message || data?.text || JSON.stringify(data);
-          addCard({ type: 'chat', prompt, text, model: 'gemini', parentId });
+          addCard({ type: mode, prompt, text, model: mode === 'chat' ? 'gemini' : `gemini-${mode}`, parentId });
         } else if (mode === 'svg') {
           const { data, error } = await supabase.functions.invoke('generate-fal', {
             body: { prompt, svg: true },
@@ -182,7 +192,8 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
           const { data, error } = await supabase.functions.invoke('generate-image', {
             body: {
               prompt: finalPrompt,
-              provider: 'pollinations',
+              // Só força Pollinations quando o usuário escolhe explicitamente esse modo
+              provider: mode === 'pollinations' ? 'pollinations' : undefined,
               aspect_ratio: opts?.aspect_ratio,
               quality: opts?.quality,
               reference_images: hasRefs ? referenceImages : undefined,
