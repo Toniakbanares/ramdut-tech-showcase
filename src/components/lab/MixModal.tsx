@@ -227,6 +227,34 @@ export const MixModal = ({ open, onOpenChange, onGenerate }: Props) => {
               );
             })}
 
+            <button
+              onClick={generateAllRefs}
+              disabled={bulk}
+              className="w-full h-11 rounded-xl bg-white/5 border border-white/10 text-sm text-white hover:bg-white/10 flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {bulk ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              Gerar todas as referências em paralelo
+            </button>
+
+            <div>
+              <div className="text-[10px] uppercase tracking-widest text-neutral-500 mb-1.5">Variações</div>
+              <div className="grid grid-cols-4 gap-1.5">
+                {[1, 2, 3, 4].map((n) => (
+                  <button
+                    key={n}
+                    onClick={() => setCount(n)}
+                    className={`h-11 rounded-lg text-sm font-medium transition-colors ${
+                      count === n
+                        ? 'bg-gradient-to-br from-[#8B5CF6] to-[#06B6D4] text-white border border-purple-400'
+                        : 'bg-white/5 text-neutral-300 border border-white/10 hover:bg-white/10'
+                    }`}
+                  >
+                    {n}x
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="rounded-lg bg-black/40 border border-white/5 p-3 text-xs text-neutral-400">
               <span className="text-neutral-500">Prompt final:</span>{' '}
               <span className="text-white">{buildPrompt() || '...'}</span>
@@ -237,8 +265,9 @@ export const MixModal = ({ open, onOpenChange, onGenerate }: Props) => {
               className="w-full h-12 bg-gradient-to-r from-[#8B5CF6] to-[#06B6D4] hover:opacity-90 text-white font-bold"
             >
               <Wand2 className="h-4 w-4 mr-2" />
-              Gerar com referências
+              Gerar {count > 1 ? `${count} variações` : 'com referências'}
             </Button>
+
           </div>
         </motion.div>
       </DialogContent>
