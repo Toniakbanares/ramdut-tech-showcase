@@ -358,12 +358,23 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
           isPro,
           selected: selectedId === c.id,
           onSelect: () => select(c.id),
-          onFork: () => handleGenerate(c.type, c.prompt, c.id),
+          onFork: () =>
+            handleGenerate(
+              c.type,
+              c.imageUrl
+                ? `${c.prompt} — nova variação: mantenha o mesmo sujeito e paleta da imagem de referência, mude ângulo, luz e composição. Alta fidelidade, sem texto, sem logo.`
+                : c.prompt,
+              c.id,
+              c.imageUrl ? [c.imageUrl] : undefined,
+              { quality: 'hd' },
+            ),
+          onRetry: () => handleRetry(c),
           onShare: () => handleShare(c),
           onDownload: () => handleDownload(c),
           onDelete: () => removeCard(c.id),
           onEdit: () => handleEdit(c),
           sharing: sharingId === c.id,
+
         },
         draggable: true,
       })),
