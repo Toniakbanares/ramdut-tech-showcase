@@ -137,7 +137,7 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
       prompt: string,
       parentId?: string,
       referenceImages?: string[],
-      opts?: { aspect_ratio?: string; quality?: 'fast' | 'standard' | 'hd' | 'ultra' },
+      opts?: { aspect_ratio?: string; quality?: 'fast' | 'standard' | 'hd' | 'ultra'; cardId?: string },
     ) => {
       if (cooldownRemaining() > 0) {
         toast({ title: 'Cooldown ativo', description: `Aguarde ${Math.ceil(cooldownRemaining() / 1000)}s.` });
@@ -147,6 +147,23 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
       setGenerating(true);
       markGenerated();
 
+      // Card-placeholder imediato (ou reaproveita o card em erro no retry)
+      let cardId = opts?.cardId;
+      if (cardId) {
+        updateCard(cardId, { status: 'loading', error: undefined });
+      } else {
+        cardId = addCard({
+          type: mode,
+          prompt,
+          parentId,
+          status: 'loading',
+          refs: referenceImages,
+        }).id;
+      }
+
+      const retryToast = (attempt: number) =>
+        toast({ title: `Tentando de novo (${attempt + 1}ª)`, description: 'O provedor falhou, reenviando…' });
+
       try {
         if (mode === 'chat' || mode === 'music' || mode === 'story') {
           const systemByMode: Record<string, string> = {
@@ -154,43 +171,43 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
             music: 'Você é um compositor musical profissional. Dado um tema/estilo, produza: 1) Título, 2) Gênero e BPM sugerido, 3) Estrutura (Intro, Verso 1, Refrão, Verso 2, Refrão, Ponte, Refrão final), 4) Letra completa em português (ou no idioma do pedido) com métrica cantável, 5) Sugestão de acordes por seção (ex: Am F C G) e 6) Dicas de instrumentação e mood. Use markdown com títulos e listas.',
             story: 'Você é um roteirista de vídeos curtos e longos. Dado uma ideia, entregue: 1) Logline em 1 frase, 2) Personagens principais, 3) Tom e estilo visual, 4) Estrutura em 3 atos, 5) Cenas numeradas com: LOCAL, DURAÇÃO estimada, AÇÃO/DESCRIÇÃO, DIÁLOGO, PROMPT DE IMAGEM (para gerar cada cena em IA), 6) Sugestão de trilha sonora. Português por padrão, markdown com títulos claros.',
           };
-          const { data, error } = await supabase.functions.invoke('ai-chat', {
-            body: {
+          const data = await invokeAi<any>(
+            'ai-chat',
+            {
               messages: [
                 { role: 'system', content: systemByMode[mode] },
                 { role: 'user', content: prompt },
               ],
             },
-          });
-          if (error) throw error;
-          const text = data?.message || data?.text || JSON.stringify(data);
-          addCard({ type: mode, prompt, text, model: mode === 'chat' ? 'gemini' : `gemini-${mode}`, parentId });
+            { onRetry: retryToast },
+          );
+          const text = data?.message || data?.text || '';
+          if (!text) throw new Error('Sem resultado');
+          updateCard(cardId, { text, model: mode === 'chat' ? 'gemini' : `gemini-${mode}`, status: 'done' });
         } else if (mode === 'svg') {
-          const { data, error } = await supabase.functions.invoke('generate-fal', {
-            body: { prompt, svg: true },
-          });
-          if (error) throw error;
-          if (data?.error) throw new Error(data.error);
+          const data = await invokeAi<any>('generate-fal', { prompt, svg: true }, { onRetry: retryToast });
           if (data?.svg) {
-            addCard({ type: 'svg', prompt, svg: enrichSvg(data.svg, prompt), model: data.provider, parentId });
+            updateCard(cardId, { svg: enrichSvg(data.svg, prompt), model: data.provider, status: 'done' });
           } else if (data?.imageUrl) {
-            addCard({ type: 'svg', prompt, imageUrl: data.imageUrl, model: data.provider, parentId });
+            updateCard(cardId, { imageUrl: data.imageUrl, model: data.provider, status: 'done' });
           } else {
             throw new Error('Sem resultado');
           }
         } else if (mode === 'pro-fal') {
-          const { data, error } = await supabase.functions.invoke('generate-fal', {
-            body: { prompt, model: 'flux-schnell' },
-          });
-          if (error) throw error;
-          if (data?.error) throw new Error(data.error);
-          addCard({ type: 'pro-fal', prompt, imageUrl: data.imageUrl, model: data.provider, parentId });
+          const data = await invokeAi<any>(
+            'generate-fal',
+            { prompt, model: 'flux-schnell' },
+            { onRetry: retryToast },
+          );
+          if (!data?.imageUrl) throw new Error('Sem imagem');
+          updateCard(cardId, { imageUrl: data.imageUrl, model: data.provider, status: 'done' });
         } else {
           const finalPrompt =
             mode === 'meme' ? `Meme estilo internet, engraçado, sobre: ${prompt}` : prompt;
           const hasRefs = !!(referenceImages && referenceImages.length);
-          const { data, error } = await supabase.functions.invoke('generate-image', {
-            body: {
+          const data = await invokeAi<any>(
+            'generate-image',
+            {
               prompt: finalPrompt,
               // Só força Pollinations quando o usuário escolhe explicitamente esse modo
               provider: mode === 'pollinations' ? 'pollinations' : undefined,
@@ -198,27 +215,48 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
               quality: opts?.quality,
               reference_images: hasRefs ? referenceImages : undefined,
             },
+            { onRetry: retryToast },
+          );
+          if (!data?.imageUrl) throw new Error('Sem imagem');
+          updateCard(cardId, {
+            imageUrl: data.imageUrl,
+            model: data.provider || 'pollinations',
+            status: 'done',
           });
-          if (error) throw error;
-          if (data?.error) throw new Error(data.error);
-          addCard({ type: mode, prompt, imageUrl: data.imageUrl, model: data.provider || 'pollinations', parentId });
         }
 
-
         limit.increment();
-      } catch (e: any) {
-        toast({
-          title: 'Falha na geração',
-          description: e?.message?.slice(0, 200) || 'Tente novamente',
-          variant: 'destructive',
-        });
+      } catch (e) {
+        const info = humanizeAiError(e);
+        updateCard(cardId, { status: 'error', error: info.description });
+        toast({ title: info.title, description: info.description, variant: 'destructive' });
       } finally {
         setGenerating(false);
       }
     },
-    [limit, addCard, markGenerated, cooldownRemaining, toast],
+    [limit, addCard, updateCard, markGenerated, cooldownRemaining, toast],
   );
 
+  // Retry direto do card em erro
+  const handleRetry = useCallback(
+    (c: LabCard) => {
+      handleGenerate(c.type, c.prompt, c.parentId, c.refs, { cardId: c.id });
+    },
+    [handleGenerate],
+  );
+
+  // Mistura dois cards: usa as duas imagens como referência real
+  const mixCards = useCallback(
+    (source: LabCard, target: LabCard) => {
+      const refs = [source.imageUrl, target.imageUrl].filter(Boolean) as string[];
+      const prompt =
+        `Funda os dois conceitos numa única imagem coesa: "${source.prompt}" + "${target.prompt}". ` +
+        `Mantenha o sujeito da primeira referência e o ambiente/estética da segunda. ` +
+        `Composição profissional, iluminação consistente, altíssimo detalhe, sem colagem, sem texto, sem logo.`;
+      handleGenerate('image', prompt, source.id, refs, { quality: 'hd' });
+    },
+    [handleGenerate],
+  );
 
   const onConnect = useCallback(
     (params: Connection) => {
@@ -226,23 +264,28 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
       const source = cards.find((c) => c.id === params.source);
       const target = cards.find((c) => c.id === params.target);
       if (!source || !target) return;
-      const refs = [source.imageUrl, target.imageUrl].filter(Boolean) as string[];
-      const prompt = `Misture em uma imagem única e profissional: ${source.prompt}; ${target.prompt}. Alta qualidade, composição coerente, detalhes nítidos, sem texto e sem logo.`;
-      handleGenerate('image', prompt, source.id, refs);
+      mixCards(source, target);
     },
-    [cards, handleGenerate, setEdges],
+    [cards, mixCards, setEdges],
   );
 
-  // Mix: gera N variações com as mesmas referências
+  // Mix: gera N variações em paralelo com as mesmas referências
   const handleMix = useCallback(
     async (prompt: string, references: string[], count = 1) => {
-      for (let i = 0; i < count; i++) {
-        const seeded = count > 1 ? `${prompt} (variação ${i + 1})` : prompt;
-        await handleGenerate('image', seeded, undefined, references);
-      }
+      const jobs = Array.from({ length: count }, (_, i) =>
+        handleGenerate(
+          'image',
+          count > 1 ? `${prompt} (variação ${i + 1}, ângulo e composição diferentes)` : prompt,
+          undefined,
+          references,
+          { quality: 'hd' },
+        ),
+      );
+      await Promise.allSettled(jobs);
     },
     [handleGenerate],
   );
+
 
   // Salvar resultado do editor como novo card
   const handleEditorSave = useCallback(
