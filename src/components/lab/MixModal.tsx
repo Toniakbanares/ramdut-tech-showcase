@@ -38,6 +38,8 @@ async function fileToDataUrl(file: File): Promise<string> {
 
 export const MixModal = ({ open, onOpenChange, onGenerate }: Props) => {
   const { toast } = useToast();
+  const [count, setCount] = useState(1);
+  const [bulk, setBulk] = useState(false);
   const [slots, setSlots] = useState<Record<SlotKey, Slot>>({
     objeto: { text: '' },
     local: { text: '' },
@@ -46,6 +48,7 @@ export const MixModal = ({ open, onOpenChange, onGenerate }: Props) => {
   const fileInputRefs = useRef<Record<SlotKey, HTMLInputElement | null>>({
     objeto: null, local: null, estilo: null,
   });
+
 
   const update = (key: SlotKey, patch: Partial<Slot>) =>
     setSlots((s) => ({ ...s, [key]: { ...s[key], ...patch } }));
