@@ -1,14 +1,15 @@
 import { NavLink } from 'react-router-dom';
-import { MessageSquare, Wand2, Image as ImageIcon, Activity, Home } from 'lucide-react';
+import { MessageSquare, Wand2, Image as ImageIcon, Clapperboard, Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const items = [
   { to: '/chat', label: 'Chat Ramu', icon: MessageSquare },
+  { to: '/studio', label: 'Studio', icon: Clapperboard },
   { to: '/lab', label: 'Ferramentas', icon: Wand2 },
   { to: '/imagine', label: 'Imagens', icon: ImageIcon },
-  { to: '/api-status', label: 'Status', icon: Activity },
   { to: '/', label: 'Início', icon: Home },
 ];
+
 
 export const MobileBottomNav = () => {
   return (
