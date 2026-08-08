@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { LabMode } from '@/lib/lab-helpers';
 
+export type CardStatus = 'loading' | 'done' | 'error';
+
 export interface LabCard {
   id: string;
   type: LabMode;
@@ -14,7 +16,11 @@ export interface LabCard {
   createdAt: number;
   shareId?: string;      // id no banco quando compartilhado
   parentId?: string;     // referência ao card pai (fork)
+  status?: CardStatus;   // estado da geração
+  error?: string;        // mensagem amigável quando status === 'error'
+  refs?: string[];       // imagens de referência usadas (para retry/fork)
 }
+
 
 interface LabState {
   cards: LabCard[];
