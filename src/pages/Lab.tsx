@@ -39,6 +39,8 @@ import {
   downloadDataUrl,
   downloadText,
 } from '@/lib/lab-helpers';
+import { invokeAi, humanizeAiError } from '@/lib/ai-invoke';
+
 
 const nodeTypes: NodeTypes = { generation: GenerationCard };
 

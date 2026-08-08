@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Download, Share2, GitFork, Trash2, Lock, Loader2, Wand2 } from 'lucide-react';
+import { Download, Share2, GitFork, Trash2, Lock, Loader2, Wand2, RefreshCw, AlertTriangle } from 'lucide-react';
 import { Handle, Position } from 'reactflow';
 import type { LabCard } from '@/store/lab-store';
 import { MODE_META } from '@/lib/lab-helpers';
@@ -15,14 +15,17 @@ interface Props {
     onDownload: () => void;
     onDelete: () => void;
     onEdit: () => void;
+    onRetry: () => void;
     sharing?: boolean;
   };
 }
 
 export const GenerationCard = ({ data }: Props) => {
-  const { card, isPro, selected, onSelect, onFork, onShare, onDownload, onDelete, onEdit, sharing } = data;
+  const { card, isPro, selected, onSelect, onFork, onShare, onDownload, onDelete, onEdit, onRetry, sharing } = data;
   const meta = MODE_META[card.type];
   const isImage = !!card.imageUrl;
+  const isLoading = card.status === 'loading';
+  const isError = card.status === 'error';
 
   return (
     <motion.div
@@ -32,7 +35,7 @@ export const GenerationCard = ({ data }: Props) => {
       transition={{ type: 'spring', stiffness: 400, damping: 40 }}
       onClick={onSelect}
       className={`w-[280px] sm:w-[300px] rounded-xl overflow-hidden ramu-glass cursor-pointer transition-all ${
-        selected ? 'ring-2 ring-[#8B5CF6]' : 'ramu-card-border'
+        selected ? 'ring-2 ring-[#8B5CF6]' : isError ? 'ring-1 ring-red-500/50' : 'ramu-card-border'
       }`}
     >
       <Handle type="target" position={Position.Top} id="in-top" className="!bg-[#8B5CF6] !border-2 !border-white/30 !w-5 !h-5 md:!w-4 md:!h-4 hover:!scale-125 transition-transform" />
@@ -47,10 +50,35 @@ export const GenerationCard = ({ data }: Props) => {
       </div>
 
       <div className="relative aspect-square bg-neutral-900 flex items-center justify-center">
+        {isLoading && (
+          <div className="absolute inset-0 grid place-items-center bg-gradient-to-br from-[#8B5CF6]/10 to-[#06B6D4]/10">
+            <div className="text-center px-4">
+              <Loader2 className="h-7 w-7 mx-auto text-[#8B5CF6] animate-spin mb-2" />
+              <p className="text-xs text-neutral-400">Gerando… isso leva alguns segundos</p>
+            </div>
+          </div>
+        )}
+
+        {isError && (
+          <div className="absolute inset-0 grid place-items-center bg-red-950/30 px-4">
+            <div className="text-center">
+              <AlertTriangle className="h-7 w-7 mx-auto text-red-400 mb-2" />
+              <p className="text-[11px] text-neutral-300 mb-3 line-clamp-4">{card.error || 'Falha na geração'}</p>
+              <button
+                onClick={(e) => { e.stopPropagation(); onRetry(); }}
+                className="min-h-[44px] px-4 rounded-lg ramu-accent-bg text-white text-xs font-medium inline-flex items-center gap-1.5"
+              >
+                <RefreshCw className="h-3.5 w-3.5" /> Tentar novamente
+              </button>
+            </div>
+          </div>
+        )}
+
         {card.imageUrl && (
           <img
             src={card.imageUrl}
             alt={card.prompt}
+            loading="lazy"
             className={`w-full h-full object-cover ${!isPro ? 'blur-md' : ''}`}
             draggable={false}
           />
@@ -98,23 +126,25 @@ export const GenerationCard = ({ data }: Props) => {
           </button>
         )}
         <button
-          onClick={(e) => { e.stopPropagation(); onFork(); }}
-          className="min-h-[44px] text-xs text-neutral-300 hover:text-white hover:bg-white/5 rounded flex flex-col items-center justify-center gap-0.5"
+          onClick={(e) => { e.stopPropagation(); isError ? onRetry() : onFork(); }}
+          disabled={isLoading}
+          className="min-h-[44px] text-xs text-neutral-300 hover:text-white hover:bg-white/5 rounded flex flex-col items-center justify-center gap-0.5 disabled:opacity-30"
+          title={isError ? 'Tentar novamente' : 'Fork — nova variação a partir desta'}
         >
-          <GitFork className="h-3.5 w-3.5" />
-          <span className="text-[10px]">Fork</span>
+          {isError ? <RefreshCw className="h-3.5 w-3.5" /> : <GitFork className="h-3.5 w-3.5" />}
+          <span className="text-[10px]">{isError ? 'Retry' : 'Fork'}</span>
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); onShare(); }}
-          disabled={sharing}
-          className="min-h-[44px] text-xs text-neutral-300 hover:text-white hover:bg-white/5 rounded flex flex-col items-center justify-center gap-0.5 disabled:opacity-50"
+          disabled={sharing || isLoading || isError}
+          className="min-h-[44px] text-xs text-neutral-300 hover:text-white hover:bg-white/5 rounded flex flex-col items-center justify-center gap-0.5 disabled:opacity-30"
         >
           {sharing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Share2 className="h-3.5 w-3.5" />}
           <span className="text-[10px]">Share</span>
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); onDownload(); }}
-          disabled={!isPro && !!(card.imageUrl || card.svg)}
+          disabled={isLoading || isError || (!isPro && !!(card.imageUrl || card.svg))}
           className="min-h-[44px] text-xs text-neutral-300 hover:text-white hover:bg-white/5 rounded flex flex-col items-center justify-center gap-0.5 disabled:opacity-30"
           title={!isPro && (card.imageUrl || card.svg) ? 'Pro pra baixar' : 'Download'}
         >
