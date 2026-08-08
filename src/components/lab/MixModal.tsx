@@ -75,20 +75,34 @@ export const MixModal = ({ open, onOpenChange, onGenerate }: Props) => {
         : key === 'local' ? `${txt}, empty scene background reference, wide shot, no people, cinematic`
         : `style reference: ${txt}, abstract texture sample, no subject, high detail`;
       // Referências usam Pollinations (grátis, ilimitado, rápido)
-      const { data, error } = await supabase.functions.invoke('generate-image', {
-        body: { prompt: promptByKey, provider: 'pollinations' },
+      const data = await invokeAi<any>('generate-image', {
+        prompt: promptByKey,
+        provider: 'pollinations',
+        quality: 'fast',
       });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
       if (!data?.imageUrl) throw new Error('Sem imagem');
       update(key, { image: data.imageUrl });
-    } catch (e: any) {
-      toast({ title: 'Falha ao gerar referência', description: e?.message?.slice(0, 200), variant: 'destructive' });
+    } catch (e) {
+      const info = humanizeAiError(e);
+      toast({ title: 'Falha na referência', description: info.description, variant: 'destructive' });
     } finally {
       update(key, { generating: false });
     }
   };
 
+  // Gera em paralelo todas as referências que têm texto e ainda não têm imagem
+  const generateAllRefs = async () => {
+    const pending = (Object.keys(SLOT_META) as SlotKey[]).filter(
+      (k) => slots[k].text.trim() && !slots[k].image,
+    );
+    if (!pending.length) {
+      toast({ title: 'Nada pra gerar', description: 'Descreva ao menos um campo sem referência.' });
+      return;
+    }
+    setBulk(true);
+    await Promise.allSettled(pending.map((k) => generateRef(k)));
+    setBulk(false);
+  };
 
   const buildPrompt = () => {
     const parts: string[] = [];
@@ -112,10 +126,11 @@ export const MixModal = ({ open, onOpenChange, onGenerate }: Props) => {
       return;
     }
     const refs = [slots.objeto.image, slots.local.image, slots.estilo.image].filter(Boolean) as string[];
-    onGenerate(prompt, refs, 1);
+    onGenerate(prompt, refs, count);
     onOpenChange(false);
     setSlots({ objeto: { text: '' }, local: { text: '' }, estilo: { text: '' } });
   };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
