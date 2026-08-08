@@ -88,7 +88,9 @@ export const useLabStore = create<LabState>()(
     }),
     {
       name: 'ramu-lab-store',
-      partialize: (s) => ({ cards: s.cards }),
+      // não persiste cards em andamento (evita "loading" fantasma ao recarregar)
+      partialize: (s) => ({ cards: s.cards.filter((c) => c.status !== 'loading') }),
     },
+
   ),
 );

@@ -73,9 +73,9 @@ export async function invokeAi<T = any>(
     try {
       const { data, error } = await supabase.functions.invoke(fn, {
         body,
-        // @ts-expect-error supabase-js aceita signal em runtime
         signal: controller.signal,
       });
+
       clearTimeout(timer);
 
       if (error) throw new AiError(error.message || 'Erro na função', 'invoke', true);
