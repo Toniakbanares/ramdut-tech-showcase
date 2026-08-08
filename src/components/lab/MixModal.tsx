@@ -3,8 +3,9 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/compone
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { Wand2, Sparkles, Upload, ImagePlus, X, Loader2 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { invokeAi, humanizeAiError } from '@/lib/ai-invoke';
 import { useToast } from '@/hooks/use-toast';
+
 
 interface Props {
   open: boolean;
