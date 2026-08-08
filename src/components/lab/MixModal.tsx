@@ -3,8 +3,9 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/compone
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { Wand2, Sparkles, Upload, ImagePlus, X, Loader2 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { invokeAi, humanizeAiError } from '@/lib/ai-invoke';
 import { useToast } from '@/hooks/use-toast';
+
 
 interface Props {
   open: boolean;
@@ -38,6 +39,8 @@ async function fileToDataUrl(file: File): Promise<string> {
 
 export const MixModal = ({ open, onOpenChange, onGenerate }: Props) => {
   const { toast } = useToast();
+  const [count, setCount] = useState(1);
+  const [bulk, setBulk] = useState(false);
   const [slots, setSlots] = useState<Record<SlotKey, Slot>>({
     objeto: { text: '' },
     local: { text: '' },
@@ -46,6 +49,7 @@ export const MixModal = ({ open, onOpenChange, onGenerate }: Props) => {
   const fileInputRefs = useRef<Record<SlotKey, HTMLInputElement | null>>({
     objeto: null, local: null, estilo: null,
   });
+
 
   const update = (key: SlotKey, patch: Partial<Slot>) =>
     setSlots((s) => ({ ...s, [key]: { ...s[key], ...patch } }));
@@ -72,20 +76,34 @@ export const MixModal = ({ open, onOpenChange, onGenerate }: Props) => {
         : key === 'local' ? `${txt}, empty scene background reference, wide shot, no people, cinematic`
         : `style reference: ${txt}, abstract texture sample, no subject, high detail`;
       // Referências usam Pollinations (grátis, ilimitado, rápido)
-      const { data, error } = await supabase.functions.invoke('generate-image', {
-        body: { prompt: promptByKey, provider: 'pollinations' },
+      const data = await invokeAi<any>('generate-image', {
+        prompt: promptByKey,
+        provider: 'pollinations',
+        quality: 'fast',
       });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
       if (!data?.imageUrl) throw new Error('Sem imagem');
       update(key, { image: data.imageUrl });
-    } catch (e: any) {
-      toast({ title: 'Falha ao gerar referência', description: e?.message?.slice(0, 200), variant: 'destructive' });
+    } catch (e) {
+      const info = humanizeAiError(e);
+      toast({ title: 'Falha na referência', description: info.description, variant: 'destructive' });
     } finally {
       update(key, { generating: false });
     }
   };
 
+  // Gera em paralelo todas as referências que têm texto e ainda não têm imagem
+  const generateAllRefs = async () => {
+    const pending = (Object.keys(SLOT_META) as SlotKey[]).filter(
+      (k) => slots[k].text.trim() && !slots[k].image,
+    );
+    if (!pending.length) {
+      toast({ title: 'Nada pra gerar', description: 'Descreva ao menos um campo sem referência.' });
+      return;
+    }
+    setBulk(true);
+    await Promise.allSettled(pending.map((k) => generateRef(k)));
+    setBulk(false);
+  };
 
   const buildPrompt = () => {
     const parts: string[] = [];
@@ -109,10 +127,11 @@ export const MixModal = ({ open, onOpenChange, onGenerate }: Props) => {
       return;
     }
     const refs = [slots.objeto.image, slots.local.image, slots.estilo.image].filter(Boolean) as string[];
-    onGenerate(prompt, refs, 1);
+    onGenerate(prompt, refs, count);
     onOpenChange(false);
     setSlots({ objeto: { text: '' }, local: { text: '' }, estilo: { text: '' } });
   };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -208,6 +227,34 @@ export const MixModal = ({ open, onOpenChange, onGenerate }: Props) => {
               );
             })}
 
+            <button
+              onClick={generateAllRefs}
+              disabled={bulk}
+              className="w-full h-11 rounded-xl bg-white/5 border border-white/10 text-sm text-white hover:bg-white/10 flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {bulk ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              Gerar todas as referências em paralelo
+            </button>
+
+            <div>
+              <div className="text-[10px] uppercase tracking-widest text-neutral-500 mb-1.5">Variações</div>
+              <div className="grid grid-cols-4 gap-1.5">
+                {[1, 2, 3, 4].map((n) => (
+                  <button
+                    key={n}
+                    onClick={() => setCount(n)}
+                    className={`h-11 rounded-lg text-sm font-medium transition-colors ${
+                      count === n
+                        ? 'bg-gradient-to-br from-[#8B5CF6] to-[#06B6D4] text-white border border-purple-400'
+                        : 'bg-white/5 text-neutral-300 border border-white/10 hover:bg-white/10'
+                    }`}
+                  >
+                    {n}x
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="rounded-lg bg-black/40 border border-white/5 p-3 text-xs text-neutral-400">
               <span className="text-neutral-500">Prompt final:</span>{' '}
               <span className="text-white">{buildPrompt() || '...'}</span>
@@ -218,8 +265,9 @@ export const MixModal = ({ open, onOpenChange, onGenerate }: Props) => {
               className="w-full h-12 bg-gradient-to-r from-[#8B5CF6] to-[#06B6D4] hover:opacity-90 text-white font-bold"
             >
               <Wand2 className="h-4 w-4 mr-2" />
-              Gerar com referências
+              Gerar {count > 1 ? `${count} variações` : 'com referências'}
             </Button>
+
           </div>
         </motion.div>
       </DialogContent>

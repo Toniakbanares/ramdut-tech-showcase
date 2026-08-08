@@ -10,6 +10,8 @@ import SharePage from "./pages/SharePage";
 import ApiStatus from "./pages/ApiStatus";
 import RamonChat from "./pages/RamonChat";
 import Chat from "./pages/Chat";
+import Studio from "./pages/Studio";
+
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +26,8 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/chat" element={<Chat />} />
           <Route path="/imagine" element={<Imagine />} />
+          <Route path="/studio" element={<Studio />} />
+
 
           {/* RAMU Lab V3 — canvas único, rotas SEO-friendly */}
           <Route path="/lab" element={<Lab metaKey="default" />} />
