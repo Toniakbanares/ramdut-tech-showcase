@@ -236,9 +236,9 @@ const Studio = () => {
     setReference(await fileToDataUrl(f));
   };
 
-  const title = 'RAMDUT Studio — Gerador de imagens IA com presets cinematográficos';
+  const title = 'RAMDUT Studio — Gerador de imagens e memes com IA';
   const description =
-    'Studio de criação visual com IA: presets cinematográficos, remix por referência, lote de variações e download em alta. Grátis, mobile-first.';
+    'Studio de criação visual com IA: presets cinematográficos, gerador de memes de gatos, pets e pessoas, remix por referência e download em alta. Grátis e mobile-first.';
 
   return (
     <div className="min-h-screen bg-[#0A0A0B] text-white">
