@@ -4,13 +4,14 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, Sparkles, Loader2, Download, Share2, RefreshCw, X, Upload,
-  AlertTriangle, Wand2, ImagePlus, Layers,
+  AlertTriangle, Wand2, ImagePlus, Layers, Laugh, Maximize2, Grid2x2, Grid3x3,
 } from 'lucide-react';
 
 import { MobileBottomNav } from '@/components/MobileBottomNav';
 import { useToast } from '@/hooks/use-toast';
 import { invokeAi, humanizeAiError } from '@/lib/ai-invoke';
 import { downloadDataUrl } from '@/lib/lab-helpers';
+import { composeMeme, MEME_SUBJECTS, MEME_STYLES } from '@/lib/meme';
 
 type Quality = 'fast' | 'standard' | 'hd' | 'ultra';
 
