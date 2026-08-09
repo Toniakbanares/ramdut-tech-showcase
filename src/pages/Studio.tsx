@@ -454,19 +454,21 @@ const Studio = () => {
           </div>
 
           {/* Aspect */}
-          <div className="flex flex-wrap gap-1.5">
-            {ASPECTS.map((a) => (
-              <button
-                key={a}
-                onClick={() => setAspect(a)}
-                className={`h-10 px-3 rounded-lg text-xs font-mono ${
-                  aspect === a ? 'bg-purple-600 text-white' : 'bg-white/5 border border-white/10 text-neutral-300'
-                }`}
-              >
-                {a}
-              </button>
-            ))}
-          </div>
+          {tab === 'create' && (
+            <div className="flex flex-wrap gap-1.5">
+              {ASPECTS.map((a) => (
+                <button
+                  key={a}
+                  onClick={() => setAspect(a)}
+                  className={`h-10 px-3 rounded-lg text-xs font-mono ${
+                    aspect === a ? 'bg-purple-600 text-white' : 'bg-white/5 border border-white/10 text-neutral-300'
+                  }`}
+                >
+                  {a}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Quality + batch */}
           <div className="grid grid-cols-4 gap-1.5">
@@ -499,24 +501,45 @@ const Studio = () => {
           </div>
 
           <button
-            onClick={generate}
+            onClick={tab === 'meme' ? generateMeme : generate}
             disabled={busy}
             className="w-full h-14 rounded-2xl bg-gradient-to-r from-[#8B5CF6] to-[#06B6D4] font-bold flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.99] transition-transform"
           >
-            {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5" />}
-            {busy ? 'Criando…' : `Criar ${batch > 1 ? `${batch} imagens` : 'imagem'}`}
+            {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : tab === 'meme' ? <Laugh className="h-5 w-5" /> : <Sparkles className="h-5 w-5" />}
+            {busy
+              ? 'Criando…'
+              : tab === 'meme'
+                ? `Criar ${batch > 1 ? `${batch} memes` : 'meme'}`
+                : `Criar ${batch > 1 ? `${batch} imagens` : 'imagem'}`}
           </button>
         </section>
 
         {/* Galeria */}
         <section className="mt-5">
+          {shots.length > 0 && (
+            <div className="flex items-center gap-2 mb-2">
+              <h2 className="text-[10px] uppercase tracking-widest text-neutral-500 flex-1">Galeria</h2>
+              <button
+                onClick={() => setDense((d) => !d)}
+                className="h-9 px-3 rounded-lg bg-white/5 border border-white/10 text-[11px] text-neutral-300 flex items-center gap-1.5"
+                aria-label="Alternar tamanho das miniaturas"
+              >
+                {dense ? <Grid3x3 className="h-3.5 w-3.5" /> : <Grid2x2 className="h-3.5 w-3.5" />}
+                {dense ? 'Compacto' : 'Grande'}
+              </button>
+            </div>
+          )}
           {shots.length === 0 ? (
             <div className="text-center py-14 text-neutral-500">
               <Wand2 className="h-10 w-10 mx-auto mb-3 text-[#8B5CF6]/60" />
-              <p className="text-sm">Escolha um preset, descreva a cena e crie.</p>
+              <p className="text-sm">
+                {tab === 'meme'
+                  ? 'Escolha o personagem, escreva a legenda e gere seu meme.'
+                  : 'Escolha um preset, descreva a cena e crie.'}
+              </p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5">
+            <div className={`grid gap-2.5 ${dense ? 'grid-cols-3 md:grid-cols-4' : 'grid-cols-2 md:grid-cols-3'}`}>
               <AnimatePresence initial={false}>
                 {shots.map((s) => (
                   <motion.article
@@ -530,7 +553,7 @@ const Studio = () => {
                     <div className="relative aspect-square bg-neutral-900 grid place-items-center">
                       {s.status === 'loading' && <Loader2 className="h-6 w-6 animate-spin text-[#8B5CF6]" />}
                       {s.status === 'error' && (
-                        <div className="text-center px-3">
+                        <div className="text-center px-2">
                           <AlertTriangle className="h-6 w-6 mx-auto text-red-400 mb-1.5" />
                           <p className="text-[10px] text-neutral-400 line-clamp-3 mb-2">{s.error}</p>
                           <button
@@ -542,10 +565,16 @@ const Studio = () => {
                         </div>
                       )}
                       {s.imageUrl && (
-                        <img src={s.imageUrl} alt={s.prompt} loading="lazy" className="w-full h-full object-cover" />
+                        <button onClick={() => setZoom(s)} className="absolute inset-0" aria-label="Ampliar imagem">
+                          <img src={s.imageUrl} alt={s.prompt} loading="lazy" className="w-full h-full object-cover" />
+                          {s.isMeme && <MemeCaption top={s.memeTop} bottom={s.memeBottom} />}
+                          <span className="absolute bottom-1 right-1 h-7 w-7 rounded-lg bg-black/60 grid place-items-center">
+                            <Maximize2 className="h-3.5 w-3.5 text-white" />
+                          </span>
+                        </button>
                       )}
                     </div>
-                    <p className="px-2.5 py-2 text-[11px] text-neutral-400 line-clamp-2">{s.prompt}</p>
+                    {!dense && <p className="px-2.5 py-2 text-[11px] text-neutral-400 line-clamp-2">{s.prompt}</p>}
                     {s.status === 'done' && (
                       <div className="grid grid-cols-3 border-t border-white/5">
                         <button
@@ -555,7 +584,7 @@ const Studio = () => {
                           <Wand2 className="h-3.5 w-3.5" /> Remix
                         </button>
                         <button
-                          onClick={() => s.imageUrl && downloadDataUrl(s.imageUrl, `ramdut-${s.id.slice(0, 6)}.png`)}
+                          onClick={() => downloadShot(s)}
                           className="min-h-[44px] text-[10px] text-neutral-300 hover:bg-white/5 flex flex-col items-center justify-center gap-0.5"
                         >
                           <Download className="h-3.5 w-3.5" /> Baixar
@@ -574,6 +603,32 @@ const Studio = () => {
             </div>
           )}
         </section>
+
+        {/* Zoom */}
+        <AnimatePresence>
+          {zoom?.imageUrl && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[70] bg-black/90 grid place-items-center p-4"
+              onClick={() => setZoom(null)}
+            >
+              <div className="relative max-w-full max-h-[80vh]">
+                <img src={zoom.imageUrl} alt={zoom.prompt} className="max-w-full max-h-[80vh] object-contain rounded-xl" />
+                {zoom.isMeme && <MemeCaption top={zoom.memeTop} bottom={zoom.memeBottom} />}
+              </div>
+              <button
+                onClick={() => setZoom(null)}
+                className="absolute top-4 right-4 h-11 w-11 rounded-full bg-white/10 grid place-items-center"
+                aria-label="Fechar"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
       </main>
 
       <MobileBottomNav />
