@@ -107,9 +107,10 @@ const Studio = () => {
   const runShot = useCallback(
     async (shot: Shot) => {
       try {
-        const full = activePreset && shot.prompt.indexOf(activePreset.suffix) === -1
-          ? `${shot.prompt}, ${activePreset.suffix}`
-          : shot.prompt;
+        const full =
+          !shot.isMeme && activePreset && shot.prompt.indexOf(activePreset.suffix) === -1
+            ? `${shot.prompt}, ${activePreset.suffix}`
+            : shot.prompt;
 
         const data =
           shot.engine === 'pro-fal'
@@ -152,6 +153,55 @@ const Studio = () => {
     await Promise.allSettled(newShots.map(runShot));
     setBusy(false);
   }, [prompt, batch, engine, aspect, quality, reference, runShot, toast]);
+
+  const generateMeme = useCallback(async () => {
+    const subject = MEME_SUBJECTS.find((s) => s.id === memeSubject);
+    const style = MEME_STYLES.find((s) => s.id === memeStyle);
+    const idea = memeIdea.trim();
+    if (!subject && !idea) {
+      toast({ title: 'Escolha um personagem', description: 'Ou escreva a ideia do meme.' });
+      return;
+    }
+    if (!memeTop.trim() && !memeBottom.trim()) {
+      toast({ title: 'Escreva a legenda', description: 'Preencha o texto de cima ou o de baixo.' });
+      return;
+    }
+    setBusy(true);
+    const scene = [subject?.prompt, idea].filter(Boolean).join(', ');
+    const newShots: Shot[] = Array.from({ length: batch }, (_, i) => ({
+      id: crypto.randomUUID(),
+      prompt: `${scene}${batch > 1 ? ` (variação ${i + 1})` : ''}, ${style?.suffix ?? ''}, no text, no watermark, centered subject, plenty of empty space at top and bottom for caption`,
+      status: 'loading',
+      engine,
+      aspect: '1:1',
+      quality,
+      ref: reference,
+      isMeme: true,
+      memeTop,
+      memeBottom,
+    }));
+    setShots((s) => [...newShots, ...s]);
+    await Promise.allSettled(newShots.map(runShot));
+    setBusy(false);
+  }, [memeSubject, memeStyle, memeIdea, memeTop, memeBottom, batch, engine, quality, reference, runShot, toast]);
+
+  const downloadShot = useCallback(
+    async (shot: Shot) => {
+      if (!shot.imageUrl) return;
+      const name = `ramdut-${shot.isMeme ? 'meme-' : ''}${shot.id.slice(0, 6)}.png`;
+      if (shot.isMeme) {
+        const composed = await composeMeme(shot.imageUrl, { top: shot.memeTop, bottom: shot.memeBottom });
+        if (composed) {
+          downloadDataUrl(composed, name);
+          return;
+        }
+        toast({ title: 'Baixando a imagem base', description: 'A legenda continua visível no card.' });
+      }
+      downloadDataUrl(shot.imageUrl, name);
+    },
+    [toast],
+  );
+
 
   const retry = (shot: Shot) => {
     patch(shot.id, { status: 'loading', error: undefined });
