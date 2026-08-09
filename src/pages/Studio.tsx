@@ -60,6 +60,10 @@ interface Shot {
   aspect: string;
   quality: Quality;
   ref?: string;
+  /** legendas quando o card é um meme */
+  memeTop?: string;
+  memeBottom?: string;
+  isMeme?: boolean;
 }
 
 const fileToDataUrl = (file: File) =>
@@ -74,6 +78,7 @@ const Studio = () => {
   const { toast } = useToast();
   const fileRef = useRef<HTMLInputElement | null>(null);
 
+  const [tab, setTab] = useState<'create' | 'meme'>('create');
   const [prompt, setPrompt] = useState('');
   const [preset, setPreset] = useState<string | null>('cinematic');
   const [engine, setEngine] = useState<'auto' | 'pollinations' | 'pro-fal'>('auto');
@@ -83,6 +88,16 @@ const Studio = () => {
   const [reference, setReference] = useState<string | undefined>();
   const [shots, setShots] = useState<Shot[]>([]);
   const [busy, setBusy] = useState(false);
+  /** densidade da galeria — resolve imagens gigantes no celular */
+  const [dense, setDense] = useState(true);
+  const [zoom, setZoom] = useState<Shot | null>(null);
+
+  // Meme
+  const [memeSubject, setMemeSubject] = useState('cat');
+  const [memeStyle, setMemeStyle] = useState('photo');
+  const [memeIdea, setMemeIdea] = useState('');
+  const [memeTop, setMemeTop] = useState('');
+  const [memeBottom, setMemeBottom] = useState('');
 
   const activePreset = useMemo(() => PRESETS.find((p) => p.id === preset), [preset]);
 
