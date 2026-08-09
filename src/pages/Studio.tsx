@@ -51,7 +51,10 @@ const QUALITIES: { id: Quality; label: string }[] = [
 
 /** Legenda estilo meme renderizada por cima da imagem */
 const MemeCaption = ({ top, bottom }: { top?: string; bottom?: string }) => (
-  <span className="pointer-events-none absolute inset-0 flex flex-col justify-between p-[4%]">
+  <span
+    className="pointer-events-none absolute inset-0 flex flex-col justify-between p-[4%]"
+    style={{ containerType: 'inline-size' }}
+  >
     <span className="ramu-meme-text">{top?.toUpperCase()}</span>
     <span className="ramu-meme-text">{bottom?.toUpperCase()}</span>
   </span>
