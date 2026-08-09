@@ -34,7 +34,7 @@ export const GenerationCard = ({ data }: Props) => {
       animate={{ opacity: 1, scale: 1 }}
       transition={{ type: 'spring', stiffness: 400, damping: 40 }}
       onClick={onSelect}
-      className={`w-[280px] sm:w-[300px] rounded-xl overflow-hidden ramu-glass cursor-pointer transition-all ${
+      className={`w-[210px] sm:w-[260px] md:w-[300px] rounded-xl overflow-hidden ramu-glass cursor-pointer transition-all ${
         selected ? 'ring-2 ring-[#8B5CF6]' : isError ? 'ring-1 ring-red-500/50' : 'ramu-card-border'
       }`}
     >

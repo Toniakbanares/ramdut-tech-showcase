@@ -156,6 +156,21 @@ All colors MUST be HSL.
     backdrop-filter: blur(12px);
     border: 1px solid rgba(139, 92, 246, 0.15);
   }
+  /* Legenda de meme sobre a imagem */
+  .ramu-meme-text {
+    font-family: Impact, "Anton", "Arial Black", system-ui, sans-serif;
+    font-weight: 900;
+    line-height: 1.05;
+    text-align: center;
+    color: #fff;
+    text-transform: uppercase;
+    font-size: clamp(0.6rem, 7cqw, 3rem);
+    -webkit-text-stroke: 0.06em #000;
+    paint-order: stroke fill;
+    word-break: break-word;
+  }
+
+
 
   /* Light theme override (apply .ramu-light on root container) */
   .ramu-light .ramu-canvas-bg,

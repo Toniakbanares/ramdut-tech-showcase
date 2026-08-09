@@ -4,13 +4,14 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, Sparkles, Loader2, Download, Share2, RefreshCw, X, Upload,
-  AlertTriangle, Wand2, ImagePlus, Layers,
+  AlertTriangle, Wand2, ImagePlus, Layers, Laugh, Maximize2, Grid2x2, Grid3x3,
 } from 'lucide-react';
 
 import { MobileBottomNav } from '@/components/MobileBottomNav';
 import { useToast } from '@/hooks/use-toast';
 import { invokeAi, humanizeAiError } from '@/lib/ai-invoke';
 import { downloadDataUrl } from '@/lib/lab-helpers';
+import { composeMeme, MEME_SUBJECTS, MEME_STYLES } from '@/lib/meme';
 
 type Quality = 'fast' | 'standard' | 'hd' | 'ultra';
 
@@ -48,6 +49,17 @@ const QUALITIES: { id: Quality; label: string }[] = [
   { id: 'ultra', label: 'Ultra' },
 ];
 
+/** Legenda estilo meme renderizada por cima da imagem */
+const MemeCaption = ({ top, bottom }: { top?: string; bottom?: string }) => (
+  <span
+    className="pointer-events-none absolute inset-0 flex flex-col justify-between p-[4%]"
+    style={{ containerType: 'inline-size' }}
+  >
+    <span className="ramu-meme-text">{top?.toUpperCase()}</span>
+    <span className="ramu-meme-text">{bottom?.toUpperCase()}</span>
+  </span>
+);
+
 interface Shot {
   id: string;
   prompt: string;
@@ -59,6 +71,10 @@ interface Shot {
   aspect: string;
   quality: Quality;
   ref?: string;
+  /** legendas quando o card é um meme */
+  memeTop?: string;
+  memeBottom?: string;
+  isMeme?: boolean;
 }
 
 const fileToDataUrl = (file: File) =>
@@ -73,6 +89,7 @@ const Studio = () => {
   const { toast } = useToast();
   const fileRef = useRef<HTMLInputElement | null>(null);
 
+  const [tab, setTab] = useState<'create' | 'meme'>('create');
   const [prompt, setPrompt] = useState('');
   const [preset, setPreset] = useState<string | null>('cinematic');
   const [engine, setEngine] = useState<'auto' | 'pollinations' | 'pro-fal'>('auto');
@@ -82,6 +99,16 @@ const Studio = () => {
   const [reference, setReference] = useState<string | undefined>();
   const [shots, setShots] = useState<Shot[]>([]);
   const [busy, setBusy] = useState(false);
+  /** densidade da galeria — resolve imagens gigantes no celular */
+  const [dense, setDense] = useState(true);
+  const [zoom, setZoom] = useState<Shot | null>(null);
+
+  // Meme
+  const [memeSubject, setMemeSubject] = useState('cat');
+  const [memeStyle, setMemeStyle] = useState('photo');
+  const [memeIdea, setMemeIdea] = useState('');
+  const [memeTop, setMemeTop] = useState('');
+  const [memeBottom, setMemeBottom] = useState('');
 
   const activePreset = useMemo(() => PRESETS.find((p) => p.id === preset), [preset]);
 
@@ -91,9 +118,10 @@ const Studio = () => {
   const runShot = useCallback(
     async (shot: Shot) => {
       try {
-        const full = activePreset && shot.prompt.indexOf(activePreset.suffix) === -1
-          ? `${shot.prompt}, ${activePreset.suffix}`
-          : shot.prompt;
+        const full =
+          !shot.isMeme && activePreset && shot.prompt.indexOf(activePreset.suffix) === -1
+            ? `${shot.prompt}, ${activePreset.suffix}`
+            : shot.prompt;
 
         const data =
           shot.engine === 'pro-fal'
@@ -137,6 +165,55 @@ const Studio = () => {
     setBusy(false);
   }, [prompt, batch, engine, aspect, quality, reference, runShot, toast]);
 
+  const generateMeme = useCallback(async () => {
+    const subject = MEME_SUBJECTS.find((s) => s.id === memeSubject);
+    const style = MEME_STYLES.find((s) => s.id === memeStyle);
+    const idea = memeIdea.trim();
+    if (!subject && !idea) {
+      toast({ title: 'Escolha um personagem', description: 'Ou escreva a ideia do meme.' });
+      return;
+    }
+    if (!memeTop.trim() && !memeBottom.trim()) {
+      toast({ title: 'Escreva a legenda', description: 'Preencha o texto de cima ou o de baixo.' });
+      return;
+    }
+    setBusy(true);
+    const scene = [subject?.prompt, idea].filter(Boolean).join(', ');
+    const newShots: Shot[] = Array.from({ length: batch }, (_, i) => ({
+      id: crypto.randomUUID(),
+      prompt: `${scene}${batch > 1 ? ` (variação ${i + 1})` : ''}, ${style?.suffix ?? ''}, no text, no watermark, centered subject, plenty of empty space at top and bottom for caption`,
+      status: 'loading',
+      engine,
+      aspect: '1:1',
+      quality,
+      ref: reference,
+      isMeme: true,
+      memeTop,
+      memeBottom,
+    }));
+    setShots((s) => [...newShots, ...s]);
+    await Promise.allSettled(newShots.map(runShot));
+    setBusy(false);
+  }, [memeSubject, memeStyle, memeIdea, memeTop, memeBottom, batch, engine, quality, reference, runShot, toast]);
+
+  const downloadShot = useCallback(
+    async (shot: Shot) => {
+      if (!shot.imageUrl) return;
+      const name = `ramdut-${shot.isMeme ? 'meme-' : ''}${shot.id.slice(0, 6)}.png`;
+      if (shot.isMeme) {
+        const composed = await composeMeme(shot.imageUrl, { top: shot.memeTop, bottom: shot.memeBottom });
+        if (composed) {
+          downloadDataUrl(composed, name);
+          return;
+        }
+        toast({ title: 'Baixando a imagem base', description: 'A legenda continua visível no card.' });
+      }
+      downloadDataUrl(shot.imageUrl, name);
+    },
+    [toast],
+  );
+
+
   const retry = (shot: Shot) => {
     patch(shot.id, { status: 'loading', error: undefined });
     runShot({ ...shot, status: 'loading' });
@@ -170,9 +247,9 @@ const Studio = () => {
     setReference(await fileToDataUrl(f));
   };
 
-  const title = 'RAMDUT Studio — Gerador de imagens IA com presets cinematográficos';
+  const title = 'RAMDUT Studio — Gerador de imagens e memes com IA';
   const description =
-    'Studio de criação visual com IA: presets cinematográficos, remix por referência, lote de variações e download em alta. Grátis, mobile-first.';
+    'Studio de criação visual com IA: presets cinematográficos, gerador de memes de gatos, pets e pessoas, remix por referência e download em alta. Grátis e mobile-first.';
 
   return (
     <div className="min-h-screen bg-[#0A0A0B] text-white">
@@ -204,43 +281,126 @@ const Studio = () => {
       </header>
 
       <main className="px-3 pb-40 lg:pb-10 max-w-5xl mx-auto">
+        {/* Abas */}
+        <div className="pt-3 grid grid-cols-2 gap-1.5 p-1 rounded-2xl bg-white/5 border border-white/10">
+          <button
+            onClick={() => setTab('create')}
+            className={`h-11 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors ${
+              tab === 'create' ? 'bg-gradient-to-r from-[#8B5CF6] to-[#06B6D4] text-white' : 'text-neutral-400'
+            }`}
+          >
+            <Sparkles className="h-4 w-4" /> Criar
+          </button>
+          <button
+            onClick={() => setTab('meme')}
+            className={`h-11 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors ${
+              tab === 'meme' ? 'bg-gradient-to-r from-[#8B5CF6] to-[#06B6D4] text-white' : 'text-neutral-400'
+            }`}
+          >
+            <Laugh className="h-4 w-4" /> Meme
+          </button>
+        </div>
+
         {/* Presets */}
-        <section className="pt-4">
-          <h2 className="text-[10px] uppercase tracking-widest text-neutral-500 mb-2">Presets</h2>
-          <div className="flex gap-2 overflow-x-auto pb-2 -mx-3 px-3 snap-x">
-            {PRESETS.map((p) => {
-              const active = preset === p.id;
-              return (
+        {tab === 'create' && (
+          <section className="pt-4">
+            <h2 className="text-[10px] uppercase tracking-widest text-neutral-500 mb-2">Presets</h2>
+            <div className="flex gap-2 overflow-x-auto pb-2 -mx-3 px-3 snap-x">
+              {PRESETS.map((p) => {
+                const active = preset === p.id;
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => {
+                      setPreset(active ? null : p.id);
+                      if (!active) setAspect(p.aspect);
+                    }}
+                    className={`snap-start shrink-0 w-[104px] h-[104px] rounded-2xl border flex flex-col items-center justify-center gap-1.5 transition-all active:scale-95 ${
+                      active
+                        ? 'border-[#8B5CF6] bg-gradient-to-br from-[#8B5CF6]/25 to-[#06B6D4]/15'
+                        : 'border-white/10 bg-white/5 hover:bg-white/10'
+                    }`}
+                  >
+                    <span className="text-2xl">{p.emoji}</span>
+                    <span className="text-xs font-medium">{p.label}</span>
+                    <span className="text-[10px] text-neutral-500 font-mono">{p.aspect}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {/* Personagens do meme */}
+        {tab === 'meme' && (
+          <section className="pt-4">
+            <h2 className="text-[10px] uppercase tracking-widest text-neutral-500 mb-2">Personagem</h2>
+            <div className="flex gap-2 overflow-x-auto pb-2 -mx-3 px-3 snap-x">
+              {MEME_SUBJECTS.map((s) => (
                 <button
-                  key={p.id}
-                  onClick={() => {
-                    setPreset(active ? null : p.id);
-                    if (!active) setAspect(p.aspect);
-                  }}
-                  className={`snap-start shrink-0 w-[104px] h-[104px] rounded-2xl border flex flex-col items-center justify-center gap-1.5 transition-all active:scale-95 ${
-                    active
+                  key={s.id}
+                  onClick={() => setMemeSubject(s.id)}
+                  className={`snap-start shrink-0 w-[88px] h-[88px] rounded-2xl border flex flex-col items-center justify-center gap-1 transition-all active:scale-95 ${
+                    memeSubject === s.id
                       ? 'border-[#8B5CF6] bg-gradient-to-br from-[#8B5CF6]/25 to-[#06B6D4]/15'
-                      : 'border-white/10 bg-white/5 hover:bg-white/10'
+                      : 'border-white/10 bg-white/5'
                   }`}
                 >
-                  <span className="text-2xl">{p.emoji}</span>
-                  <span className="text-xs font-medium">{p.label}</span>
-                  <span className="text-[10px] text-neutral-500 font-mono">{p.aspect}</span>
+                  <span className="text-2xl">{s.emoji}</span>
+                  <span className="text-[11px] font-medium">{s.label}</span>
                 </button>
-              );
-            })}
-          </div>
-        </section>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-1.5 mt-1">
+              {MEME_STYLES.map((s) => (
+                <button
+                  key={s.id}
+                  onClick={() => setMemeStyle(s.id)}
+                  className={`h-10 px-3 rounded-lg text-xs ${
+                    memeStyle === s.id ? 'bg-purple-600 text-white' : 'bg-white/5 border border-white/10 text-neutral-300'
+                  }`}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Composer */}
         <section className="mt-3 rounded-2xl border border-white/10 bg-white/[0.03] p-3 space-y-3">
-          <textarea
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            rows={3}
-            placeholder="Descreva a cena… ex: um astronauta tomando café numa varanda em Marte"
-            className="w-full bg-transparent text-base resize-none focus:outline-none placeholder:text-neutral-600"
-          />
+          {tab === 'create' ? (
+            <textarea
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              rows={3}
+              placeholder="Descreva a cena… ex: um astronauta tomando café numa varanda em Marte"
+              className="w-full bg-transparent text-base resize-none focus:outline-none placeholder:text-neutral-600"
+            />
+          ) : (
+            <div className="space-y-2">
+              <input
+                value={memeTop}
+                onChange={(e) => setMemeTop(e.target.value)}
+                placeholder="Texto de cima"
+                className="w-full h-12 rounded-xl bg-black/30 border border-white/10 px-3 text-sm focus:outline-none focus:border-[#8B5CF6] placeholder:text-neutral-600"
+              />
+              <input
+                value={memeBottom}
+                onChange={(e) => setMemeBottom(e.target.value)}
+                placeholder="Texto de baixo"
+                className="w-full h-12 rounded-xl bg-black/30 border border-white/10 px-3 text-sm focus:outline-none focus:border-[#8B5CF6] placeholder:text-neutral-600"
+              />
+              <textarea
+                value={memeIdea}
+                onChange={(e) => setMemeIdea(e.target.value)}
+                rows={2}
+                placeholder="Detalhe a cena (opcional): ex: gato de terno numa reunião online"
+                className="w-full bg-transparent text-sm resize-none focus:outline-none placeholder:text-neutral-600"
+              />
+            </div>
+          )}
+
 
           {/* Referência */}
           <div className="flex items-center gap-2">
@@ -305,19 +465,21 @@ const Studio = () => {
           </div>
 
           {/* Aspect */}
-          <div className="flex flex-wrap gap-1.5">
-            {ASPECTS.map((a) => (
-              <button
-                key={a}
-                onClick={() => setAspect(a)}
-                className={`h-10 px-3 rounded-lg text-xs font-mono ${
-                  aspect === a ? 'bg-purple-600 text-white' : 'bg-white/5 border border-white/10 text-neutral-300'
-                }`}
-              >
-                {a}
-              </button>
-            ))}
-          </div>
+          {tab === 'create' && (
+            <div className="flex flex-wrap gap-1.5">
+              {ASPECTS.map((a) => (
+                <button
+                  key={a}
+                  onClick={() => setAspect(a)}
+                  className={`h-10 px-3 rounded-lg text-xs font-mono ${
+                    aspect === a ? 'bg-purple-600 text-white' : 'bg-white/5 border border-white/10 text-neutral-300'
+                  }`}
+                >
+                  {a}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Quality + batch */}
           <div className="grid grid-cols-4 gap-1.5">
@@ -350,24 +512,45 @@ const Studio = () => {
           </div>
 
           <button
-            onClick={generate}
+            onClick={tab === 'meme' ? generateMeme : generate}
             disabled={busy}
             className="w-full h-14 rounded-2xl bg-gradient-to-r from-[#8B5CF6] to-[#06B6D4] font-bold flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.99] transition-transform"
           >
-            {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5" />}
-            {busy ? 'Criando…' : `Criar ${batch > 1 ? `${batch} imagens` : 'imagem'}`}
+            {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : tab === 'meme' ? <Laugh className="h-5 w-5" /> : <Sparkles className="h-5 w-5" />}
+            {busy
+              ? 'Criando…'
+              : tab === 'meme'
+                ? `Criar ${batch > 1 ? `${batch} memes` : 'meme'}`
+                : `Criar ${batch > 1 ? `${batch} imagens` : 'imagem'}`}
           </button>
         </section>
 
         {/* Galeria */}
         <section className="mt-5">
+          {shots.length > 0 && (
+            <div className="flex items-center gap-2 mb-2">
+              <h2 className="text-[10px] uppercase tracking-widest text-neutral-500 flex-1">Galeria</h2>
+              <button
+                onClick={() => setDense((d) => !d)}
+                className="h-9 px-3 rounded-lg bg-white/5 border border-white/10 text-[11px] text-neutral-300 flex items-center gap-1.5"
+                aria-label="Alternar tamanho das miniaturas"
+              >
+                {dense ? <Grid3x3 className="h-3.5 w-3.5" /> : <Grid2x2 className="h-3.5 w-3.5" />}
+                {dense ? 'Compacto' : 'Grande'}
+              </button>
+            </div>
+          )}
           {shots.length === 0 ? (
             <div className="text-center py-14 text-neutral-500">
               <Wand2 className="h-10 w-10 mx-auto mb-3 text-[#8B5CF6]/60" />
-              <p className="text-sm">Escolha um preset, descreva a cena e crie.</p>
+              <p className="text-sm">
+                {tab === 'meme'
+                  ? 'Escolha o personagem, escreva a legenda e gere seu meme.'
+                  : 'Escolha um preset, descreva a cena e crie.'}
+              </p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5">
+            <div className={`grid gap-2.5 ${dense ? 'grid-cols-3 md:grid-cols-4' : 'grid-cols-2 md:grid-cols-3'}`}>
               <AnimatePresence initial={false}>
                 {shots.map((s) => (
                   <motion.article
@@ -381,7 +564,7 @@ const Studio = () => {
                     <div className="relative aspect-square bg-neutral-900 grid place-items-center">
                       {s.status === 'loading' && <Loader2 className="h-6 w-6 animate-spin text-[#8B5CF6]" />}
                       {s.status === 'error' && (
-                        <div className="text-center px-3">
+                        <div className="text-center px-2">
                           <AlertTriangle className="h-6 w-6 mx-auto text-red-400 mb-1.5" />
                           <p className="text-[10px] text-neutral-400 line-clamp-3 mb-2">{s.error}</p>
                           <button
@@ -393,10 +576,16 @@ const Studio = () => {
                         </div>
                       )}
                       {s.imageUrl && (
-                        <img src={s.imageUrl} alt={s.prompt} loading="lazy" className="w-full h-full object-cover" />
+                        <button onClick={() => setZoom(s)} className="absolute inset-0" aria-label="Ampliar imagem">
+                          <img src={s.imageUrl} alt={s.prompt} loading="lazy" className="w-full h-full object-cover" />
+                          {s.isMeme && <MemeCaption top={s.memeTop} bottom={s.memeBottom} />}
+                          <span className="absolute bottom-1 right-1 h-7 w-7 rounded-lg bg-black/60 grid place-items-center">
+                            <Maximize2 className="h-3.5 w-3.5 text-white" />
+                          </span>
+                        </button>
                       )}
                     </div>
-                    <p className="px-2.5 py-2 text-[11px] text-neutral-400 line-clamp-2">{s.prompt}</p>
+                    {!dense && <p className="px-2.5 py-2 text-[11px] text-neutral-400 line-clamp-2">{s.prompt}</p>}
                     {s.status === 'done' && (
                       <div className="grid grid-cols-3 border-t border-white/5">
                         <button
@@ -406,7 +595,7 @@ const Studio = () => {
                           <Wand2 className="h-3.5 w-3.5" /> Remix
                         </button>
                         <button
-                          onClick={() => s.imageUrl && downloadDataUrl(s.imageUrl, `ramdut-${s.id.slice(0, 6)}.png`)}
+                          onClick={() => downloadShot(s)}
                           className="min-h-[44px] text-[10px] text-neutral-300 hover:bg-white/5 flex flex-col items-center justify-center gap-0.5"
                         >
                           <Download className="h-3.5 w-3.5" /> Baixar
@@ -425,6 +614,32 @@ const Studio = () => {
             </div>
           )}
         </section>
+
+        {/* Zoom */}
+        <AnimatePresence>
+          {zoom?.imageUrl && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[70] bg-black/90 grid place-items-center p-4"
+              onClick={() => setZoom(null)}
+            >
+              <div className="relative max-w-full max-h-[80vh]">
+                <img src={zoom.imageUrl} alt={zoom.prompt} className="max-w-full max-h-[80vh] object-contain rounded-xl" />
+                {zoom.isMeme && <MemeCaption top={zoom.memeTop} bottom={zoom.memeBottom} />}
+              </div>
+              <button
+                onClick={() => setZoom(null)}
+                className="absolute top-4 right-4 h-11 w-11 rounded-full bg-white/10 grid place-items-center"
+                aria-label="Fechar"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
       </main>
 
       <MobileBottomNav />
