@@ -270,43 +270,126 @@ const Studio = () => {
       </header>
 
       <main className="px-3 pb-40 lg:pb-10 max-w-5xl mx-auto">
+        {/* Abas */}
+        <div className="pt-3 grid grid-cols-2 gap-1.5 p-1 rounded-2xl bg-white/5 border border-white/10">
+          <button
+            onClick={() => setTab('create')}
+            className={`h-11 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors ${
+              tab === 'create' ? 'bg-gradient-to-r from-[#8B5CF6] to-[#06B6D4] text-white' : 'text-neutral-400'
+            }`}
+          >
+            <Sparkles className="h-4 w-4" /> Criar
+          </button>
+          <button
+            onClick={() => setTab('meme')}
+            className={`h-11 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors ${
+              tab === 'meme' ? 'bg-gradient-to-r from-[#8B5CF6] to-[#06B6D4] text-white' : 'text-neutral-400'
+            }`}
+          >
+            <Laugh className="h-4 w-4" /> Meme
+          </button>
+        </div>
+
         {/* Presets */}
-        <section className="pt-4">
-          <h2 className="text-[10px] uppercase tracking-widest text-neutral-500 mb-2">Presets</h2>
-          <div className="flex gap-2 overflow-x-auto pb-2 -mx-3 px-3 snap-x">
-            {PRESETS.map((p) => {
-              const active = preset === p.id;
-              return (
+        {tab === 'create' && (
+          <section className="pt-4">
+            <h2 className="text-[10px] uppercase tracking-widest text-neutral-500 mb-2">Presets</h2>
+            <div className="flex gap-2 overflow-x-auto pb-2 -mx-3 px-3 snap-x">
+              {PRESETS.map((p) => {
+                const active = preset === p.id;
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => {
+                      setPreset(active ? null : p.id);
+                      if (!active) setAspect(p.aspect);
+                    }}
+                    className={`snap-start shrink-0 w-[104px] h-[104px] rounded-2xl border flex flex-col items-center justify-center gap-1.5 transition-all active:scale-95 ${
+                      active
+                        ? 'border-[#8B5CF6] bg-gradient-to-br from-[#8B5CF6]/25 to-[#06B6D4]/15'
+                        : 'border-white/10 bg-white/5 hover:bg-white/10'
+                    }`}
+                  >
+                    <span className="text-2xl">{p.emoji}</span>
+                    <span className="text-xs font-medium">{p.label}</span>
+                    <span className="text-[10px] text-neutral-500 font-mono">{p.aspect}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {/* Personagens do meme */}
+        {tab === 'meme' && (
+          <section className="pt-4">
+            <h2 className="text-[10px] uppercase tracking-widest text-neutral-500 mb-2">Personagem</h2>
+            <div className="flex gap-2 overflow-x-auto pb-2 -mx-3 px-3 snap-x">
+              {MEME_SUBJECTS.map((s) => (
                 <button
-                  key={p.id}
-                  onClick={() => {
-                    setPreset(active ? null : p.id);
-                    if (!active) setAspect(p.aspect);
-                  }}
-                  className={`snap-start shrink-0 w-[104px] h-[104px] rounded-2xl border flex flex-col items-center justify-center gap-1.5 transition-all active:scale-95 ${
-                    active
+                  key={s.id}
+                  onClick={() => setMemeSubject(s.id)}
+                  className={`snap-start shrink-0 w-[88px] h-[88px] rounded-2xl border flex flex-col items-center justify-center gap-1 transition-all active:scale-95 ${
+                    memeSubject === s.id
                       ? 'border-[#8B5CF6] bg-gradient-to-br from-[#8B5CF6]/25 to-[#06B6D4]/15'
-                      : 'border-white/10 bg-white/5 hover:bg-white/10'
+                      : 'border-white/10 bg-white/5'
                   }`}
                 >
-                  <span className="text-2xl">{p.emoji}</span>
-                  <span className="text-xs font-medium">{p.label}</span>
-                  <span className="text-[10px] text-neutral-500 font-mono">{p.aspect}</span>
+                  <span className="text-2xl">{s.emoji}</span>
+                  <span className="text-[11px] font-medium">{s.label}</span>
                 </button>
-              );
-            })}
-          </div>
-        </section>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-1.5 mt-1">
+              {MEME_STYLES.map((s) => (
+                <button
+                  key={s.id}
+                  onClick={() => setMemeStyle(s.id)}
+                  className={`h-10 px-3 rounded-lg text-xs ${
+                    memeStyle === s.id ? 'bg-purple-600 text-white' : 'bg-white/5 border border-white/10 text-neutral-300'
+                  }`}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Composer */}
         <section className="mt-3 rounded-2xl border border-white/10 bg-white/[0.03] p-3 space-y-3">
-          <textarea
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            rows={3}
-            placeholder="Descreva a cena… ex: um astronauta tomando café numa varanda em Marte"
-            className="w-full bg-transparent text-base resize-none focus:outline-none placeholder:text-neutral-600"
-          />
+          {tab === 'create' ? (
+            <textarea
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              rows={3}
+              placeholder="Descreva a cena… ex: um astronauta tomando café numa varanda em Marte"
+              className="w-full bg-transparent text-base resize-none focus:outline-none placeholder:text-neutral-600"
+            />
+          ) : (
+            <div className="space-y-2">
+              <input
+                value={memeTop}
+                onChange={(e) => setMemeTop(e.target.value)}
+                placeholder="Texto de cima"
+                className="w-full h-12 rounded-xl bg-black/30 border border-white/10 px-3 text-sm focus:outline-none focus:border-[#8B5CF6] placeholder:text-neutral-600"
+              />
+              <input
+                value={memeBottom}
+                onChange={(e) => setMemeBottom(e.target.value)}
+                placeholder="Texto de baixo"
+                className="w-full h-12 rounded-xl bg-black/30 border border-white/10 px-3 text-sm focus:outline-none focus:border-[#8B5CF6] placeholder:text-neutral-600"
+              />
+              <textarea
+                value={memeIdea}
+                onChange={(e) => setMemeIdea(e.target.value)}
+                rows={2}
+                placeholder="Detalhe a cena (opcional): ex: gato de terno numa reunião online"
+                className="w-full bg-transparent text-sm resize-none focus:outline-none placeholder:text-neutral-600"
+              />
+            </div>
+          )}
+
 
           {/* Referência */}
           <div className="flex items-center gap-2">
