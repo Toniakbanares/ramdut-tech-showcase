@@ -131,7 +131,7 @@ const Studio = () => {
 
   // Vídeo
   const [videoPrompt, setVideoPrompt] = useState('');
-  const [motion, setMotion] = useState('dolly-in');
+  const [cameraMove, setCameraMove] = useState('dolly-in');
   const [videoModel, setVideoModel] = useState<string>(VIDEO_MODELS[0].id);
   const [videoSize, setVideoSize] = useState<string>(VIDEO_SIZES[0].id);
   const [seconds, setSeconds] = useState<'4' | '6' | '8'>('8');
