@@ -387,10 +387,10 @@ const Studio = () => {
 
       <main className="px-3 pb-40 lg:pb-10 max-w-5xl mx-auto">
         {/* Abas */}
-        <div className="pt-3 grid grid-cols-2 gap-1.5 p-1 rounded-2xl bg-white/5 border border-white/10">
+        <div className="pt-3 grid grid-cols-3 gap-1.5 p-1 rounded-2xl bg-white/5 border border-white/10">
           <button
             onClick={() => setTab('create')}
-            className={`h-11 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors ${
+            className={`h-11 rounded-xl text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors ${
               tab === 'create' ? 'bg-gradient-to-r from-[#8B5CF6] to-[#06B6D4] text-white' : 'text-neutral-400'
             }`}
           >
@@ -398,13 +398,22 @@ const Studio = () => {
           </button>
           <button
             onClick={() => setTab('meme')}
-            className={`h-11 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors ${
+            className={`h-11 rounded-xl text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors ${
               tab === 'meme' ? 'bg-gradient-to-r from-[#8B5CF6] to-[#06B6D4] text-white' : 'text-neutral-400'
             }`}
           >
             <Laugh className="h-4 w-4" /> Meme
           </button>
+          <button
+            onClick={() => setTab('video')}
+            className={`h-11 rounded-xl text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors ${
+              tab === 'video' ? 'bg-gradient-to-r from-[#8B5CF6] to-[#06B6D4] text-white' : 'text-neutral-400'
+            }`}
+          >
+            <Film className="h-4 w-4" /> Vídeo
+          </button>
         </div>
+
 
         {/* Presets */}
         {tab === 'create' && (
