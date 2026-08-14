@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, Sparkles, Loader2, Download, Share2, RefreshCw, X, Upload,
   AlertTriangle, Wand2, ImagePlus, Layers, Laugh, Maximize2, Grid2x2, Grid3x3,
+  Film, Play,
 } from 'lucide-react';
 
 import { MobileBottomNav } from '@/components/MobileBottomNav';
@@ -12,6 +13,11 @@ import { useToast } from '@/hooks/use-toast';
 import { invokeAi, humanizeAiError } from '@/lib/ai-invoke';
 import { downloadDataUrl } from '@/lib/lab-helpers';
 import { composeMeme, MEME_SUBJECTS, MEME_STYLES } from '@/lib/meme';
+import {
+  MOTION_PRESETS, VIDEO_MODELS, VIDEO_SIZES,
+  createVideoJob, waitForVideo, downloadVideo, toDataUrl,
+  type VideoStatus,
+} from '@/lib/video';
 
 type Quality = 'fast' | 'standard' | 'hd' | 'ultra';
 
@@ -77,6 +83,19 @@ interface Shot {
   isMeme?: boolean;
 }
 
+interface Clip {
+  id: string;
+  prompt: string;
+  status: VideoStatus;
+  progress?: number;
+  videoUrl?: string;
+  error?: string;
+  model: string;
+  seconds: string;
+  size: string;
+  poster?: string;
+}
+
 const fileToDataUrl = (file: File) =>
   new Promise<string>((resolve, reject) => {
     const r = new FileReader();
@@ -89,7 +108,7 @@ const Studio = () => {
   const { toast } = useToast();
   const fileRef = useRef<HTMLInputElement | null>(null);
 
-  const [tab, setTab] = useState<'create' | 'meme'>('create');
+  const [tab, setTab] = useState<'create' | 'meme' | 'video'>('create');
   const [prompt, setPrompt] = useState('');
   const [preset, setPreset] = useState<string | null>('cinematic');
   const [engine, setEngine] = useState<'auto' | 'pollinations' | 'pro-fal'>('auto');
@@ -109,6 +128,16 @@ const Studio = () => {
   const [memeIdea, setMemeIdea] = useState('');
   const [memeTop, setMemeTop] = useState('');
   const [memeBottom, setMemeBottom] = useState('');
+
+  // Vídeo
+  const [videoPrompt, setVideoPrompt] = useState('');
+  const [cameraMove, setCameraMove] = useState('dolly-in');
+  const [videoModel, setVideoModel] = useState<string>(VIDEO_MODELS[0].id);
+  const [videoSize, setVideoSize] = useState<string>(VIDEO_SIZES[0].id);
+  const [seconds, setSeconds] = useState<'4' | '6' | '8'>('8');
+  const [videoRef, setVideoRef] = useState<string | undefined>();
+  const [clips, setClips] = useState<Clip[]>([]);
+  const [videoBusy, setVideoBusy] = useState(false);
 
   const activePreset = useMemo(() => PRESETS.find((p) => p.id === preset), [preset]);
 
@@ -227,6 +256,82 @@ const Studio = () => {
     toast({ title: 'Remix pronto', description: 'A imagem virou referência. Ajuste o prompt e gere.' });
   };
 
+  // ---------------- Vídeo ----------------
+  const patchClip = (id: string, p: Partial<Clip>) =>
+    setClips((c) => c.map((x) => (x.id === id ? { ...x, ...p } : x)));
+
+  const runClip = useCallback(
+    async (clip: Clip, refImage?: string) => {
+      try {
+        const jobId = await createVideoJob({
+          prompt: clip.prompt,
+          model: clip.model,
+          seconds: clip.seconds as '4' | '6' | '8',
+          size: clip.size,
+          inputReference: refImage,
+        });
+        patchClip(clip.id, { status: 'processing' });
+        const job = await waitForVideo(jobId, (j) =>
+          patchClip(clip.id, { status: j.status, progress: j.progress }),
+        );
+        if (job.status === 'completed' && job.videoUrl) {
+          patchClip(clip.id, { status: 'completed', videoUrl: job.videoUrl });
+        } else {
+          patchClip(clip.id, { status: 'failed', error: job.error || 'Não foi possível gerar o vídeo.' });
+        }
+      } catch (e) {
+        patchClip(clip.id, { status: 'failed', error: humanizeAiError(e).description });
+      }
+    },
+    [],
+  );
+
+  const generateVideo = useCallback(async () => {
+    const base = videoPrompt.trim();
+    if (!base) {
+      toast({ title: 'Descreva o vídeo', description: 'Conte o que deve acontecer na cena.' });
+      return;
+    }
+    const move = MOTION_PRESETS.find((m) => m.id === cameraMove);
+    const full = move ? `${base}. ${move.suffix}` : base;
+    const clip: Clip = {
+      id: crypto.randomUUID(),
+      prompt: full,
+      status: 'queued',
+      model: videoModel,
+      seconds: videoSize.includes('1920') || videoSize.includes('1080x') ? '8' : seconds,
+      size: videoSize,
+      poster: videoRef,
+    };
+    setClips((c) => [clip, ...c]);
+    setVideoBusy(true);
+    const refData = videoRef ? await toDataUrl(videoRef) : undefined;
+    await runClip(clip, refData);
+    setVideoBusy(false);
+  }, [videoPrompt, cameraMove, videoModel, videoSize, seconds, videoRef, runClip, toast]);
+
+  const retryClip = (clip: Clip) => {
+    patchClip(clip.id, { status: 'queued', error: undefined, progress: 0 });
+    void (async () => {
+      setVideoBusy(true);
+      const refData = clip.poster ? await toDataUrl(clip.poster) : undefined;
+      await runClip(clip, refData);
+      setVideoBusy(false);
+    })();
+  };
+
+  /** Imagem gerada → vira referência de vídeo (image-to-video sem novo upload) */
+  const animate = (shot: Shot) => {
+    if (!shot.imageUrl) return;
+    setVideoRef(shot.imageUrl);
+    setVideoPrompt(shot.prompt);
+    setTab('video');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    toast({ title: 'Pronto pra animar', description: 'A imagem virou o primeiro quadro do vídeo.' });
+  };
+
+
+
   const share = async (shot: Shot) => {
     const canShare = typeof navigator !== 'undefined' && !!navigator.share;
     if (canShare) {
@@ -282,10 +387,10 @@ const Studio = () => {
 
       <main className="px-3 pb-40 lg:pb-10 max-w-5xl mx-auto">
         {/* Abas */}
-        <div className="pt-3 grid grid-cols-2 gap-1.5 p-1 rounded-2xl bg-white/5 border border-white/10">
+        <div className="pt-3 grid grid-cols-3 gap-1.5 p-1 rounded-2xl bg-white/5 border border-white/10">
           <button
             onClick={() => setTab('create')}
-            className={`h-11 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors ${
+            className={`h-11 rounded-xl text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors ${
               tab === 'create' ? 'bg-gradient-to-r from-[#8B5CF6] to-[#06B6D4] text-white' : 'text-neutral-400'
             }`}
           >
@@ -293,13 +398,22 @@ const Studio = () => {
           </button>
           <button
             onClick={() => setTab('meme')}
-            className={`h-11 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors ${
+            className={`h-11 rounded-xl text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors ${
               tab === 'meme' ? 'bg-gradient-to-r from-[#8B5CF6] to-[#06B6D4] text-white' : 'text-neutral-400'
             }`}
           >
             <Laugh className="h-4 w-4" /> Meme
           </button>
+          <button
+            onClick={() => setTab('video')}
+            className={`h-11 rounded-xl text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors ${
+              tab === 'video' ? 'bg-gradient-to-r from-[#8B5CF6] to-[#06B6D4] text-white' : 'text-neutral-400'
+            }`}
+          >
+            <Film className="h-4 w-4" /> Vídeo
+          </button>
         </div>
+
 
         {/* Presets */}
         {tab === 'create' && (
