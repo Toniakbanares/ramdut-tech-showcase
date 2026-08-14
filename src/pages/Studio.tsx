@@ -83,6 +83,19 @@ interface Shot {
   isMeme?: boolean;
 }
 
+interface Clip {
+  id: string;
+  prompt: string;
+  status: VideoStatus;
+  progress?: number;
+  videoUrl?: string;
+  error?: string;
+  model: string;
+  seconds: string;
+  size: string;
+  poster?: string;
+}
+
 const fileToDataUrl = (file: File) =>
   new Promise<string>((resolve, reject) => {
     const r = new FileReader();
@@ -95,7 +108,7 @@ const Studio = () => {
   const { toast } = useToast();
   const fileRef = useRef<HTMLInputElement | null>(null);
 
-  const [tab, setTab] = useState<'create' | 'meme'>('create');
+  const [tab, setTab] = useState<'create' | 'meme' | 'video'>('create');
   const [prompt, setPrompt] = useState('');
   const [preset, setPreset] = useState<string | null>('cinematic');
   const [engine, setEngine] = useState<'auto' | 'pollinations' | 'pro-fal'>('auto');
@@ -115,6 +128,16 @@ const Studio = () => {
   const [memeIdea, setMemeIdea] = useState('');
   const [memeTop, setMemeTop] = useState('');
   const [memeBottom, setMemeBottom] = useState('');
+
+  // Vídeo
+  const [videoPrompt, setVideoPrompt] = useState('');
+  const [motion, setMotion] = useState('dolly-in');
+  const [videoModel, setVideoModel] = useState<string>(VIDEO_MODELS[0].id);
+  const [videoSize, setVideoSize] = useState<string>(VIDEO_SIZES[0].id);
+  const [seconds, setSeconds] = useState<'4' | '6' | '8'>('8');
+  const [videoRef, setVideoRef] = useState<string | undefined>();
+  const [clips, setClips] = useState<Clip[]>([]);
+  const [videoBusy, setVideoBusy] = useState(false);
 
   const activePreset = useMemo(() => PRESETS.find((p) => p.id === preset), [preset]);
 
