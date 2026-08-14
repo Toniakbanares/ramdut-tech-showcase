@@ -256,6 +256,82 @@ const Studio = () => {
     toast({ title: 'Remix pronto', description: 'A imagem virou referência. Ajuste o prompt e gere.' });
   };
 
+  // ---------------- Vídeo ----------------
+  const patchClip = (id: string, p: Partial<Clip>) =>
+    setClips((c) => c.map((x) => (x.id === id ? { ...x, ...p } : x)));
+
+  const runClip = useCallback(
+    async (clip: Clip, refImage?: string) => {
+      try {
+        const jobId = await createVideoJob({
+          prompt: clip.prompt,
+          model: clip.model,
+          seconds: clip.seconds as '4' | '6' | '8',
+          size: clip.size,
+          inputReference: refImage,
+        });
+        patchClip(clip.id, { status: 'processing' });
+        const job = await waitForVideo(jobId, (j) =>
+          patchClip(clip.id, { status: j.status, progress: j.progress }),
+        );
+        if (job.status === 'completed' && job.videoUrl) {
+          patchClip(clip.id, { status: 'completed', videoUrl: job.videoUrl });
+        } else {
+          patchClip(clip.id, { status: 'failed', error: job.error || 'Não foi possível gerar o vídeo.' });
+        }
+      } catch (e) {
+        patchClip(clip.id, { status: 'failed', error: humanizeAiError(e).description });
+      }
+    },
+    [],
+  );
+
+  const generateVideo = useCallback(async () => {
+    const base = videoPrompt.trim();
+    if (!base) {
+      toast({ title: 'Descreva o vídeo', description: 'Conte o que deve acontecer na cena.' });
+      return;
+    }
+    const move = MOTION_PRESETS.find((m) => m.id === cameraMove);
+    const full = move ? `${base}. ${move.suffix}` : base;
+    const clip: Clip = {
+      id: crypto.randomUUID(),
+      prompt: full,
+      status: 'queued',
+      model: videoModel,
+      seconds: videoSize.includes('1920') || videoSize.includes('1080x') ? '8' : seconds,
+      size: videoSize,
+      poster: videoRef,
+    };
+    setClips((c) => [clip, ...c]);
+    setVideoBusy(true);
+    const refData = videoRef ? await toDataUrl(videoRef) : undefined;
+    await runClip(clip, refData);
+    setVideoBusy(false);
+  }, [videoPrompt, cameraMove, videoModel, videoSize, seconds, videoRef, runClip, toast]);
+
+  const retryClip = (clip: Clip) => {
+    patchClip(clip.id, { status: 'queued', error: undefined, progress: 0 });
+    void (async () => {
+      setVideoBusy(true);
+      const refData = clip.poster ? await toDataUrl(clip.poster) : undefined;
+      await runClip(clip, refData);
+      setVideoBusy(false);
+    })();
+  };
+
+  /** Imagem gerada → vira referência de vídeo (image-to-video sem novo upload) */
+  const animate = (shot: Shot) => {
+    if (!shot.imageUrl) return;
+    setVideoRef(shot.imageUrl);
+    setVideoPrompt(shot.prompt);
+    setTab('video');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    toast({ title: 'Pronto pra animar', description: 'A imagem virou o primeiro quadro do vídeo.' });
+  };
+
+
+
   const share = async (shot: Shot) => {
     const canShare = typeof navigator !== 'undefined' && !!navigator.share;
     if (canShare) {
