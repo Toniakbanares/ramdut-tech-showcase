@@ -107,6 +107,8 @@ const fileToDataUrl = (file: File) =>
 const Studio = () => {
   const { toast } = useToast();
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const videoFileRef = useRef<HTMLInputElement | null>(null);
+
 
   const [tab, setTab] = useState<'create' | 'meme' | 'video'>('create');
   const [prompt, setPrompt] = useState('');
@@ -140,6 +142,17 @@ const Studio = () => {
   const [videoBusy, setVideoBusy] = useState(false);
 
   const activePreset = useMemo(() => PRESETS.find((p) => p.id === preset), [preset]);
+  /** 1080p no Veo só existe em clipes de 8s */
+  const is1080 = videoSize.includes('1920') || videoSize.includes('1080x');
+
+  const onPickVideoFile = async (f: File) => {
+    if (f.size > 4 * 1024 * 1024) {
+      toast({ title: 'Imagem muito grande', description: 'Máximo 4MB.', variant: 'destructive' });
+      return;
+    }
+    setVideoRef(await fileToDataUrl(f));
+  };
+
 
   const patch = (id: string, p: Partial<Shot>) =>
     setShots((s) => s.map((x) => (x.id === id ? { ...x, ...p } : x)));
@@ -482,8 +495,10 @@ const Studio = () => {
         )}
 
         {/* Composer */}
+        {tab !== 'video' && (
         <section className="mt-3 rounded-2xl border border-white/10 bg-white/[0.03] p-3 space-y-3">
           {tab === 'create' ? (
+
             <textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
@@ -638,9 +653,216 @@ const Studio = () => {
                 : `Criar ${batch > 1 ? `${batch} imagens` : 'imagem'}`}
           </button>
         </section>
+        )}
+
+        {/* Composer de vídeo */}
+        {tab === 'video' && (
+          <section className="mt-3 rounded-2xl border border-white/10 bg-white/[0.03] p-3 space-y-3">
+            <textarea
+              value={videoPrompt}
+              onChange={(e) => setVideoPrompt(e.target.value)}
+              rows={3}
+              placeholder="Descreva o vídeo… ex: um gato de terno digitando num notebook, luz de janela"
+              className="w-full bg-transparent text-base resize-none focus:outline-none placeholder:text-neutral-600"
+            />
+
+            {/* Primeiro quadro (image-to-video) */}
+            <div className="flex items-center gap-2">
+              <input
+                ref={videoFileRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) onPickVideoFile(f);
+                  e.target.value = '';
+                }}
+              />
+              {videoRef ? (
+                <div className="relative">
+                  <img src={videoRef} alt="Primeiro quadro do vídeo" className="h-14 w-14 rounded-xl object-cover border border-[#8B5CF6]/50" />
+                  <button
+                    onClick={() => setVideoRef(undefined)}
+                    className="absolute -top-1.5 -right-1.5 h-6 w-6 rounded-full bg-black border border-white/20 grid place-items-center"
+                    aria-label="Remover primeiro quadro"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => videoFileRef.current?.click()}
+                  className="h-14 w-14 rounded-xl border border-dashed border-white/15 grid place-items-center text-neutral-500 hover:text-white"
+                  aria-label="Adicionar primeiro quadro"
+                >
+                  <ImagePlus className="h-5 w-5" />
+                </button>
+              )}
+              <p className="text-[11px] text-neutral-500 flex-1">
+                {videoRef
+                  ? 'Image-to-video: o vídeo começa nessa imagem.'
+                  : 'Opcional: envie uma imagem — ou use “Animar” numa imagem da galeria.'}
+              </p>
+            </div>
+
+            {/* Modelo */}
+            <div className="grid grid-cols-3 gap-1.5">
+              {VIDEO_MODELS.map((m) => (
+                <button
+                  key={m.id}
+                  onClick={() => setVideoModel(m.id)}
+                  className={`h-12 rounded-xl text-xs font-medium flex flex-col items-center justify-center ${
+                    videoModel === m.id
+                      ? 'bg-gradient-to-br from-[#8B5CF6] to-[#06B6D4] text-white'
+                      : 'bg-white/5 border border-white/10 text-neutral-300'
+                  }`}
+                >
+                  {m.label}
+                  <span className="text-[9px] opacity-70">{m.desc}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Formato / resolução */}
+            <div className="grid grid-cols-2 gap-1.5">
+              {VIDEO_SIZES.map((s) => (
+                <button
+                  key={s.id}
+                  onClick={() => setVideoSize(s.id)}
+                  className={`h-10 rounded-lg text-xs font-mono ${
+                    videoSize === s.id ? 'bg-purple-600 text-white' : 'bg-white/5 border border-white/10 text-neutral-300'
+                  }`}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Duração */}
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] uppercase tracking-widest text-neutral-500">Duração</span>
+              {(['4', '6', '8'] as const).map((n) => (
+                <button
+                  key={n}
+                  onClick={() => setSeconds(n)}
+                  disabled={is1080 && n !== '8'}
+                  className={`h-10 w-12 rounded-lg text-xs font-medium disabled:opacity-30 ${
+                    (is1080 ? '8' : seconds) === n ? 'bg-purple-600 text-white' : 'bg-white/5 border border-white/10 text-neutral-300'
+                  }`}
+                >
+                  {n}s
+                </button>
+              ))}
+              {is1080 && <span className="text-[10px] text-neutral-500">1080p só em 8s</span>}
+            </div>
+
+            {/* Movimento de câmera */}
+            <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
+              {MOTION_PRESETS.map((m) => (
+                <button
+                  key={m.id}
+                  onClick={() => setCameraMove(m.id)}
+                  className={`shrink-0 h-10 px-3 rounded-lg text-xs ${
+                    cameraMove === m.id ? 'bg-purple-600 text-white' : 'bg-white/5 border border-white/10 text-neutral-300'
+                  }`}
+                >
+                  {m.emoji} {m.label}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={generateVideo}
+              disabled={videoBusy}
+              className="w-full h-14 rounded-2xl bg-gradient-to-r from-[#8B5CF6] to-[#06B6D4] font-bold flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.99] transition-transform"
+            >
+              {videoBusy ? <Loader2 className="h-5 w-5 animate-spin" /> : <Film className="h-5 w-5" />}
+              {videoBusy ? 'Gerando vídeo… (1-3 min)' : 'Gerar vídeo'}
+            </button>
+            <p className="text-[10px] text-neutral-600 text-center">
+              Vídeo com áudio, 24fps. Gerar leva de 1 a 3 minutos — pode continuar navegando nesta aba.
+            </p>
+          </section>
+        )}
+
+        {/* Galeria de vídeos */}
+        {tab === 'video' && (
+          <section className="mt-5 space-y-3">
+            {clips.length === 0 ? (
+              <div className="text-center py-14 text-neutral-500">
+                <Film className="h-10 w-10 mx-auto mb-3 text-[#8B5CF6]/60" />
+                <p className="text-sm">Descreva uma cena (ou anime uma imagem) e gere seu primeiro vídeo.</p>
+              </div>
+            ) : (
+              clips.map((c) => (
+                <article key={c.id} className="rounded-2xl overflow-hidden border border-white/10 bg-white/[0.03]">
+                  <div className="relative bg-neutral-900">
+                    {c.status === 'completed' && c.videoUrl ? (
+                      <video
+                        src={c.videoUrl}
+                        poster={c.poster}
+                        controls
+                        playsInline
+                        preload="metadata"
+                        className="w-full max-h-[60vh] object-contain bg-black"
+                      />
+                    ) : c.status === 'failed' ? (
+                      <div className="p-6 text-center">
+                        <AlertTriangle className="h-7 w-7 mx-auto text-red-400 mb-2" />
+                        <p className="text-[11px] text-neutral-400 mb-3">{c.error}</p>
+                        <button
+                          onClick={() => retryClip(c)}
+                          className="min-h-[44px] px-4 rounded-lg bg-white/10 text-xs inline-flex items-center gap-1.5"
+                        >
+                          <RefreshCw className="h-3.5 w-3.5" /> Tentar novamente
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="p-8 text-center">
+                        {c.poster && (
+                          <img src={c.poster} alt="" className="absolute inset-0 w-full h-full object-cover opacity-20" />
+                        )}
+                        <div className="relative">
+                          <Loader2 className="h-7 w-7 mx-auto animate-spin text-[#8B5CF6] mb-2" />
+                          <p className="text-xs text-neutral-400">
+                            {c.status === 'queued' ? 'Na fila…' : `Renderizando… ${c.progress ?? 0}%`}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <p className="px-3 py-2 text-[11px] text-neutral-400 line-clamp-2">{c.prompt}</p>
+                  {c.status === 'completed' && c.videoUrl && (
+                    <div className="grid grid-cols-2 border-t border-white/5">
+                      <button
+                        onClick={() => downloadVideo(c.videoUrl!, `ramdut-${c.id.slice(0, 8)}.mp4`)}
+                        className="min-h-[44px] text-[11px] text-neutral-300 hover:bg-white/5 flex items-center justify-center gap-1.5"
+                      >
+                        <Download className="h-3.5 w-3.5" /> Baixar MP4
+                      </button>
+                      <a
+                        href={c.videoUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="min-h-[44px] text-[11px] text-neutral-300 hover:bg-white/5 flex items-center justify-center gap-1.5"
+                      >
+                        <Play className="h-3.5 w-3.5" /> Abrir
+                      </a>
+                    </div>
+                  )}
+                </article>
+              ))
+            )}
+          </section>
+        )}
+
+
 
         {/* Galeria */}
+        {tab !== 'video' && (
         <section className="mt-5">
+
           {shots.length > 0 && (
             <div className="flex items-center gap-2 mb-2">
               <h2 className="text-[10px] uppercase tracking-widest text-neutral-500 flex-1">Galeria</h2>
@@ -701,13 +923,20 @@ const Studio = () => {
                     </div>
                     {!dense && <p className="px-2.5 py-2 text-[11px] text-neutral-400 line-clamp-2">{s.prompt}</p>}
                     {s.status === 'done' && (
-                      <div className="grid grid-cols-3 border-t border-white/5">
+                      <div className="grid grid-cols-4 border-t border-white/5">
+                        <button
+                          onClick={() => animate(s)}
+                          className="min-h-[44px] text-[10px] text-[#8B5CF6] hover:bg-white/5 flex flex-col items-center justify-center gap-0.5"
+                        >
+                          <Film className="h-3.5 w-3.5" /> Animar
+                        </button>
                         <button
                           onClick={() => remix(s)}
                           className="min-h-[44px] text-[10px] text-neutral-300 hover:bg-white/5 flex flex-col items-center justify-center gap-0.5"
                         >
                           <Wand2 className="h-3.5 w-3.5" /> Remix
                         </button>
+
                         <button
                           onClick={() => downloadShot(s)}
                           className="min-h-[44px] text-[10px] text-neutral-300 hover:bg-white/5 flex flex-col items-center justify-center gap-0.5"
@@ -728,6 +957,8 @@ const Studio = () => {
             </div>
           )}
         </section>
+        )}
+
 
         {/* Zoom */}
         <AnimatePresence>
