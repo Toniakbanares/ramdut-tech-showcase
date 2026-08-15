@@ -957,6 +957,8 @@ const Studio = () => {
             </div>
           )}
         </section>
+        )}
+
 
         {/* Zoom */}
         <AnimatePresence>
