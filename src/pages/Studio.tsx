@@ -142,6 +142,17 @@ const Studio = () => {
   const [videoBusy, setVideoBusy] = useState(false);
 
   const activePreset = useMemo(() => PRESETS.find((p) => p.id === preset), [preset]);
+  /** 1080p no Veo só existe em clipes de 8s */
+  const is1080 = videoSize.includes('1920') || videoSize.includes('1080x');
+
+  const onPickVideoFile = async (f: File) => {
+    if (f.size > 4 * 1024 * 1024) {
+      toast({ title: 'Imagem muito grande', description: 'Máximo 4MB.', variant: 'destructive' });
+      return;
+    }
+    setVideoRef(await fileToDataUrl(f));
+  };
+
 
   const patch = (id: string, p: Partial<Shot>) =>
     setShots((s) => s.map((x) => (x.id === id ? { ...x, ...p } : x)));
