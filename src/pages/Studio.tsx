@@ -482,8 +482,10 @@ const Studio = () => {
         )}
 
         {/* Composer */}
+        {tab !== 'video' && (
         <section className="mt-3 rounded-2xl border border-white/10 bg-white/[0.03] p-3 space-y-3">
           {tab === 'create' ? (
+
             <textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
