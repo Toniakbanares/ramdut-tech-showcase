@@ -860,7 +860,9 @@ const Studio = () => {
 
 
         {/* Galeria */}
+        {tab !== 'video' && (
         <section className="mt-5">
+
           {shots.length > 0 && (
             <div className="flex items-center gap-2 mb-2">
               <h2 className="text-[10px] uppercase tracking-widest text-neutral-500 flex-1">Galeria</h2>
