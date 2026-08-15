@@ -107,6 +107,8 @@ const fileToDataUrl = (file: File) =>
 const Studio = () => {
   const { toast } = useToast();
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const videoFileRef = useRef<HTMLInputElement | null>(null);
+
 
   const [tab, setTab] = useState<'create' | 'meme' | 'video'>('create');
   const [prompt, setPrompt] = useState('');
