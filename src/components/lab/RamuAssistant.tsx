@@ -42,9 +42,13 @@ export const RamuAssistant = ({ selectedCard, totalCards }: Props) => {
 
   return (
     <div
-      className="fixed bottom-24 sm:bottom-6 left-3 sm:left-4 z-40"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      className="fixed left-3 sm:left-4 z-[55]"
+      style={{
+        // acima da bottom nav (64px) + barra de comando (~84px) + safe-area
+        bottom: 'calc(156px + env(safe-area-inset-bottom, 0px))',
+      }}
     >
+
       <AnimatePresence>
         {open && (
           <motion.div
