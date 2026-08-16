@@ -763,71 +763,86 @@ const Studio = () => {
               </p>
             </div>
 
-            {/* Modelo */}
-            <div className="grid grid-cols-3 gap-1.5">
-              {VIDEO_MODELS.map((m) => (
-                <button
-                  key={m.id}
-                  onClick={() => setVideoModel(m.id)}
-                  className={`h-12 rounded-xl text-xs font-medium flex flex-col items-center justify-center ${
-                    videoModel === m.id
-                      ? 'bg-gradient-to-br from-[#8B5CF6] to-[#06B6D4] text-white'
-                      : 'bg-white/5 border border-white/10 text-neutral-300'
-                  }`}
-                >
-                  {m.label}
-                  <span className="text-[9px] opacity-70">{m.desc}</span>
-                </button>
-              ))}
-            </div>
+            <button
+              onClick={() => setAdvanced((v) => !v)}
+              className="w-full h-11 rounded-xl bg-white/5 border border-white/10 text-xs text-neutral-300 flex items-center justify-center gap-2"
+              aria-expanded={advanced}
+            >
+              <SlidersHorizontal className="h-3.5 w-3.5" />
+              Ajustes {advanced ? '' : `· ${VIDEO_MODELS.find((m) => m.id === videoModel)?.label} · ${is1080 ? '8' : seconds}s`}
+              <ChevronDown className={`h-3.5 w-3.5 transition-transform ${advanced ? 'rotate-180' : ''}`} />
+            </button>
 
-            {/* Formato / resolução */}
-            <div className="grid grid-cols-2 gap-1.5">
-              {VIDEO_SIZES.map((s) => (
-                <button
-                  key={s.id}
-                  onClick={() => setVideoSize(s.id)}
-                  className={`h-10 rounded-lg text-xs font-mono ${
-                    videoSize === s.id ? 'bg-purple-600 text-white' : 'bg-white/5 border border-white/10 text-neutral-300'
-                  }`}
-                >
-                  {s.label}
-                </button>
-              ))}
-            </div>
+            {advanced && (
+              <div className="space-y-3 pt-1">
+                {/* Modelo */}
+                <div className="grid grid-cols-3 gap-1.5">
+                  {VIDEO_MODELS.map((m) => (
+                    <button
+                      key={m.id}
+                      onClick={() => setVideoModel(m.id)}
+                      className={`h-12 rounded-xl text-xs font-medium flex flex-col items-center justify-center ${
+                        videoModel === m.id
+                          ? 'bg-gradient-to-br from-[#8B5CF6] to-[#06B6D4] text-white'
+                          : 'bg-white/5 border border-white/10 text-neutral-300'
+                      }`}
+                    >
+                      {m.label}
+                      <span className="text-[9px] opacity-70">{m.desc}</span>
+                    </button>
+                  ))}
+                </div>
 
-            {/* Duração */}
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] uppercase tracking-widest text-neutral-500">Duração</span>
-              {(['4', '6', '8'] as const).map((n) => (
-                <button
-                  key={n}
-                  onClick={() => setSeconds(n)}
-                  disabled={is1080 && n !== '8'}
-                  className={`h-10 w-12 rounded-lg text-xs font-medium disabled:opacity-30 ${
-                    (is1080 ? '8' : seconds) === n ? 'bg-purple-600 text-white' : 'bg-white/5 border border-white/10 text-neutral-300'
-                  }`}
-                >
-                  {n}s
-                </button>
-              ))}
-              {is1080 && <span className="text-[10px] text-neutral-500">1080p só em 8s</span>}
-            </div>
+                {/* Formato / resolução */}
+                <div className="grid grid-cols-2 gap-1.5">
+                  {VIDEO_SIZES.map((s) => (
+                    <button
+                      key={s.id}
+                      onClick={() => setVideoSize(s.id)}
+                      className={`h-10 rounded-lg text-xs font-mono ${
+                        videoSize === s.id ? 'bg-purple-600 text-white' : 'bg-white/5 border border-white/10 text-neutral-300'
+                      }`}
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
 
-            {/* Movimento de câmera */}
-            <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
-              {MOTION_PRESETS.map((m) => (
-                <button
-                  key={m.id}
-                  onClick={() => setCameraMove(m.id)}
-                  className={`shrink-0 h-10 px-3 rounded-lg text-xs ${
-                    cameraMove === m.id ? 'bg-purple-600 text-white' : 'bg-white/5 border border-white/10 text-neutral-300'
-                  }`}
-                >
-                  {m.emoji} {m.label}
-                </button>
-              ))}
-            </div>
+                {/* Duração */}
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] uppercase tracking-widest text-neutral-500">Duração</span>
+                  {(['4', '6', '8'] as const).map((n) => (
+                    <button
+                      key={n}
+                      onClick={() => setSeconds(n)}
+                      disabled={is1080 && n !== '8'}
+                      className={`h-10 w-12 rounded-lg text-xs font-medium disabled:opacity-30 ${
+                        (is1080 ? '8' : seconds) === n ? 'bg-purple-600 text-white' : 'bg-white/5 border border-white/10 text-neutral-300'
+                      }`}
+                    >
+                      {n}s
+                    </button>
+                  ))}
+                  {is1080 && <span className="text-[10px] text-neutral-500">1080p só em 8s</span>}
+                </div>
+
+                {/* Movimento de câmera */}
+                <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
+                  {MOTION_PRESETS.map((m) => (
+                    <button
+                      key={m.id}
+                      onClick={() => setCameraMove(m.id)}
+                      className={`shrink-0 h-10 px-3 rounded-lg text-xs ${
+                        cameraMove === m.id ? 'bg-purple-600 text-white' : 'bg-white/5 border border-white/10 text-neutral-300'
+                      }`}
+                    >
+                      {m.emoji} {m.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
 
             <button
               onClick={generateVideo}
