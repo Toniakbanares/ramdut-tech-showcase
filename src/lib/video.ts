@@ -49,6 +49,7 @@ export interface VideoJob {
   progress?: number;
   videoUrl?: string;
   error?: string;
+  provider?: string;
 }
 
 async function call(body: Record<string, unknown>) {
@@ -71,11 +72,28 @@ export async function createVideoJob(input: CreateVideoInput): Promise<string> {
   return data.id as string;
 }
 
+export async function cancelVideoJob(id: string) {
+  try {
+    await call({ action: 'cancel', id });
+  } catch {
+    /* cancelamento é best-effort */
+  }
+}
+
+export async function deleteVideoJob(id: string) {
+  try {
+    await call({ action: 'delete', id });
+  } catch {
+    /* exclusão local acontece de qualquer forma */
+  }
+}
+
 export async function pollVideoJob(id: string): Promise<VideoJob> {
   const data = await call({ action: 'status', id });
   if (data?.error && !data?.status) throw new Error(data.error);
-  return { id, status: data.status, progress: data.progress, videoUrl: data.videoUrl, error: data.error };
+  return { id, status: data.status, progress: data.progress, videoUrl: data.videoUrl, error: data.error, provider: data.provider };
 }
+
 
 /**
  * Aguarda a conclusão com polling controlado (sem loop infinito).

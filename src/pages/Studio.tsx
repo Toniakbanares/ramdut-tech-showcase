@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, Sparkles, Loader2, Download, Share2, RefreshCw, X, Upload,
   AlertTriangle, Wand2, ImagePlus, Layers, Laugh, Maximize2, Grid2x2, Grid3x3,
-  Film, Play,
+  Film, Play, Trash2, SlidersHorizontal, ChevronDown, Ban,
 } from 'lucide-react';
 
 import { MobileBottomNav } from '@/components/MobileBottomNav';
@@ -16,8 +16,10 @@ import { composeMeme, MEME_SUBJECTS, MEME_STYLES } from '@/lib/meme';
 import {
   MOTION_PRESETS, VIDEO_MODELS, VIDEO_SIZES,
   createVideoJob, waitForVideo, downloadVideo, toDataUrl,
+  cancelVideoJob, deleteVideoJob,
   type VideoStatus,
 } from '@/lib/video';
+
 
 type Quality = 'fast' | 'standard' | 'hd' | 'ultra';
 
@@ -94,7 +96,11 @@ interface Clip {
   seconds: string;
   size: string;
   poster?: string;
+  /** id do job no provider (para cancelar/excluir) */
+  jobId?: string;
+  provider?: string;
 }
+
 
 const fileToDataUrl = (file: File) =>
   new Promise<string>((resolve, reject) => {
@@ -140,6 +146,11 @@ const Studio = () => {
   const [videoRef, setVideoRef] = useState<string | undefined>();
   const [clips, setClips] = useState<Clip[]>([]);
   const [videoBusy, setVideoBusy] = useState(false);
+  /** painel de configurações avançadas recolhido por padrão */
+  const [advanced, setAdvanced] = useState(false);
+  /** aborta o polling de um clipe específico */
+  const aborts = useRef<Record<string, AbortController>>({});
+
 
   const activePreset = useMemo(() => PRESETS.find((p) => p.id === preset), [preset]);
   /** 1080p no Veo só existe em clipes de 8s */
@@ -275,6 +286,8 @@ const Studio = () => {
 
   const runClip = useCallback(
     async (clip: Clip, refImage?: string) => {
+      const controller = new AbortController();
+      aborts.current[clip.id] = controller;
       try {
         const jobId = await createVideoJob({
           prompt: clip.prompt,
@@ -283,21 +296,49 @@ const Studio = () => {
           size: clip.size,
           inputReference: refImage,
         });
-        patchClip(clip.id, { status: 'processing' });
-        const job = await waitForVideo(jobId, (j) =>
-          patchClip(clip.id, { status: j.status, progress: j.progress }),
+        patchClip(clip.id, { status: 'processing', jobId });
+        const job = await waitForVideo(
+          jobId,
+          (j) => patchClip(clip.id, { status: j.status, progress: j.progress }),
+          { signal: controller.signal },
         );
-        if (job.status === 'completed' && job.videoUrl) {
-          patchClip(clip.id, { status: 'completed', videoUrl: job.videoUrl });
+        if (job.status === 'cancelled') {
+          patchClip(clip.id, { status: 'cancelled' });
+        } else if (job.status === 'completed' && job.videoUrl) {
+          patchClip(clip.id, { status: 'completed', videoUrl: job.videoUrl, progress: 100 });
         } else {
           patchClip(clip.id, { status: 'failed', error: job.error || 'Não foi possível gerar o vídeo.' });
         }
       } catch (e) {
+        console.error('[studio] vídeo falhou:', e);
         patchClip(clip.id, { status: 'failed', error: humanizeAiError(e).description });
+      } finally {
+        delete aborts.current[clip.id];
       }
     },
     [],
   );
+
+  const cancelClip = (clip: Clip) => {
+    aborts.current[clip.id]?.abort();
+    patchClip(clip.id, { status: 'cancelled' });
+    if (clip.jobId) void cancelVideoJob(clip.jobId);
+    setVideoBusy(false);
+    toast({ title: 'Geração cancelada' });
+  };
+
+  const deleteClip = (clip: Clip) => {
+    if (!window.confirm('Excluir este vídeo? Essa ação não pode ser desfeita.')) return;
+    aborts.current[clip.id]?.abort();
+    if (clip.jobId) void deleteVideoJob(clip.jobId);
+    setClips((c) => c.filter((x) => x.id !== clip.id));
+  };
+
+  const deleteShot = (shot: Shot) => {
+    if (!window.confirm('Excluir esta imagem?')) return;
+    setShots((s) => s.filter((x) => x.id !== shot.id));
+  };
+
 
   const generateVideo = useCallback(async () => {
     const base = videoPrompt.trim();
@@ -575,70 +616,86 @@ const Studio = () => {
             </button>
           </div>
 
-          {/* Engine */}
-          <div className="grid grid-cols-3 gap-1.5">
-            {ENGINES.map((e) => (
-              <button
-                key={e.id}
-                onClick={() => setEngine(e.id)}
-                className={`h-12 rounded-xl text-xs font-medium flex flex-col items-center justify-center transition-colors ${
-                  engine === e.id
-                    ? 'bg-gradient-to-br from-[#8B5CF6] to-[#06B6D4] text-white'
-                    : 'bg-white/5 border border-white/10 text-neutral-300'
-                }`}
-              >
-                {e.label}
-                <span className="text-[9px] opacity-70">{e.desc}</span>
-              </button>
-            ))}
-          </div>
+          {/* Configurações avançadas (recolhidas) */}
+          <button
+            onClick={() => setAdvanced((v) => !v)}
+            className="w-full h-11 rounded-xl bg-white/5 border border-white/10 text-xs text-neutral-300 flex items-center justify-center gap-2"
+            aria-expanded={advanced}
+          >
+            <SlidersHorizontal className="h-3.5 w-3.5" />
+            Ajustes {advanced ? '' : `· ${ENGINES.find((e) => e.id === engine)?.label} · ${aspect} · ${QUALITIES.find((q) => q.id === quality)?.label}`}
+            <ChevronDown className={`h-3.5 w-3.5 transition-transform ${advanced ? 'rotate-180' : ''}`} />
+          </button>
 
-          {/* Aspect */}
-          {tab === 'create' && (
-            <div className="flex flex-wrap gap-1.5">
-              {ASPECTS.map((a) => (
-                <button
-                  key={a}
-                  onClick={() => setAspect(a)}
-                  className={`h-10 px-3 rounded-lg text-xs font-mono ${
-                    aspect === a ? 'bg-purple-600 text-white' : 'bg-white/5 border border-white/10 text-neutral-300'
-                  }`}
-                >
-                  {a}
-                </button>
-              ))}
+          {advanced && (
+            <div className="space-y-3 pt-1">
+              {/* Engine */}
+              <div className="grid grid-cols-3 gap-1.5">
+                {ENGINES.map((e) => (
+                  <button
+                    key={e.id}
+                    onClick={() => setEngine(e.id)}
+                    className={`h-12 rounded-xl text-xs font-medium flex flex-col items-center justify-center transition-colors ${
+                      engine === e.id
+                        ? 'bg-gradient-to-br from-[#8B5CF6] to-[#06B6D4] text-white'
+                        : 'bg-white/5 border border-white/10 text-neutral-300'
+                    }`}
+                  >
+                    {e.label}
+                    <span className="text-[9px] opacity-70">{e.desc}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Aspect */}
+              {tab === 'create' && (
+                <div className="flex flex-wrap gap-1.5">
+                  {ASPECTS.map((a) => (
+                    <button
+                      key={a}
+                      onClick={() => setAspect(a)}
+                      className={`h-10 px-3 rounded-lg text-xs font-mono ${
+                        aspect === a ? 'bg-purple-600 text-white' : 'bg-white/5 border border-white/10 text-neutral-300'
+                      }`}
+                    >
+                      {a}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Qualidade */}
+              <div className="grid grid-cols-4 gap-1.5">
+                {QUALITIES.map((q) => (
+                  <button
+                    key={q.id}
+                    onClick={() => setQuality(q.id)}
+                    className={`h-10 rounded-lg text-xs font-medium ${
+                      quality === q.id ? 'bg-purple-600 text-white' : 'bg-white/5 border border-white/10 text-neutral-300'
+                    }`}
+                  >
+                    {q.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] uppercase tracking-widest text-neutral-500">Lote</span>
+                {[1, 2, 4].map((n) => (
+                  <button
+                    key={n}
+                    onClick={() => setBatch(n)}
+                    className={`h-10 w-12 rounded-lg text-xs font-medium ${
+                      batch === n ? 'bg-purple-600 text-white' : 'bg-white/5 border border-white/10 text-neutral-300'
+                    }`}
+                  >
+                    {n}x
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
-          {/* Quality + batch */}
-          <div className="grid grid-cols-4 gap-1.5">
-            {QUALITIES.map((q) => (
-              <button
-                key={q.id}
-                onClick={() => setQuality(q.id)}
-                className={`h-10 rounded-lg text-xs font-medium ${
-                  quality === q.id ? 'bg-purple-600 text-white' : 'bg-white/5 border border-white/10 text-neutral-300'
-                }`}
-              >
-                {q.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] uppercase tracking-widest text-neutral-500">Lote</span>
-            {[1, 2, 4].map((n) => (
-              <button
-                key={n}
-                onClick={() => setBatch(n)}
-                className={`h-10 w-12 rounded-lg text-xs font-medium ${
-                  batch === n ? 'bg-purple-600 text-white' : 'bg-white/5 border border-white/10 text-neutral-300'
-                }`}
-              >
-                {n}x
-              </button>
-            ))}
-          </div>
 
           <button
             onClick={tab === 'meme' ? generateMeme : generate}
@@ -706,71 +763,86 @@ const Studio = () => {
               </p>
             </div>
 
-            {/* Modelo */}
-            <div className="grid grid-cols-3 gap-1.5">
-              {VIDEO_MODELS.map((m) => (
-                <button
-                  key={m.id}
-                  onClick={() => setVideoModel(m.id)}
-                  className={`h-12 rounded-xl text-xs font-medium flex flex-col items-center justify-center ${
-                    videoModel === m.id
-                      ? 'bg-gradient-to-br from-[#8B5CF6] to-[#06B6D4] text-white'
-                      : 'bg-white/5 border border-white/10 text-neutral-300'
-                  }`}
-                >
-                  {m.label}
-                  <span className="text-[9px] opacity-70">{m.desc}</span>
-                </button>
-              ))}
-            </div>
+            <button
+              onClick={() => setAdvanced((v) => !v)}
+              className="w-full h-11 rounded-xl bg-white/5 border border-white/10 text-xs text-neutral-300 flex items-center justify-center gap-2"
+              aria-expanded={advanced}
+            >
+              <SlidersHorizontal className="h-3.5 w-3.5" />
+              Ajustes {advanced ? '' : `· ${VIDEO_MODELS.find((m) => m.id === videoModel)?.label} · ${is1080 ? '8' : seconds}s`}
+              <ChevronDown className={`h-3.5 w-3.5 transition-transform ${advanced ? 'rotate-180' : ''}`} />
+            </button>
 
-            {/* Formato / resolução */}
-            <div className="grid grid-cols-2 gap-1.5">
-              {VIDEO_SIZES.map((s) => (
-                <button
-                  key={s.id}
-                  onClick={() => setVideoSize(s.id)}
-                  className={`h-10 rounded-lg text-xs font-mono ${
-                    videoSize === s.id ? 'bg-purple-600 text-white' : 'bg-white/5 border border-white/10 text-neutral-300'
-                  }`}
-                >
-                  {s.label}
-                </button>
-              ))}
-            </div>
+            {advanced && (
+              <div className="space-y-3 pt-1">
+                {/* Modelo */}
+                <div className="grid grid-cols-3 gap-1.5">
+                  {VIDEO_MODELS.map((m) => (
+                    <button
+                      key={m.id}
+                      onClick={() => setVideoModel(m.id)}
+                      className={`h-12 rounded-xl text-xs font-medium flex flex-col items-center justify-center ${
+                        videoModel === m.id
+                          ? 'bg-gradient-to-br from-[#8B5CF6] to-[#06B6D4] text-white'
+                          : 'bg-white/5 border border-white/10 text-neutral-300'
+                      }`}
+                    >
+                      {m.label}
+                      <span className="text-[9px] opacity-70">{m.desc}</span>
+                    </button>
+                  ))}
+                </div>
 
-            {/* Duração */}
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] uppercase tracking-widest text-neutral-500">Duração</span>
-              {(['4', '6', '8'] as const).map((n) => (
-                <button
-                  key={n}
-                  onClick={() => setSeconds(n)}
-                  disabled={is1080 && n !== '8'}
-                  className={`h-10 w-12 rounded-lg text-xs font-medium disabled:opacity-30 ${
-                    (is1080 ? '8' : seconds) === n ? 'bg-purple-600 text-white' : 'bg-white/5 border border-white/10 text-neutral-300'
-                  }`}
-                >
-                  {n}s
-                </button>
-              ))}
-              {is1080 && <span className="text-[10px] text-neutral-500">1080p só em 8s</span>}
-            </div>
+                {/* Formato / resolução */}
+                <div className="grid grid-cols-2 gap-1.5">
+                  {VIDEO_SIZES.map((s) => (
+                    <button
+                      key={s.id}
+                      onClick={() => setVideoSize(s.id)}
+                      className={`h-10 rounded-lg text-xs font-mono ${
+                        videoSize === s.id ? 'bg-purple-600 text-white' : 'bg-white/5 border border-white/10 text-neutral-300'
+                      }`}
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
 
-            {/* Movimento de câmera */}
-            <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
-              {MOTION_PRESETS.map((m) => (
-                <button
-                  key={m.id}
-                  onClick={() => setCameraMove(m.id)}
-                  className={`shrink-0 h-10 px-3 rounded-lg text-xs ${
-                    cameraMove === m.id ? 'bg-purple-600 text-white' : 'bg-white/5 border border-white/10 text-neutral-300'
-                  }`}
-                >
-                  {m.emoji} {m.label}
-                </button>
-              ))}
-            </div>
+                {/* Duração */}
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] uppercase tracking-widest text-neutral-500">Duração</span>
+                  {(['4', '6', '8'] as const).map((n) => (
+                    <button
+                      key={n}
+                      onClick={() => setSeconds(n)}
+                      disabled={is1080 && n !== '8'}
+                      className={`h-10 w-12 rounded-lg text-xs font-medium disabled:opacity-30 ${
+                        (is1080 ? '8' : seconds) === n ? 'bg-purple-600 text-white' : 'bg-white/5 border border-white/10 text-neutral-300'
+                      }`}
+                    >
+                      {n}s
+                    </button>
+                  ))}
+                  {is1080 && <span className="text-[10px] text-neutral-500">1080p só em 8s</span>}
+                </div>
+
+                {/* Movimento de câmera */}
+                <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
+                  {MOTION_PRESETS.map((m) => (
+                    <button
+                      key={m.id}
+                      onClick={() => setCameraMove(m.id)}
+                      className={`shrink-0 h-10 px-3 rounded-lg text-xs ${
+                        cameraMove === m.id ? 'bg-purple-600 text-white' : 'bg-white/5 border border-white/10 text-neutral-300'
+                      }`}
+                    >
+                      {m.emoji} {m.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
 
             <button
               onClick={generateVideo}
@@ -922,35 +994,50 @@ const Studio = () => {
                       )}
                     </div>
                     {!dense && <p className="px-2.5 py-2 text-[11px] text-neutral-400 line-clamp-2">{s.prompt}</p>}
-                    {s.status === 'done' && (
-                      <div className="grid grid-cols-4 border-t border-white/5">
+                    {(s.status === 'done' || s.status === 'error') && (
+                      <div className="grid grid-cols-5 border-t border-white/5">
                         <button
                           onClick={() => animate(s)}
-                          className="min-h-[44px] text-[10px] text-[#8B5CF6] hover:bg-white/5 flex flex-col items-center justify-center gap-0.5"
+                          disabled={s.status !== 'done'}
+                          className="min-h-[44px] text-[10px] text-[#8B5CF6] hover:bg-white/5 flex flex-col items-center justify-center gap-0.5 disabled:opacity-30"
+                          aria-label="Animar imagem"
                         >
-                          <Film className="h-3.5 w-3.5" /> Animar
+                          <Film className="h-3.5 w-3.5" />
                         </button>
                         <button
                           onClick={() => remix(s)}
                           className="min-h-[44px] text-[10px] text-neutral-300 hover:bg-white/5 flex flex-col items-center justify-center gap-0.5"
+                          aria-label="Remix"
                         >
-                          <Wand2 className="h-3.5 w-3.5" /> Remix
+                          <Wand2 className="h-3.5 w-3.5" />
                         </button>
 
                         <button
                           onClick={() => downloadShot(s)}
-                          className="min-h-[44px] text-[10px] text-neutral-300 hover:bg-white/5 flex flex-col items-center justify-center gap-0.5"
+                          disabled={s.status !== 'done'}
+                          className="min-h-[44px] text-[10px] text-neutral-300 hover:bg-white/5 flex flex-col items-center justify-center gap-0.5 disabled:opacity-30"
+                          aria-label="Baixar"
                         >
-                          <Download className="h-3.5 w-3.5" /> Baixar
+                          <Download className="h-3.5 w-3.5" />
                         </button>
                         <button
                           onClick={() => share(s)}
-                          className="min-h-[44px] text-[10px] text-neutral-300 hover:bg-white/5 flex flex-col items-center justify-center gap-0.5"
+                          disabled={s.status !== 'done'}
+                          className="min-h-[44px] text-[10px] text-neutral-300 hover:bg-white/5 flex flex-col items-center justify-center gap-0.5 disabled:opacity-30"
+                          aria-label="Compartilhar"
                         >
-                          <Share2 className="h-3.5 w-3.5" /> Enviar
+                          <Share2 className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={() => deleteShot(s)}
+                          className="min-h-[44px] text-[10px] text-red-400/80 hover:bg-white/5 flex flex-col items-center justify-center gap-0.5"
+                          aria-label="Excluir imagem"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
                         </button>
                       </div>
                     )}
+
                   </motion.article>
                 ))}
               </AnimatePresence>
