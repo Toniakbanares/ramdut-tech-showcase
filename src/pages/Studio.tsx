@@ -96,7 +96,11 @@ interface Clip {
   seconds: string;
   size: string;
   poster?: string;
+  /** id do job no provider (para cancelar/excluir) */
+  jobId?: string;
+  provider?: string;
 }
+
 
 const fileToDataUrl = (file: File) =>
   new Promise<string>((resolve, reject) => {
