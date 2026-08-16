@@ -286,6 +286,8 @@ const Studio = () => {
 
   const runClip = useCallback(
     async (clip: Clip, refImage?: string) => {
+      const controller = new AbortController();
+      aborts.current[clip.id] = controller;
       try {
         const jobId = await createVideoJob({
           prompt: clip.prompt,
@@ -294,21 +296,49 @@ const Studio = () => {
           size: clip.size,
           inputReference: refImage,
         });
-        patchClip(clip.id, { status: 'processing' });
-        const job = await waitForVideo(jobId, (j) =>
-          patchClip(clip.id, { status: j.status, progress: j.progress }),
+        patchClip(clip.id, { status: 'processing', jobId });
+        const job = await waitForVideo(
+          jobId,
+          (j) => patchClip(clip.id, { status: j.status, progress: j.progress }),
+          { signal: controller.signal },
         );
-        if (job.status === 'completed' && job.videoUrl) {
-          patchClip(clip.id, { status: 'completed', videoUrl: job.videoUrl });
+        if (job.status === 'cancelled') {
+          patchClip(clip.id, { status: 'cancelled' });
+        } else if (job.status === 'completed' && job.videoUrl) {
+          patchClip(clip.id, { status: 'completed', videoUrl: job.videoUrl, progress: 100 });
         } else {
           patchClip(clip.id, { status: 'failed', error: job.error || 'Não foi possível gerar o vídeo.' });
         }
       } catch (e) {
+        console.error('[studio] vídeo falhou:', e);
         patchClip(clip.id, { status: 'failed', error: humanizeAiError(e).description });
+      } finally {
+        delete aborts.current[clip.id];
       }
     },
     [],
   );
+
+  const cancelClip = (clip: Clip) => {
+    aborts.current[clip.id]?.abort();
+    patchClip(clip.id, { status: 'cancelled' });
+    if (clip.jobId) void cancelVideoJob(clip.jobId);
+    setVideoBusy(false);
+    toast({ title: 'Geração cancelada' });
+  };
+
+  const deleteClip = (clip: Clip) => {
+    if (!window.confirm('Excluir este vídeo? Essa ação não pode ser desfeita.')) return;
+    aborts.current[clip.id]?.abort();
+    if (clip.jobId) void deleteVideoJob(clip.jobId);
+    setClips((c) => c.filter((x) => x.id !== clip.id));
+  };
+
+  const deleteShot = (shot: Shot) => {
+    if (!window.confirm('Excluir esta imagem?')) return;
+    setShots((s) => s.filter((x) => x.id !== shot.id));
+  };
+
 
   const generateVideo = useCallback(async () => {
     const base = videoPrompt.trim();
