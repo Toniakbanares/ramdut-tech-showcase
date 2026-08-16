@@ -616,70 +616,86 @@ const Studio = () => {
             </button>
           </div>
 
-          {/* Engine */}
-          <div className="grid grid-cols-3 gap-1.5">
-            {ENGINES.map((e) => (
-              <button
-                key={e.id}
-                onClick={() => setEngine(e.id)}
-                className={`h-12 rounded-xl text-xs font-medium flex flex-col items-center justify-center transition-colors ${
-                  engine === e.id
-                    ? 'bg-gradient-to-br from-[#8B5CF6] to-[#06B6D4] text-white'
-                    : 'bg-white/5 border border-white/10 text-neutral-300'
-                }`}
-              >
-                {e.label}
-                <span className="text-[9px] opacity-70">{e.desc}</span>
-              </button>
-            ))}
-          </div>
+          {/* Configurações avançadas (recolhidas) */}
+          <button
+            onClick={() => setAdvanced((v) => !v)}
+            className="w-full h-11 rounded-xl bg-white/5 border border-white/10 text-xs text-neutral-300 flex items-center justify-center gap-2"
+            aria-expanded={advanced}
+          >
+            <SlidersHorizontal className="h-3.5 w-3.5" />
+            Ajustes {advanced ? '' : `· ${ENGINES.find((e) => e.id === engine)?.label} · ${aspect} · ${QUALITIES.find((q) => q.id === quality)?.label}`}
+            <ChevronDown className={`h-3.5 w-3.5 transition-transform ${advanced ? 'rotate-180' : ''}`} />
+          </button>
 
-          {/* Aspect */}
-          {tab === 'create' && (
-            <div className="flex flex-wrap gap-1.5">
-              {ASPECTS.map((a) => (
-                <button
-                  key={a}
-                  onClick={() => setAspect(a)}
-                  className={`h-10 px-3 rounded-lg text-xs font-mono ${
-                    aspect === a ? 'bg-purple-600 text-white' : 'bg-white/5 border border-white/10 text-neutral-300'
-                  }`}
-                >
-                  {a}
-                </button>
-              ))}
+          {advanced && (
+            <div className="space-y-3 pt-1">
+              {/* Engine */}
+              <div className="grid grid-cols-3 gap-1.5">
+                {ENGINES.map((e) => (
+                  <button
+                    key={e.id}
+                    onClick={() => setEngine(e.id)}
+                    className={`h-12 rounded-xl text-xs font-medium flex flex-col items-center justify-center transition-colors ${
+                      engine === e.id
+                        ? 'bg-gradient-to-br from-[#8B5CF6] to-[#06B6D4] text-white'
+                        : 'bg-white/5 border border-white/10 text-neutral-300'
+                    }`}
+                  >
+                    {e.label}
+                    <span className="text-[9px] opacity-70">{e.desc}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Aspect */}
+              {tab === 'create' && (
+                <div className="flex flex-wrap gap-1.5">
+                  {ASPECTS.map((a) => (
+                    <button
+                      key={a}
+                      onClick={() => setAspect(a)}
+                      className={`h-10 px-3 rounded-lg text-xs font-mono ${
+                        aspect === a ? 'bg-purple-600 text-white' : 'bg-white/5 border border-white/10 text-neutral-300'
+                      }`}
+                    >
+                      {a}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Qualidade */}
+              <div className="grid grid-cols-4 gap-1.5">
+                {QUALITIES.map((q) => (
+                  <button
+                    key={q.id}
+                    onClick={() => setQuality(q.id)}
+                    className={`h-10 rounded-lg text-xs font-medium ${
+                      quality === q.id ? 'bg-purple-600 text-white' : 'bg-white/5 border border-white/10 text-neutral-300'
+                    }`}
+                  >
+                    {q.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] uppercase tracking-widest text-neutral-500">Lote</span>
+                {[1, 2, 4].map((n) => (
+                  <button
+                    key={n}
+                    onClick={() => setBatch(n)}
+                    className={`h-10 w-12 rounded-lg text-xs font-medium ${
+                      batch === n ? 'bg-purple-600 text-white' : 'bg-white/5 border border-white/10 text-neutral-300'
+                    }`}
+                  >
+                    {n}x
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
-          {/* Quality + batch */}
-          <div className="grid grid-cols-4 gap-1.5">
-            {QUALITIES.map((q) => (
-              <button
-                key={q.id}
-                onClick={() => setQuality(q.id)}
-                className={`h-10 rounded-lg text-xs font-medium ${
-                  quality === q.id ? 'bg-purple-600 text-white' : 'bg-white/5 border border-white/10 text-neutral-300'
-                }`}
-              >
-                {q.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] uppercase tracking-widest text-neutral-500">Lote</span>
-            {[1, 2, 4].map((n) => (
-              <button
-                key={n}
-                onClick={() => setBatch(n)}
-                className={`h-10 w-12 rounded-lg text-xs font-medium ${
-                  batch === n ? 'bg-purple-600 text-white' : 'bg-white/5 border border-white/10 text-neutral-300'
-                }`}
-              >
-                {n}x
-              </button>
-            ))}
-          </div>
 
           <button
             onClick={tab === 'meme' ? generateMeme : generate}
