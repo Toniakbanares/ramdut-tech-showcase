@@ -994,35 +994,50 @@ const Studio = () => {
                       )}
                     </div>
                     {!dense && <p className="px-2.5 py-2 text-[11px] text-neutral-400 line-clamp-2">{s.prompt}</p>}
-                    {s.status === 'done' && (
-                      <div className="grid grid-cols-4 border-t border-white/5">
+                    {(s.status === 'done' || s.status === 'error') && (
+                      <div className="grid grid-cols-5 border-t border-white/5">
                         <button
                           onClick={() => animate(s)}
-                          className="min-h-[44px] text-[10px] text-[#8B5CF6] hover:bg-white/5 flex flex-col items-center justify-center gap-0.5"
+                          disabled={s.status !== 'done'}
+                          className="min-h-[44px] text-[10px] text-[#8B5CF6] hover:bg-white/5 flex flex-col items-center justify-center gap-0.5 disabled:opacity-30"
+                          aria-label="Animar imagem"
                         >
-                          <Film className="h-3.5 w-3.5" /> Animar
+                          <Film className="h-3.5 w-3.5" />
                         </button>
                         <button
                           onClick={() => remix(s)}
                           className="min-h-[44px] text-[10px] text-neutral-300 hover:bg-white/5 flex flex-col items-center justify-center gap-0.5"
+                          aria-label="Remix"
                         >
-                          <Wand2 className="h-3.5 w-3.5" /> Remix
+                          <Wand2 className="h-3.5 w-3.5" />
                         </button>
 
                         <button
                           onClick={() => downloadShot(s)}
-                          className="min-h-[44px] text-[10px] text-neutral-300 hover:bg-white/5 flex flex-col items-center justify-center gap-0.5"
+                          disabled={s.status !== 'done'}
+                          className="min-h-[44px] text-[10px] text-neutral-300 hover:bg-white/5 flex flex-col items-center justify-center gap-0.5 disabled:opacity-30"
+                          aria-label="Baixar"
                         >
-                          <Download className="h-3.5 w-3.5" /> Baixar
+                          <Download className="h-3.5 w-3.5" />
                         </button>
                         <button
                           onClick={() => share(s)}
-                          className="min-h-[44px] text-[10px] text-neutral-300 hover:bg-white/5 flex flex-col items-center justify-center gap-0.5"
+                          disabled={s.status !== 'done'}
+                          className="min-h-[44px] text-[10px] text-neutral-300 hover:bg-white/5 flex flex-col items-center justify-center gap-0.5 disabled:opacity-30"
+                          aria-label="Compartilhar"
                         >
-                          <Share2 className="h-3.5 w-3.5" /> Enviar
+                          <Share2 className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={() => deleteShot(s)}
+                          className="min-h-[44px] text-[10px] text-red-400/80 hover:bg-white/5 flex flex-col items-center justify-center gap-0.5"
+                          aria-label="Excluir imagem"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
                         </button>
                       </div>
                     )}
+
                   </motion.article>
                 ))}
               </AnimatePresence>
