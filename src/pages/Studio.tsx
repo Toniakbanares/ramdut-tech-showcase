@@ -146,6 +146,11 @@ const Studio = () => {
   const [videoRef, setVideoRef] = useState<string | undefined>();
   const [clips, setClips] = useState<Clip[]>([]);
   const [videoBusy, setVideoBusy] = useState(false);
+  /** painel de configurações avançadas recolhido por padrão */
+  const [advanced, setAdvanced] = useState(false);
+  /** aborta o polling de um clipe específico */
+  const aborts = useRef<Record<string, AbortController>>({});
+
 
   const activePreset = useMemo(() => PRESETS.find((p) => p.id === preset), [preset]);
   /** 1080p no Veo só existe em clipes de 8s */
