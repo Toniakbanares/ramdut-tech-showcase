@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, Sparkles, Loader2, Download, Share2, RefreshCw, X, Upload,
   AlertTriangle, Wand2, ImagePlus, Layers, Laugh, Maximize2, Grid2x2, Grid3x3,
-  Film, Play,
+  Film, Play, Trash2, SlidersHorizontal, ChevronDown, Ban,
 } from 'lucide-react';
 
 import { MobileBottomNav } from '@/components/MobileBottomNav';
@@ -16,8 +16,10 @@ import { composeMeme, MEME_SUBJECTS, MEME_STYLES } from '@/lib/meme';
 import {
   MOTION_PRESETS, VIDEO_MODELS, VIDEO_SIZES,
   createVideoJob, waitForVideo, downloadVideo, toDataUrl,
+  cancelVideoJob, deleteVideoJob,
   type VideoStatus,
 } from '@/lib/video';
+
 
 type Quality = 'fast' | 'standard' | 'hd' | 'ultra';
 
