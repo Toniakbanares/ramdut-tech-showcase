@@ -106,7 +106,28 @@ const APIS: ApiCard[] = [
     status: 'operational',
     icon: FileCode,
   },
+  {
+    name: 'Google Veo (vídeo)',
+    desc: 'Text-to-video e image-to-video via Lovable Gateway',
+    url: 'https://docs.lovable.dev/',
+    category: 'tools',
+    free: 'Consome créditos de IA do workspace',
+    features: ['Veo 3.1 Lite', 'Veo 3.1 Fast', 'Veo 3.1', '720p/1080p', 'Áudio'],
+    status: 'operational',
+    icon: Activity,
+  },
+  {
+    name: 'Agnes AI',
+    desc: 'Provedor adicional de texto — verificação em tempo real da chave',
+    url: 'https://platform.agnes-ai.com/settings/apiKeys',
+    category: 'text',
+    free: 'Conforme o plano da conta Agnes',
+    features: ['Chat/completions', 'Bearer auth', 'Fallback de texto'],
+    status: 'unknown',
+    icon: MessageSquare,
+  },
 ];
+
 
 const CATEGORIES = [
   { id: 'all' as const, label: 'Todas', icon: Activity },
