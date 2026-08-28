@@ -43,6 +43,41 @@ serve(async (req) => {
           ...(init?.headers || {}),
         },
       });
+    // ---- probe: descobre esquema de auth/rota aceito (não vaza a chave) ----
+    if (action === "probe") {
+      const bases = [
+        "https://api.agnes-ai.com/api/v1",
+        "https://api.agnes-ai.com/api/open/v1",
+        "https://api.agnes-ai.com/openapi/v1",
+        "https://platform.agnes-ai.com/api/v1",
+      ];
+      const schemes: Record<string, Record<string, string>> = {
+        bearer: { Authorization: `Bearer ${KEY}` },
+        raw: { Authorization: KEY },
+        xapikey: { "x-api-key": KEY },
+        apikey: { "api-key": KEY },
+      };
+      const out: any[] = [];
+      for (const b of bases) {
+        for (const [name, h] of Object.entries(schemes)) {
+          for (const p of ["/models", "/chat/completions"]) {
+            try {
+              const r = await fetch(`${b}${p}`, {
+                method: p === "/models" ? "GET" : "POST",
+                headers: { ...h, "Content-Type": "application/json" },
+                body: p === "/models" ? undefined : JSON.stringify({ model: "gpt-4o-mini", messages: [{ role: "user", content: "hi" }] }),
+              });
+              const t = (await r.text()).slice(0, 160);
+              if (r.status !== 404) out.push({ base: b, scheme: name, path: p, status: r.status, body: t });
+            } catch (e) {
+              out.push({ base: b, scheme: name, path: p, error: String(e).slice(0, 80) });
+            }
+          }
+        }
+      }
+      return json({ out });
+    }
+
 
     // ---- ping/status: usado pela página de APIs ----
     if (action === "status") {
