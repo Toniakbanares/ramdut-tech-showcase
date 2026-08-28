@@ -5,8 +5,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-/** Base da API Agnes (descoberta em api.agnes-ai.com) */
-const BASE = "https://api.agnes-ai.com/api/v1";
+/** Base da API Agnes (sobrescrevível pelo secret AGNES_API_BASE) */
+const BASE = Deno.env.get("AGNES_API_BASE") || "https://api.agnes-ai.com/api/v1";
+
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
