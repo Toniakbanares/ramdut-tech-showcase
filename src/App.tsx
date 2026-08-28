@@ -11,6 +11,7 @@ import ApiStatus from "./pages/ApiStatus";
 import RamonChat from "./pages/RamonChat";
 import Chat from "./pages/Chat";
 import Studio from "./pages/Studio";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 import NotFound from "./pages/NotFound";
 
@@ -22,11 +23,13 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <ErrorBoundary area="app">
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/chat" element={<Chat />} />
-          <Route path="/imagine" element={<Imagine />} />
-          <Route path="/studio" element={<Studio />} />
+          <Route path="/chat" element={<ErrorBoundary area="chat"><Chat /></ErrorBoundary>} />
+          <Route path="/imagine" element={<ErrorBoundary area="imagine"><Imagine /></ErrorBoundary>} />
+          <Route path="/studio" element={<ErrorBoundary area="studio"><Studio /></ErrorBoundary>} />
+
 
 
           {/* RAMU Lab V3 — canvas único, rotas SEO-friendly */}
