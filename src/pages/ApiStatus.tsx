@@ -106,7 +106,28 @@ const APIS: ApiCard[] = [
     status: 'operational',
     icon: FileCode,
   },
+  {
+    name: 'Google Veo (vídeo)',
+    desc: 'Text-to-video e image-to-video via Lovable Gateway',
+    url: 'https://docs.lovable.dev/',
+    category: 'tools',
+    free: 'Consome créditos de IA do workspace',
+    features: ['Veo 3.1 Lite', 'Veo 3.1 Fast', 'Veo 3.1', '720p/1080p', 'Áudio'],
+    status: 'operational',
+    icon: Activity,
+  },
+  {
+    name: 'Agnes AI',
+    desc: 'Provedor adicional de texto — verificação em tempo real da chave',
+    url: 'https://platform.agnes-ai.com/settings/apiKeys',
+    category: 'text',
+    free: 'Conforme o plano da conta Agnes',
+    features: ['Chat/completions', 'Bearer auth', 'Fallback de texto'],
+    status: 'unknown',
+    icon: MessageSquare,
+  },
 ];
+
 
 const CATEGORIES = [
   { id: 'all' as const, label: 'Todas', icon: Activity },
@@ -144,6 +165,8 @@ const statusBadge = (s: ApiStatus) => {
 const ApiStatusPage = () => {
   const [filter, setFilter] = useState<typeof CATEGORIES[number]['id']>('all');
   const [tick, setTick] = useState(0);
+  /** status verificado ao vivo (chave/endpoint) por API */
+  const [live, setLive] = useState<Record<string, { status: ApiStatus; note?: string }>>({});
 
   // SEO
   useEffect(() => {
@@ -157,9 +180,34 @@ const ApiStatusPage = () => {
     return () => clearInterval(t);
   }, []);
 
-  const filtered = filter === 'all' ? APIS : APIS.filter((a) => a.category === filter);
-  const operational = APIS.filter((a) => a.status === 'operational').length;
-  const uptime = Math.round((operational / APIS.length) * 100);
+  // Checagem real da Agnes AI
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('agnes-ai', { body: { action: 'status' } });
+        if (!alive) return;
+        if (error) throw error;
+        setLive((s) => ({
+          ...s,
+          'Agnes AI': data?.ok
+            ? { status: 'operational', note: `${data.models?.length ?? 0} modelos` }
+            : { status: 'down', note: data?.error },
+        }));
+      } catch (e) {
+        if (alive) setLive((s) => ({ ...s, 'Agnes AI': { status: 'down', note: 'Sem resposta do provedor' } }));
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const apis = APIS.map((a) => (live[a.name] ? { ...a, status: live[a.name].status, desc: live[a.name].note ? `${a.desc} — ${live[a.name].note}` : a.desc } : a));
+  const filtered = filter === 'all' ? apis : apis.filter((a) => a.category === filter);
+  const operational = apis.filter((a) => a.status === 'operational').length;
+  const uptime = Math.round((operational / apis.length) * 100);
+
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
