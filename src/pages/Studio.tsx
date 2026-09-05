@@ -1076,7 +1076,39 @@ const Studio = () => {
 
       </main>
 
+      {/* Ação principal fixa no mobile — nunca sai da tela */}
+      <div
+        className="lg:hidden fixed inset-x-0 z-50 px-3"
+        style={{ bottom: 'calc(70px + env(safe-area-inset-bottom, 0px))' }}
+      >
+        <button
+          onClick={tab === 'video' ? generateVideo : tab === 'meme' ? generateMeme : generate}
+          disabled={tab === 'video' ? videoBusy : busy}
+          className="w-full h-14 rounded-2xl bg-gradient-to-r from-[#8B5CF6] to-[#06B6D4] font-bold flex items-center justify-center gap-2 shadow-lg shadow-black/40 disabled:opacity-60 active:scale-[0.99] transition-transform"
+        >
+          {(tab === 'video' ? videoBusy : busy) ? (
+            <Loader2 className="h-5 w-5 animate-spin" />
+          ) : tab === 'video' ? (
+            <Film className="h-5 w-5" />
+          ) : tab === 'meme' ? (
+            <Laugh className="h-5 w-5" />
+          ) : (
+            <Sparkles className="h-5 w-5" />
+          )}
+          {tab === 'video'
+            ? videoBusy
+              ? 'Gerando vídeo… (1-3 min)'
+              : 'Gerar vídeo'
+            : busy
+              ? 'Criando…'
+              : tab === 'meme'
+                ? `Criar ${batch > 1 ? `${batch} memes` : 'meme'}`
+                : `Criar ${batch > 1 ? `${batch} imagens` : 'imagem'}`}
+        </button>
+      </div>
+
       <MobileBottomNav />
+
     </div>
   );
 };
