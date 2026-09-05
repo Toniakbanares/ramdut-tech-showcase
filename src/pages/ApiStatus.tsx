@@ -11,6 +11,8 @@ import {
   Zap, Crown, Shield,
 } from 'lucide-react';
 import mascotImg from '@/assets/mascot-ramu.png';
+import { supabase } from '@/integrations/supabase/client';
+
 
 type ApiStatus = 'operational' | 'degraded' | 'down' | 'unknown';
 
