@@ -51,6 +51,8 @@ export const CommandPalette = ({ open, onClose, onSubmit, onMix, defaultMode = '
   const [styles, setStyles] = useState<string[]>([]);
   const [aspect, setAspect] = useState<string>('1:1');
   const [quality, setQuality] = useState<'fast' | 'standard' | 'hd' | 'ultra'>('standard');
+  const [showOpts, setShowOpts] = useState(false);
+
 
   useEffect(() => { if (open) setMode(defaultMode); }, [open, defaultMode]);
 
