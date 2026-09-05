@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { Command } from 'cmdk';
 import {
   Image as ImageIcon, FileCode, Crown, MessageSquare, Laugh, Sparkles, X, Wand2, Flower2, Music, Clapperboard,
+  SlidersHorizontal, ChevronDown,
 } from 'lucide-react';
+
 import type { LabMode } from '@/lib/lab-helpers';
 
 export interface GenerateOptions {
@@ -49,6 +51,8 @@ export const CommandPalette = ({ open, onClose, onSubmit, onMix, defaultMode = '
   const [styles, setStyles] = useState<string[]>([]);
   const [aspect, setAspect] = useState<string>('1:1');
   const [quality, setQuality] = useState<'fast' | 'standard' | 'hd' | 'ultra'>('standard');
+  const [showOpts, setShowOpts] = useState(false);
+
 
   useEffect(() => { if (open) setMode(defaultMode); }, [open, defaultMode]);
 
@@ -104,166 +108,181 @@ export const CommandPalette = ({ open, onClose, onSubmit, onMix, defaultMode = '
 
   return (
     <div
-      className="fixed inset-0 z-[80] flex items-end sm:items-start justify-center sm:pt-[12vh] px-0 sm:px-4 bg-black/70 backdrop-blur-sm animate-fade-in"
+      className="fixed inset-0 z-[80] flex items-end sm:items-start justify-center sm:pt-[10vh] px-0 sm:px-4 bg-black/70 backdrop-blur-sm animate-fade-in"
       onClick={onClose}
-      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <Command
         loop
-        className="w-full sm:max-w-2xl rounded-t-2xl sm:rounded-2xl ramu-glass ramu-card-border overflow-hidden animate-scale-in"
+        className="w-full sm:max-w-2xl rounded-t-3xl sm:rounded-2xl ramu-glass ramu-card-border overflow-hidden animate-scale-in flex flex-col max-h-[92vh] sm:max-h-[80vh]"
         onClick={(e) => e.stopPropagation()}
+        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       >
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-white/5">
+        {/* Puxador (mobile) */}
+        <div className="sm:hidden pt-2 pb-1 grid place-items-center shrink-0">
+          <span className="h-1.5 w-10 rounded-full bg-white/20" />
+        </div>
+
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-white/5 shrink-0">
           <Sparkles className="h-4 w-4 text-[#8B5CF6]" />
           <span className="text-xs uppercase tracking-widest text-neutral-400">RAMU Command</span>
           <button
             onClick={() => { onMix(); onClose(); }}
-            className="ml-auto h-9 px-3 rounded-lg bg-black/30 border border-[#8B5CF6]/30 text-xs text-[#06B6D4] flex items-center gap-1 hover:border-[#8B5CF6]/60"
+            className="ml-auto h-10 px-3 rounded-lg bg-black/30 border border-[#8B5CF6]/30 text-xs text-[#06B6D4] flex items-center gap-1 hover:border-[#8B5CF6]/60"
           >
             <Wand2 className="h-3.5 w-3.5" /> /mix
           </button>
-          <button onClick={onClose} className="h-10 w-10 grid place-items-center text-neutral-500 hover:text-white">
+          <button onClick={onClose} className="h-10 w-10 grid place-items-center text-neutral-500 hover:text-white" aria-label="Fechar">
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="p-2">
-          <Command.List className="max-h-[40vh] sm:max-h-64 overflow-y-auto p-2">
-            <Command.Group heading="Modo">
-              {MODES.map((m) => {
-                const Icon = m.icon;
-                const active = m.id === mode;
-                return (
-                  <Command.Item
-                    key={m.id}
-                    value={m.label}
-                    onSelect={() => setMode(m.id)}
-                    className={`flex items-center gap-3 px-3 py-3 rounded-lg cursor-pointer text-sm min-h-[44px] ${
-                      active ? 'bg-white/10 text-white' : 'text-neutral-300 hover:bg-white/5'
-                    }`}
-                  >
-                    <Icon className="h-4 w-4" />
-                    <div className="flex-1">
-                      <div>{m.label}</div>
-                      <div className="text-xs text-neutral-500">{m.desc}</div>
-                    </div>
-                    {active && <span className="text-xs text-[#06B6D4]">✓</span>}
-                  </Command.Item>
-                );
-              })}
-            </Command.Group>
-          </Command.List>
-        </div>
-
-        {showChips && (
-          <div className="border-t border-white/5 px-3 py-2">
-            <div className="text-[10px] uppercase tracking-widest text-neutral-500 mb-2">
-              Estilos (clique pra mesclar)
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {STYLE_CHIPS.map((c) => {
-                const active = styles.includes(c.id);
-                return (
-                  <button
-                    key={c.id}
-                    type="button"
-                    onClick={() => toggleStyle(c.id)}
-                    className={`h-9 min-h-[36px] px-3 rounded-full text-xs font-medium transition-colors ${
-                      active
-                        ? 'bg-purple-600 text-white border border-purple-400'
-                        : 'bg-white/5 text-neutral-300 border border-white/10 hover:bg-white/10'
-                    }`}
-                  >
-                    {c.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {showQuality && (
-          <div className="border-t border-white/5 px-3 py-2 space-y-2">
-            <div>
-              <div className="text-[10px] uppercase tracking-widest text-neutral-500 mb-1.5">Proporção</div>
-              <div className="flex flex-wrap gap-1.5">
-                {ASPECTS.map((a) => (
-                  <button
-                    key={a}
-                    type="button"
-                    onClick={() => setAspect(a)}
-                    className={`h-9 min-h-[36px] px-3 rounded-lg text-xs font-mono transition-colors ${
-                      aspect === a
-                        ? 'bg-purple-600 text-white border border-purple-400'
-                        : 'bg-white/5 text-neutral-300 border border-white/10 hover:bg-white/10'
-                    }`}
-                  >
-                    {a}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <div className="text-[10px] uppercase tracking-widest text-neutral-500 mb-1.5">Qualidade</div>
-              <div className="grid grid-cols-4 gap-1.5">
-                {QUALITIES.map((q) => (
-                  <button
-                    key={q.id}
-                    type="button"
-                    onClick={() => setQuality(q.id)}
-                    className={`h-11 rounded-lg text-xs font-medium transition-colors flex flex-col items-center justify-center ${
-                      quality === q.id
-                        ? 'bg-gradient-to-br from-[#8B5CF6] to-[#06B6D4] text-white border border-purple-400'
-                        : 'bg-white/5 text-neutral-300 border border-white/10 hover:bg-white/10'
-                    }`}
-                  >
-                    <span>{q.label}</span>
-                    <span className="text-[9px] opacity-70">{q.hint}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-
-
-
-
-        <div className="border-t border-white/5 p-3">
-          <div className="text-[10px] uppercase tracking-widest text-neutral-500 mb-1">
-            {cur.label}
-          </div>
+        {/* 1) O prompt vem primeiro no celular */}
+        <div className="px-3 pt-3 shrink-0">
           <textarea
             autoFocus
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && (e.metaKey || e.ctrlKey || !e.shiftKey)) {
+              if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
                 e.preventDefault();
                 submit();
               }
             }}
             rows={3}
-            placeholder={`${cur.desc} — digite /mix pra modo whisky`}
-            className="w-full bg-transparent text-white text-base resize-none focus:outline-none placeholder:text-neutral-600"
+            placeholder={`O que você quer criar? — ${cur.desc}`}
+            className="w-full rounded-2xl bg-black/30 border border-white/10 focus:border-[#8B5CF6] px-3 py-3 text-white text-base resize-none focus:outline-none placeholder:text-neutral-600"
           />
-          <div className="flex items-center justify-between gap-2 mt-2">
-            <div className="text-[11px] text-neutral-500">
-              {cooldownRemaining > 0
-                ? `${Math.ceil(cooldownRemaining / 1000)}s de cooldown`
-                : 'Enter envia · Esc fecha'}
-            </div>
+        </div>
+
+        {/* 2) Modos em carrossel horizontal — um toque, sem rolar lista */}
+        <div className="px-3 pt-2 shrink-0">
+          <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {MODES.map((m) => {
+              const Icon = m.icon;
+              const active = m.id === mode;
+              return (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => setMode(m.id)}
+                  className={`shrink-0 h-11 px-3.5 rounded-xl text-xs font-medium flex items-center gap-2 border transition-colors ${
+                    active
+                      ? 'bg-gradient-to-r from-[#8B5CF6] to-[#06B6D4] text-white border-transparent'
+                      : 'bg-white/5 text-neutral-300 border-white/10'
+                  }`}
+                >
+                  <Icon className="h-4 w-4" />
+                  {m.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 3) Ajustes — recolhidos por padrão no celular */}
+        {(showChips || showQuality) && (
+          <div className="px-3 pt-2 shrink-0">
             <button
-              onClick={submit}
-              disabled={(!prompt.trim() && true) || cooldownRemaining > 0}
-              className="h-11 px-5 rounded-lg ramu-accent-bg text-white text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed"
+              type="button"
+              onClick={() => setShowOpts((v) => !v)}
+              className="w-full h-11 rounded-xl bg-white/5 border border-white/10 text-xs text-neutral-300 flex items-center justify-between px-3"
             >
-              Gerar
+              <span className="flex items-center gap-2">
+                <SlidersHorizontal className="h-4 w-4" /> Ajustes
+                {showQuality && (
+                  <span className="text-[10px] text-[#06B6D4]">{aspect} · {QUALITIES.find((x) => x.id === quality)?.label}</span>
+                )}
+                {!!styles.length && <span className="text-[10px] text-[#8B5CF6]">{styles.length} estilo(s)</span>}
+              </span>
+              <ChevronDown className={`h-4 w-4 transition-transform ${showOpts ? 'rotate-180' : ''}`} />
             </button>
           </div>
+        )}
+
+        <div className="flex-1 overflow-y-auto overscroll-contain">
+          {showOpts && showChips && (
+            <div className="px-3 py-2">
+              <div className="text-[10px] uppercase tracking-widest text-neutral-500 mb-2">Estilos (dá pra mesclar)</div>
+              <div className="flex flex-wrap gap-1.5">
+                {STYLE_CHIPS.map((c) => {
+                  const active = styles.includes(c.id);
+                  return (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => toggleStyle(c.id)}
+                      className={`h-10 px-3.5 rounded-full text-xs font-medium transition-colors ${
+                        active
+                          ? 'bg-purple-600 text-white border border-purple-400'
+                          : 'bg-white/5 text-neutral-300 border border-white/10'
+                      }`}
+                    >
+                      {c.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {showOpts && showQuality && (
+            <div className="px-3 py-2 space-y-3">
+              <div>
+                <div className="text-[10px] uppercase tracking-widest text-neutral-500 mb-1.5">Proporção</div>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {ASPECTS.map((a) => (
+                    <button
+                      key={a}
+                      type="button"
+                      onClick={() => setAspect(a)}
+                      className={`h-11 rounded-xl text-xs font-mono transition-colors ${
+                        aspect === a
+                          ? 'bg-purple-600 text-white border border-purple-400'
+                          : 'bg-white/5 text-neutral-300 border border-white/10'
+                      }`}
+                    >
+                      {a}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <div className="text-[10px] uppercase tracking-widest text-neutral-500 mb-1.5">Qualidade</div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                  {QUALITIES.map((q) => (
+                    <button
+                      key={q.id}
+                      type="button"
+                      onClick={() => setQuality(q.id)}
+                      className={`h-12 rounded-xl text-xs font-medium transition-colors flex flex-col items-center justify-center ${
+                        quality === q.id
+                          ? 'bg-gradient-to-br from-[#8B5CF6] to-[#06B6D4] text-white border border-purple-400'
+                          : 'bg-white/5 text-neutral-300 border border-white/10'
+                      }`}
+                    >
+                      <span>{q.label}</span>
+                      <span className="text-[9px] opacity-70">{q.hint}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* 4) Ação sempre visível */}
+        <div className="border-t border-white/5 p-3 shrink-0 bg-black/20">
+          <button
+            onClick={submit}
+            disabled={!prompt.trim() || cooldownRemaining > 0}
+            className="w-full h-14 rounded-2xl bg-gradient-to-r from-[#8B5CF6] to-[#06B6D4] text-white text-base font-bold flex items-center justify-center gap-2 disabled:opacity-40 active:scale-[0.99] transition-transform"
+          >
+            <Sparkles className="h-5 w-5" />
+            {cooldownRemaining > 0 ? `Aguarde ${Math.ceil(cooldownRemaining / 1000)}s` : `Gerar · ${cur.label}`}
+          </button>
         </div>
       </Command>
     </div>
   );
 };
+

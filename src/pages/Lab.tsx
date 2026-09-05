@@ -590,11 +590,12 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
           </Link>
           <button
             onClick={() => setPaletteOpen(true)}
-            className="h-14 w-14 min-w-[56px] rounded-2xl ramu-accent-bg grid place-items-center text-white shadow-lg shadow-[#8B5CF6]/30 active:scale-95 transition-transform"
+            className="hidden sm:grid h-14 w-14 min-w-[56px] rounded-2xl ramu-accent-bg place-items-center text-white shadow-lg shadow-[#8B5CF6]/30 active:scale-95 transition-transform"
             aria-label="Nova geração"
           >
             <Plus className="h-6 w-6" />
           </button>
+
         </div>
       </div>
 
