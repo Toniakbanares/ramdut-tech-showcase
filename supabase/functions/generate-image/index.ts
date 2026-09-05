@@ -151,7 +151,7 @@ serve(async (req) => {
     const forcePollinations = provider === 'pollinations';
     const q: 'fast' | 'standard' | 'hd' | 'ultra' = ['fast','standard','hd','ultra'].includes(quality) ? quality : 'standard';
 
-    const aiModel = model || "google/gemini-2.5-flash-image";
+    const aiModel = model || "google/gemini-3.1-flash-image";
 
     let sizeInstruction = "";
     if (aspect_ratio && aspect_ratio !== "1:1") {
