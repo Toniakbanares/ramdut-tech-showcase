@@ -274,7 +274,7 @@ serve(async (req) => {
     let geminiError: string | null = null;
     if (geminiKeys.length > 0) {
       try {
-        const { imageUrl, keyIndex } = await generateWithGeminiRotating(fullPrompt, geminiKeys, aiModel, refImages);
+        const { imageUrl, keyIndex } = await generateWithGeminiRotating(fullPrompt, geminiKeys, aiModel, refImages, aspect_ratio);
         return new Response(
           JSON.stringify({
             imageUrl,
@@ -290,29 +290,15 @@ serve(async (req) => {
 
     // 3) Último fallback: Pollinations.ai (gratuito, sem chave)
     try {
-      const ratioMap: Record<string, { w: number; h: number }> = {
-        "1:1": { w: 1024, h: 1024 },
-        "16:9": { w: 1280, h: 720 },
-        "9:16": { w: 720, h: 1280 },
-        "4:3": { w: 1024, h: 768 },
-        "3:2": { w: 1080, h: 720 },
-        "21:9": { w: 1280, h: 548 },
-      };
-      const dims = ratioMap[aspect_ratio || "1:1"] || ratioMap["1:1"];
-      const seed = Math.floor(Math.random() * 1000000);
-      const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(fullPrompt)}?width=${dims.w}&height=${dims.h}&nologo=true&private=true&enhance=true&safe=true&seed=${seed}&model=flux`;
-      const imgRes = await fetch(url);
-      if (!imgRes.ok) throw new Error(`Pollinations ${imgRes.status}`);
-      const buf = await imgRes.arrayBuffer();
-      const base64 = bufToBase64(buf);
+      const baseByQuality: Record<string, number> = { fast: 768, standard: 1152, hd: 1536, ultra: 2048 };
+      const { w, h } = dimsFor(baseByQuality[q]);
+      const imageUrl = await pollinations(w, h, 'flux', true);
       console.log("Pollinations OK (fallback gratuito)");
       return new Response(
-        JSON.stringify({
-          imageUrl: `data:image/jpeg;base64,${base64}`,
-          provider: "pollinations-free",
-        }),
+        JSON.stringify({ imageUrl, provider: "pollinations-free", width: w, height: h }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+
     } catch (e) {
       const pollErr = e instanceof Error ? e.message : "Erro Pollinations";
       console.error("Pollinations falhou:", pollErr);
