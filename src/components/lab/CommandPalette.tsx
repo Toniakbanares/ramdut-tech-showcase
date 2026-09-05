@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { Command } from 'cmdk';
 import {
   Image as ImageIcon, FileCode, Crown, MessageSquare, Laugh, Sparkles, X, Wand2, Flower2, Music, Clapperboard,
+  SlidersHorizontal, ChevronDown,
 } from 'lucide-react';
+
 import type { LabMode } from '@/lib/lab-helpers';
 
 export interface GenerateOptions {
