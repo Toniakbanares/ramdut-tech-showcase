@@ -160,34 +160,56 @@ serve(async (req) => {
     const mixInstruction = refImages.length
       ? " Blend the referenced ideas into one coherent final image. Do not create a collage."
       : "";
-    const fullPrompt = `${prompt}${sizeInstruction}${mixInstruction} Masterpiece quality, sharp focus, rich detail, professional composition, no watermark, no text, no logo.`;
+    // Reforço de qualidade proporcional ao nível pedido
+    const qualityBoost: Record<string, string> = {
+      fast: "clean composition, good lighting",
+      standard: "sharp focus, rich detail, professional composition, natural lighting",
+      hd: "ultra detailed, sharp focus, high dynamic range, cinematic lighting, professional photography, 8k detail",
+      ultra:
+        "hyper detailed masterpiece, razor sharp focus, physically accurate materials, cinematic volumetric lighting, professional color grading, ultra high resolution, award winning composition",
+    };
+    const fullPrompt = `${prompt}${sizeInstruction}${mixInstruction} ${qualityBoost[q]}, no watermark, no text overlay, no logo, no border, no signature.`;
+
+    /** Pollinations com timeout + 2 tentativas (seeds diferentes) */
+    const pollinations = async (w: number, h: number, modelName: string, enhance: boolean) => {
+      let lastErr = "";
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const seed = Math.floor(Math.random() * 1_000_000);
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(fullPrompt)}?width=${w}&height=${h}&nologo=true&private=true&enhance=${enhance}&safe=true&seed=${seed}&model=${modelName}`;
+        try {
+          const imgRes = await fetch(url, { signal: AbortSignal.timeout(120_000) });
+          if (!imgRes.ok) throw new Error(`Pollinations ${imgRes.status}`);
+          const buf = await imgRes.arrayBuffer();
+          if (buf.byteLength < 2048) throw new Error("Imagem vazia do provedor");
+          return `data:image/jpeg;base64,${bufToBase64(buf)}`;
+        } catch (e) {
+          lastErr = e instanceof Error ? e.message : String(e);
+          console.warn(`Pollinations tentativa ${attempt + 1} falhou: ${lastErr}`);
+        }
+      }
+      throw new Error(lastErr || "Pollinations indisponível");
+    };
+
+    const ratios: Record<string, [number, number]> = {
+      "1:1": [1, 1], "16:9": [16, 9], "9:16": [9, 16],
+      "4:3": [4, 3], "3:4": [3, 4], "3:2": [3, 2], "2:3": [2, 3], "21:9": [21, 9],
+    };
+    const dimsFor = (base: number) => {
+      const [rw, rh] = ratios[aspect_ratio || "1:1"] || [1, 1];
+      const scale = base / Math.max(rw, rh);
+      // múltiplos de 64 melhoram a saída dos modelos de difusão
+      const round64 = (n: number) => Math.max(512, Math.round(n / 64) * 64);
+      return { w: round64(rw * scale), h: round64(rh * scale) };
+    };
 
     // Se forçou Pollinations, pula direto pro fallback gratuito
     if (forcePollinations) {
       try {
         const baseByQuality: Record<string, number> = { fast: 768, standard: 1152, hd: 1536, ultra: 2048 };
-        const base = baseByQuality[q];
-        const ratios: Record<string, [number, number]> = {
-          "1:1": [1, 1], "16:9": [16, 9], "9:16": [9, 16],
-          "4:3": [4, 3], "3:2": [3, 2], "21:9": [21, 9],
-        };
-        const [rw, rh] = ratios[aspect_ratio || "1:1"] || [1, 1];
-        // scale so the longer side equals `base`
-        const scale = base / Math.max(rw, rh);
-        const w = Math.round(rw * scale);
-        const h = Math.round(rh * scale);
-
-        const seed = Math.floor(Math.random() * 1000000);
-        const modelName = q === 'fast' ? 'turbo' : 'flux';
-        const enhance = q === 'hd' || q === 'ultra';
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(fullPrompt)}?width=${w}&height=${h}&nologo=true&private=true&enhance=${enhance}&safe=true&seed=${seed}&model=${modelName}`;
-        const imgRes = await fetch(url);
-        if (!imgRes.ok) throw new Error(`Pollinations ${imgRes.status}`);
-        const buf = await imgRes.arrayBuffer();
-        const base64 = bufToBase64(buf);
-
+        const { w, h } = dimsFor(baseByQuality[q]);
+        const imageUrl = await pollinations(w, h, q === 'fast' ? 'turbo' : 'flux', q === 'hd' || q === 'ultra');
         return new Response(
-          JSON.stringify({ imageUrl: `data:image/jpeg;base64,${base64}`, provider: `pollinations-${q}` }),
+          JSON.stringify({ imageUrl, provider: `pollinations-${q}`, width: w, height: h }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       } catch (e) {
@@ -197,6 +219,8 @@ serve(async (req) => {
         );
       }
     }
+
+
 
 
 
