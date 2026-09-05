@@ -700,8 +700,9 @@ const Studio = () => {
           <button
             onClick={tab === 'meme' ? generateMeme : generate}
             disabled={busy}
-            className="w-full h-14 rounded-2xl bg-gradient-to-r from-[#8B5CF6] to-[#06B6D4] font-bold flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.99] transition-transform"
+            className="hidden lg:flex w-full h-14 rounded-2xl bg-gradient-to-r from-[#8B5CF6] to-[#06B6D4] font-bold items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.99] transition-transform"
           >
+
             {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : tab === 'meme' ? <Laugh className="h-5 w-5" /> : <Sparkles className="h-5 w-5" />}
             {busy
               ? 'Criando…'
