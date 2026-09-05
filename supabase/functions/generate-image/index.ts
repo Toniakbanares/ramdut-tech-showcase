@@ -52,7 +52,9 @@ function dataUrlToInlinePart(dataUrl: string) {
   return { inlineData: { mimeType: m[1], data: m[2] } };
 }
 
-async function callGeminiOnce(prompt: string, key: string, model: string, refImages: string[] = []) {
+const GEMINI_ASPECTS = new Set(["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3", "21:9", "5:4", "4:5"]);
+
+async function callGeminiOnce(prompt: string, key: string, model: string, refImages: string[] = [], aspect?: string) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
   const parts: any[] = [];
   for (const img of refImages) {
@@ -60,19 +62,23 @@ async function callGeminiOnce(prompt: string, key: string, model: string, refIma
     if (p) parts.push(p);
   }
   parts.push({ text: prompt });
+
+  const generationConfig: Record<string, unknown> = { responseModalities: ["IMAGE", "TEXT"] };
+  // Proporção nativa (Gemini 3 image) — muito melhor que pedir no prompt
+  if (aspect && GEMINI_ASPECTS.has(aspect) && aspect !== "1:1") {
+    generationConfig.imageConfig = { aspectRatio: aspect };
+  }
+
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: [{ parts }],
-      generationConfig: { responseModalities: ["IMAGE", "TEXT"] },
-    }),
+    body: JSON.stringify({ contents: [{ parts }], generationConfig }),
   });
   return res;
 }
 
 // Tenta cada chave em sequência. Se uma falhar por quota/auth, passa pra próxima.
-async function generateWithGeminiRotating(prompt: string, keys: string[], model?: string, refImages: string[] = []) {
+async function generateWithGeminiRotating(prompt: string, keys: string[], model?: string, refImages: string[] = [], aspect?: string) {
   const geminiModel = resolveGeminiModel(model);
   const errors: string[] = [];
 
@@ -80,7 +86,8 @@ async function generateWithGeminiRotating(prompt: string, keys: string[], model?
     const key = keys[i];
     const masked = `key#${i + 1}(...${key.slice(-4)})`;
     try {
-      const res = await callGeminiOnce(prompt, key, geminiModel, refImages);
+      const res = await callGeminiOnce(prompt, key, geminiModel, refImages, aspect);
+
 
       if (res.ok) {
         const json = await res.json();
