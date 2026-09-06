@@ -311,7 +311,10 @@ const Studio = () => {
         }
       } catch (e) {
         console.error('[studio] vídeo falhou:', e);
-        patchClip(clip.id, { status: 'failed', error: humanizeAiError(e).description });
+        patchClip(clip.id, {
+          status: 'failed',
+          error: e instanceof Error ? e.message : 'Não foi possível iniciar a geração do vídeo.',
+        });
       } finally {
         delete aborts.current[clip.id];
       }
