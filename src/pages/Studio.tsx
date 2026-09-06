@@ -855,7 +855,7 @@ const Studio = () => {
               {videoBusy ? 'Gerando vídeo… (1-3 min)' : 'Gerar vídeo'}
             </button>
             <p className="text-[10px] text-neutral-600 text-center">
-              Vídeo com áudio, 24fps. Gerar leva de 1 a 3 minutos — pode continuar navegando nesta aba.
+              Vídeo com áudio. A criação pode levar alguns minutos — mantenha esta aba aberta.
             </p>
           </section>
         )}

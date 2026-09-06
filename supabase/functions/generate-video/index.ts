@@ -10,8 +10,9 @@ const GATEWAY = "https://ai.gateway.lovable.dev/v1/videos";
 const FAL_QUEUE = "https://queue.fal.run";
 const BUCKET = "generated-videos";
 
-/** Modelos Veo (Lovable AI Gateway) */
-const VEO_MODELS = new Set([
+/** Modelos aceitos pelo Lovable AI Gateway */
+const GATEWAY_MODELS = new Set([
+  "google/gemini-omni-1.1-flash",
   "google/veo-3.1-lite",
   "google/veo-3.1-fast",
   "google/veo-3.1",
@@ -50,6 +51,17 @@ function decode(jobId: string) {
   return { kind: "veo" as const, endpoint: "", id: jobId.replace(/^veo:/, "") };
 }
 
+function parseImageDataUrl(value: string) {
+  const match = value.match(/^data:(image\/(?:png|jpeg|webp));base64,(.+)$/s);
+  return match ? { mimeType: match[1], data: match[2] } : undefined;
+}
+
+function videoFormat(size: string) {
+  const portrait = size === "720x1280" || size === "1080x1920";
+  const resolution = size === "1920x1080" || size === "1080x1920" ? "1080p" : "720p";
+  return { aspectRatio: portrait ? "9:16" : "16:9", resolution };
+}
+
 async function storeAndSign(jobId: string, bytes: ArrayBuffer) {
   const supabase = admin();
   const path = `${jobId.replace(/[^a-zA-Z0-9_-]/g, "_")}.mp4`;
@@ -65,6 +77,8 @@ async function storeAndSign(jobId: string, bytes: ArrayBuffer) {
 async function existingUrl(jobId: string) {
   const supabase = admin();
   const path = `${jobId.replace(/[^a-zA-Z0-9_-]/g, "_")}.mp4`;
+  const listed = await supabase.storage.from(BUCKET).list("", { search: path, limit: 1 });
+  if (listed.error || !listed.data?.some((file) => file.name === path)) return undefined;
   const r = await supabase.storage.from(BUCKET).createSignedUrl(path, 60 * 60 * 24);
   return r.data?.signedUrl;
 }
@@ -167,7 +181,9 @@ serve(async (req) => {
       const res = await fetch(`${GATEWAY}/${job.id}`, { headers: { Authorization: `Bearer ${KEY}` } });
       const j = await res.json().catch(() => null);
       if (!res.ok || !j) {
-        return json({ status: "failed", error: j?.message || `Falha ao consultar job (${res.status})` });
+        const message = j?.message || `Falha ao consultar job (${res.status})`;
+        if (res.status === 429 || res.status >= 500) return json({ error: message }, res.status);
+        return json({ status: "failed", error: message });
       }
       if (j.status === "failed") {
         return json({ status: "failed", error: j?.error?.message || "O provedor recusou a geração." });
@@ -216,7 +232,9 @@ serve(async (req) => {
       : "";
 
     const requested = String(body?.provider || "auto");
-    const model = VEO_MODELS.has(body?.model) ? body.model : "google/veo-3.1-lite";
+    const requestedModel = String(body?.model || "");
+    const useFal = requested === "fal" || requestedModel === "fal/kling-standard";
+    const model = GATEWAY_MODELS.has(requestedModel) ? requestedModel : "google/gemini-omni-1.1-flash";
     const size = VEO_SIZES.has(body?.size) ? body.size : "1280x720";
     const seconds = ["4", "6", "8"].includes(String(body?.seconds)) ? String(body.seconds) : "8";
     const is1080 = size.includes("1920") || size.includes("1080x1920");
@@ -240,12 +258,48 @@ serve(async (req) => {
       }
     };
 
-    if (requested === "fal") return await tryFal();
+    if (useFal) return await tryFal();
 
     if (!KEY) return await tryFal("Provedor principal indisponível.");
 
-    const payload: Record<string, unknown> = { model, prompt, seconds: finalSeconds, size };
-    if (ref) payload.input_reference = ref;
+    const format = videoFormat(size);
+    const image = ref ? parseImageDataUrl(ref) : undefined;
+    let payload: Record<string, unknown>;
+
+    if (model === "google/gemini-omni-1.1-flash") {
+      const input: unknown = image
+        ? [
+            { type: "text", text: prompt },
+            { type: "image", data: image.data, mime_type: image.mimeType },
+          ]
+        : prompt;
+      payload = {
+        model,
+        input,
+        response_format: {
+          type: "video",
+          resolution: format.resolution,
+          duration: `${finalSeconds}s`,
+          aspect_ratio: format.aspectRatio,
+        },
+      };
+    } else {
+      const instance: Record<string, unknown> = { prompt };
+      if (image) {
+        instance.image = { bytesBase64Encoded: image.data, mimeType: image.mimeType };
+      }
+      payload = {
+        model,
+        instances: [instance],
+        parameters: {
+          durationSeconds: Number(finalSeconds),
+          resolution: format.resolution,
+          sampleCount: 1,
+          generateAudio: true,
+          ...(image ? {} : { aspectRatio: format.aspectRatio }),
+        },
+      };
+    }
 
     const res = await fetch(GATEWAY, {
       method: "POST",
@@ -256,13 +310,11 @@ serve(async (req) => {
 
     if (!res.ok) {
       const msg = job?.message || `Erro ${res.status} ao iniciar o vídeo`;
-      // 402/429 no gateway → tenta fal.ai automaticamente
-      if (res.status === 402 || res.status === 429) {
-        return await tryFal(`Veo indisponível (${res.status === 402 ? "sem créditos" : "fila cheia"}).`);
-      }
-      if (res.status === 400) return json({ error: msg, code: "invalid_param" });
-      if (res.status === 401 || res.status === 403) return json({ error: "Falha de autenticação no provedor de vídeo.", code: "auth" });
-      return json({ error: msg, code: "provider" });
+      if (res.status === 400) return json({ error: msg, code: "invalid_param" }, 400);
+      if (res.status === 401) return json({ error: msg, code: "configuration" }, 401);
+      if (res.status === 402 || res.status === 403) return json({ error: msg, code: "blocked" }, res.status);
+      if (res.status === 429 || res.status >= 500) return json({ error: msg, code: "retryable" }, res.status);
+      return json({ error: msg, code: "provider" }, res.status);
     }
 
     return json({ id: encodeVeo(job.id), status: job.status ?? "processing", provider: "veo", model, seconds: finalSeconds, size });

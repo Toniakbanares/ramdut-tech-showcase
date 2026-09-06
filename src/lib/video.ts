@@ -22,9 +22,9 @@ export const MOTION_PRESETS: MotionPreset[] = [
 ];
 
 export const VIDEO_MODELS = [
-  { id: 'google/veo-3.1-lite', label: 'Rápido', desc: 'Mais econômico' },
-  { id: 'google/veo-3.1-fast', label: 'Equilibrado', desc: 'Melhor qualidade' },
-  { id: 'google/veo-3.1', label: 'Máximo', desc: 'Caro, top qualidade' },
+  { id: 'google/gemini-omni-1.1-flash', label: 'Omni', desc: 'Mais novo, com áudio' },
+  { id: 'fal/kling-standard', label: 'Kling', desc: 'Alternativa econômica' },
+  { id: 'google/veo-3.1-lite', label: 'Veo', desc: 'Qualidade Google' },
 ] as const;
 
 export const VIDEO_SIZES = [
@@ -54,7 +54,14 @@ export interface VideoJob {
 
 async function call(body: Record<string, unknown>) {
   const { data, error } = await supabase.functions.invoke('generate-video', { body });
-  if (error) throw new Error(error.message || 'Falha ao falar com o servidor de vídeo');
+  if (error) {
+    const response = error.context as Response | undefined;
+    if (response) {
+      const payload = await response.clone().json().catch(() => null);
+      throw new Error(payload?.error || payload?.message || error.message || 'Falha ao falar com o servidor de vídeo');
+    }
+    throw new Error(error.message || 'Falha ao falar com o servidor de vídeo');
+  }
   return data as any;
 }
 
@@ -96,20 +103,17 @@ export async function pollVideoJob(id: string): Promise<VideoJob> {
 
 
 /**
- * Aguarda a conclusão com polling controlado (sem loop infinito).
- * Timeout padrão: 6 minutos.
+ * Aguarda a conclusão até o provedor terminar ou o usuário cancelar.
+ * Gerações longas não são abandonadas por um timeout artificial.
  */
 export async function waitForVideo(
   id: string,
   onProgress?: (job: VideoJob) => void,
-  { intervalMs = 7000, timeoutMs = 6 * 60_000, signal }: { intervalMs?: number; timeoutMs?: number; signal?: AbortSignal } = {},
+  { intervalMs = 7000, signal }: { intervalMs?: number; signal?: AbortSignal } = {},
 ): Promise<VideoJob> {
-  const deadline = Date.now() + timeoutMs;
   let failures = 0;
 
-  while (Date.now() < deadline) {
-    if (signal?.aborted) return { id, status: 'cancelled' };
-    await new Promise((r) => setTimeout(r, intervalMs));
+  while (!signal?.aborted) {
     if (signal?.aborted) return { id, status: 'cancelled' };
 
     try {
@@ -123,9 +127,11 @@ export async function waitForVideo(
         return { id, status: 'failed', error: e instanceof Error ? e.message : 'Erro ao consultar o vídeo' };
       }
     }
+
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
   }
 
-  return { id, status: 'failed', error: 'O vídeo demorou demais. Tente uma duração menor ou o modelo Rápido.' };
+  return { id, status: 'cancelled' };
 }
 
 export async function downloadVideo(url: string, name: string) {
