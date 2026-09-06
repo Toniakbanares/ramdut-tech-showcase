@@ -311,7 +311,10 @@ const Studio = () => {
         }
       } catch (e) {
         console.error('[studio] vídeo falhou:', e);
-        patchClip(clip.id, { status: 'failed', error: humanizeAiError(e).description });
+        patchClip(clip.id, {
+          status: 'failed',
+          error: e instanceof Error ? e.message : 'Não foi possível iniciar a geração do vídeo.',
+        });
       } finally {
         delete aborts.current[clip.id];
       }
@@ -855,7 +858,7 @@ const Studio = () => {
               {videoBusy ? 'Gerando vídeo… (1-3 min)' : 'Gerar vídeo'}
             </button>
             <p className="text-[10px] text-neutral-600 text-center">
-              Vídeo com áudio, 24fps. Gerar leva de 1 a 3 minutos — pode continuar navegando nesta aba.
+              Vídeo com áudio. A criação pode levar alguns minutos — mantenha esta aba aberta.
             </p>
           </section>
         )}
