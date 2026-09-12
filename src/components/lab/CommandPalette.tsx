@@ -6,10 +6,12 @@ import {
 } from 'lucide-react';
 
 import type { LabMode } from '@/lib/lab-helpers';
+import { LYRIC_GENRES } from '@/lib/lyrics-craft';
 
 export interface GenerateOptions {
   aspect_ratio?: string;
   quality?: 'fast' | 'standard' | 'hd' | 'ultra';
+  genres?: string[];
 }
 
 interface Props {
