@@ -170,7 +170,7 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
       try {
         if (mode === 'chat' || mode === 'music' || mode === 'story') {
           const systemByMode: Record<string, string> = {
-            chat: 'Você é o Ramu, assistente criativo do RAMDUT AI Lab. Responda no idioma do usuário, seja claro e útil.',
+            chat: `Você é o Ramu, assistente criativo do RAMDUT AI Lab. Responda no idioma do usuário, seja claro e útil.\nQuando escrever texto criativo (letra, poema, legenda, roteiro, copy), siga estas regras de humanização:\n${HUMANIZATION_RULES}`,
             music: buildLyricsSystemPrompt(opts?.genres),
             story: 'Você é um roteirista de vídeos curtos e longos. Dado uma ideia, entregue: 1) Logline em 1 frase, 2) Personagens principais, 3) Tom e estilo visual, 4) Estrutura em 3 atos, 5) Cenas numeradas com: LOCAL, DURAÇÃO estimada, AÇÃO/DESCRIÇÃO, DIÁLOGO, PROMPT DE IMAGEM (para gerar cada cena em IA), 6) Sugestão de trilha sonora. Português por padrão, markdown com títulos claros.',
           };
