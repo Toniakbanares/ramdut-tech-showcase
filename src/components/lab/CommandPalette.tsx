@@ -89,11 +89,14 @@ export const CommandPalette = ({ open, onClose, onSubmit, onMix, defaultMode = '
       return;
     }
     if (!trimmed) return;
-    const opts: GenerateOptions =
-      mode === 'pollinations' || mode === 'image' || mode === 'pro-fal'
-        ? { aspect_ratio: aspect, quality }
+    const isImageMode = mode === 'pollinations' || mode === 'image' || mode === 'pro-fal';
+    const opts: GenerateOptions = isImageMode
+      ? { aspect_ratio: aspect, quality }
+      : mode === 'music'
+        ? { genres }
         : {};
-    onSubmit(mode, buildFinalPrompt(trimmed), opts);
+    const finalPrompt = mode === 'music' ? trimmed : buildFinalPrompt(trimmed);
+    onSubmit(mode, finalPrompt, opts);
     setPrompt('');
     onClose();
   };
