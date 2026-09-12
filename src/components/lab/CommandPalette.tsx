@@ -6,10 +6,12 @@ import {
 } from 'lucide-react';
 
 import type { LabMode } from '@/lib/lab-helpers';
+import { LYRIC_GENRES } from '@/lib/lyrics-craft';
 
 export interface GenerateOptions {
   aspect_ratio?: string;
   quality?: 'fast' | 'standard' | 'hd' | 'ultra';
+  genres?: string[];
 }
 
 interface Props {
@@ -52,6 +54,10 @@ export const CommandPalette = ({ open, onClose, onSubmit, onMix, defaultMode = '
   const [aspect, setAspect] = useState<string>('1:1');
   const [quality, setQuality] = useState<'fast' | 'standard' | 'hd' | 'ultra'>('standard');
   const [showOpts, setShowOpts] = useState(false);
+  const [genres, setGenres] = useState<string[]>([]);
+
+  const toggleGenre = (id: string) =>
+    setGenres((g) => (g.includes(id) ? g.filter((x) => x !== id) : [...g, id]));
 
 
   useEffect(() => { if (open) setMode(defaultMode); }, [open, defaultMode]);
@@ -83,11 +89,14 @@ export const CommandPalette = ({ open, onClose, onSubmit, onMix, defaultMode = '
       return;
     }
     if (!trimmed) return;
-    const opts: GenerateOptions =
-      mode === 'pollinations' || mode === 'image' || mode === 'pro-fal'
-        ? { aspect_ratio: aspect, quality }
+    const isImageMode = mode === 'pollinations' || mode === 'image' || mode === 'pro-fal';
+    const opts: GenerateOptions = isImageMode
+      ? { aspect_ratio: aspect, quality }
+      : mode === 'music'
+        ? { genres }
         : {};
-    onSubmit(mode, buildFinalPrompt(trimmed), opts);
+    const finalPrompt = mode === 'music' ? trimmed : buildFinalPrompt(trimmed);
+    onSubmit(mode, finalPrompt, opts);
     setPrompt('');
     onClose();
   };
@@ -178,6 +187,34 @@ export const CommandPalette = ({ open, onClose, onSubmit, onMix, defaultMode = '
             })}
           </div>
         </div>
+
+        {/* Gêneros musicais — só no Compositor, dá pra mesclar */}
+        {mode === 'music' && (
+          <div className="px-3 pt-2 shrink-0">
+            <div className="text-[10px] uppercase tracking-widest text-neutral-500 mb-1.5">
+              Estilo da música {genres.length > 1 && <span className="text-[#06B6D4]">· fusão</span>}
+            </div>
+            <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {LYRIC_GENRES.map((g) => {
+                const active = genres.includes(g.id);
+                return (
+                  <button
+                    key={g.id}
+                    type="button"
+                    onClick={() => toggleGenre(g.id)}
+                    className={`shrink-0 h-10 px-3.5 rounded-full text-xs font-medium border transition-colors ${
+                      active
+                        ? 'bg-gradient-to-r from-[#8B5CF6] to-[#06B6D4] text-white border-transparent'
+                        : 'bg-white/5 text-neutral-300 border-white/10'
+                    }`}
+                  >
+                    {g.emoji} {g.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* 3) Ajustes — recolhidos por padrão no celular */}
         {(showChips || showQuality) && (

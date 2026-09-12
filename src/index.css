@@ -169,6 +169,23 @@ All colors MUST be HSL.
     paint-order: stroke fill;
     word-break: break-word;
   }
+  /* Letras de música — tipografia editorial, legível e humana */
+  .ramu-lyrics {
+    font-family: 'Newsreader', 'Iowan Old Style', Georgia, serif;
+    font-size: 0.82rem;
+    line-height: 1.65;
+    letter-spacing: 0.005em;
+    font-variant-ligatures: common-ligatures;
+  }
+  .ramu-lyrics strong,
+  .ramu-lyrics b {
+    font-family: 'Geist', 'Inter', system-ui, sans-serif;
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #a78bfa;
+  }
+
 
 
 

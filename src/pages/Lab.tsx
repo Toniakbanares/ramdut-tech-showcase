@@ -40,6 +40,7 @@ import {
   downloadText,
 } from '@/lib/lab-helpers';
 import { invokeAi, humanizeAiError } from '@/lib/ai-invoke';
+import { buildLyricsSystemPrompt, HUMANIZATION_RULES } from '@/lib/lyrics-craft';
 
 
 const nodeTypes: NodeTypes = { generation: GenerationCard };
@@ -139,7 +140,7 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
       prompt: string,
       parentId?: string,
       referenceImages?: string[],
-      opts?: { aspect_ratio?: string; quality?: 'fast' | 'standard' | 'hd' | 'ultra'; cardId?: string },
+      opts?: { aspect_ratio?: string; quality?: 'fast' | 'standard' | 'hd' | 'ultra'; cardId?: string; genres?: string[] },
     ) => {
       if (cooldownRemaining() > 0) {
         toast({ title: 'Cooldown ativo', description: `Aguarde ${Math.ceil(cooldownRemaining() / 1000)}s.` });
@@ -169,8 +170,8 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
       try {
         if (mode === 'chat' || mode === 'music' || mode === 'story') {
           const systemByMode: Record<string, string> = {
-            chat: 'Você é o Ramu, assistente criativo do RAMDUT AI Lab. Responda no idioma do usuário, seja claro e útil.',
-            music: 'Você é um compositor musical profissional. Dado um tema/estilo, produza: 1) Título, 2) Gênero e BPM sugerido, 3) Estrutura (Intro, Verso 1, Refrão, Verso 2, Refrão, Ponte, Refrão final), 4) Letra completa em português (ou no idioma do pedido) com métrica cantável, 5) Sugestão de acordes por seção (ex: Am F C G) e 6) Dicas de instrumentação e mood. Use markdown com títulos e listas.',
+            chat: `Você é o Ramu, assistente criativo do RAMDUT AI Lab. Responda no idioma do usuário, seja claro e útil.\nQuando escrever texto criativo (letra, poema, legenda, roteiro, copy), siga estas regras de humanização:\n${HUMANIZATION_RULES}`,
+            music: buildLyricsSystemPrompt(opts?.genres),
             story: 'Você é um roteirista de vídeos curtos e longos. Dado uma ideia, entregue: 1) Logline em 1 frase, 2) Personagens principais, 3) Tom e estilo visual, 4) Estrutura em 3 atos, 5) Cenas numeradas com: LOCAL, DURAÇÃO estimada, AÇÃO/DESCRIÇÃO, DIÁLOGO, PROMPT DE IMAGEM (para gerar cada cena em IA), 6) Sugestão de trilha sonora. Português por padrão, markdown com títulos claros.',
           };
           const data = await invokeAi<any>(
