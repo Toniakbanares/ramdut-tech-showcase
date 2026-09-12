@@ -139,7 +139,7 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
       prompt: string,
       parentId?: string,
       referenceImages?: string[],
-      opts?: { aspect_ratio?: string; quality?: 'fast' | 'standard' | 'hd' | 'ultra'; cardId?: string },
+      opts?: { aspect_ratio?: string; quality?: 'fast' | 'standard' | 'hd' | 'ultra'; cardId?: string; genres?: string[] },
     ) => {
       if (cooldownRemaining() > 0) {
         toast({ title: 'Cooldown ativo', description: `Aguarde ${Math.ceil(cooldownRemaining() / 1000)}s.` });
