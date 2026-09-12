@@ -90,7 +90,7 @@ export const GenerationCard = ({ data }: Props) => {
           />
         )}
         {card.text && !card.imageUrl && !card.svg && (
-          <div className={`w-full h-full overflow-auto p-3 text-xs text-neutral-200 whitespace-pre-wrap ${!isPro ? 'blur-sm select-none' : ''}`}>
+          <div className={`w-full h-full overflow-auto p-3 text-xs text-neutral-200 whitespace-pre-wrap ${card.type === 'music' ? 'ramu-lyrics' : ''} ${!isPro ? 'blur-sm select-none' : ''}`}>
             {card.text}
           </div>
         )}
