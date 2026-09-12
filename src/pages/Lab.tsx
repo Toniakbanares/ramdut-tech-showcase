@@ -40,6 +40,7 @@ import {
   downloadText,
 } from '@/lib/lab-helpers';
 import { invokeAi, humanizeAiError } from '@/lib/ai-invoke';
+import { buildLyricsSystemPrompt, HUMANIZATION_RULES } from '@/lib/lyrics-craft';
 
 
 const nodeTypes: NodeTypes = { generation: GenerationCard };
