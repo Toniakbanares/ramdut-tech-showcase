@@ -54,6 +54,10 @@ export const CommandPalette = ({ open, onClose, onSubmit, onMix, defaultMode = '
   const [aspect, setAspect] = useState<string>('1:1');
   const [quality, setQuality] = useState<'fast' | 'standard' | 'hd' | 'ultra'>('standard');
   const [showOpts, setShowOpts] = useState(false);
+  const [genres, setGenres] = useState<string[]>([]);
+
+  const toggleGenre = (id: string) =>
+    setGenres((g) => (g.includes(id) ? g.filter((x) => x !== id) : [...g, id]));
 
 
   useEffect(() => { if (open) setMode(defaultMode); }, [open, defaultMode]);
