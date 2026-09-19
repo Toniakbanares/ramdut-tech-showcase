@@ -13,7 +13,7 @@ import { useLabStore } from '@/store/lab-store';
 import { useGenerationLimit } from '@/hooks/use-generation-limit';
 import { PixPaymentModal } from '@/components/PixPaymentModal';
 import { MobileBottomNav } from '@/components/MobileBottomNav';
-import { LumisIcon } from '@/components/lab/LumisIcon';
+import { RamuMascot } from '@/components/RamuMascot';
 import {
   getDeviceId, downloadDataUrl, type LabMode,
 } from '@/lib/lab-helpers';
@@ -434,7 +434,7 @@ const Imagine = () => {
                 ) : (
                   !generating && (
                     <div className="flex flex-col items-center gap-3 p-6 text-center">
-                      <LumisIcon size={56} />
+                      <RamuMascot size={56} float />
                       <h2 className={`text-lg font-semibold ${isLight ? 'text-neutral-800' : 'text-white'}`}>
                         Sou o Ramu. Vamos criar?
                       </h2>

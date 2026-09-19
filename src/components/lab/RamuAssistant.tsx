@@ -73,10 +73,10 @@ export const RamuAssistant = ({ selectedCard, totalCards }: Props) => {
         transition={{
           y: { duration: 3.4, repeat: Infinity, ease: 'easeInOut' },
         }}
-        className="relative w-14 h-14 min-w-[44px] min-h-[44px] rounded-full ramu-card-border ramu-glass overflow-hidden"
+        className="relative w-12 h-12 rounded-full ramu-card-border ramu-glass overflow-hidden"
         aria-label="Abrir Ramu"
       >
-        <img src={mascotImg} alt="Ramu mascote" className="w-full h-full object-cover" />
+        <RamuMascot size={48} ring={false} />
         <motion.span
           animate={{ opacity: [1, 0.4, 1], scale: [1, 1.2, 1] }}
           transition={{ duration: 1.6, repeat: Infinity }}
