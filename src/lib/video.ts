@@ -52,15 +52,28 @@ export interface VideoJob {
   provider?: string;
 }
 
+export class VideoCallError extends Error {
+  code: string;
+  status?: number;
+
+  constructor(message: string, code = 'unknown', status?: number) {
+    super(message);
+    this.name = 'VideoCallError';
+    this.code = code;
+    this.status = status;
+  }
+}
+
 async function call(body: Record<string, unknown>) {
   const { data, error } = await supabase.functions.invoke('generate-video', { body });
   if (error) {
     const response = error.context as Response | undefined;
     if (response) {
       const payload = await response.clone().json().catch(() => null);
-      throw new Error(payload?.error || payload?.message || error.message || 'Falha ao falar com o servidor de vídeo');
+      const message = payload?.error || payload?.message || error.message || 'Falha ao falar com o servidor de vídeo';
+      throw new VideoCallError(message, payload?.code || 'provider', response.status);
     }
-    throw new Error(error.message || 'Falha ao falar com o servidor de vídeo');
+    throw new VideoCallError(error.message || 'Falha ao falar com o servidor de vídeo', 'network');
   }
   return data as any;
 }
@@ -74,7 +87,7 @@ export async function createVideoJob(input: CreateVideoInput): Promise<string> {
     size: input.size,
     input_reference: input.inputReference,
   });
-  if (data?.error) throw new Error(data.error);
+  if (data?.error) throw new VideoCallError(data.error, data.code || 'provider');
   if (!data?.id) throw new Error('O provedor não retornou um job de vídeo.');
   return data.id as string;
 }
