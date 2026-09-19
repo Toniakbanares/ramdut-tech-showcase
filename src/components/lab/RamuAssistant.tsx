@@ -1,8 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
-import mascotImg from '@/assets/mascot-ramu.png';
 import type { LabCard } from '@/store/lab-store';
-import { LumisIcon } from './LumisIcon';
+import { RamuMascot } from '@/components/RamuMascot';
 
 interface Props {
   selectedCard: LabCard | null;
