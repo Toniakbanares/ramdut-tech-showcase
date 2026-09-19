@@ -16,7 +16,7 @@ import { composeMeme, MEME_SUBJECTS, MEME_STYLES } from '@/lib/meme';
 import {
   MOTION_PRESETS, VIDEO_MODELS, VIDEO_SIZES,
   createVideoJob, waitForVideo, downloadVideo, toDataUrl,
-  cancelVideoJob, deleteVideoJob,
+  cancelVideoJob, deleteVideoJob, VideoCallError,
   type VideoStatus,
 } from '@/lib/video';
 
@@ -99,6 +99,8 @@ interface Clip {
   /** id do job no provider (para cancelar/excluir) */
   jobId?: string;
   provider?: string;
+  retryable?: boolean;
+  blockedByCredits?: boolean;
 }
 
 
@@ -146,6 +148,7 @@ const Studio = () => {
   const [videoRef, setVideoRef] = useState<string | undefined>();
   const [clips, setClips] = useState<Clip[]>([]);
   const [videoBusy, setVideoBusy] = useState(false);
+  const [videoCreditsBlocked, setVideoCreditsBlocked] = useState(false);
   /** painel de configurações avançadas recolhido por padrão */
   const [advanced, setAdvanced] = useState(false);
   /** aborta o polling de um clipe específico */
@@ -311,9 +314,16 @@ const Studio = () => {
         }
       } catch (e) {
         console.error('[studio] vídeo falhou:', e);
+        const blockedByCredits = e instanceof VideoCallError && e.status === 402;
+        const info = humanizeAiError(e);
+        if (blockedByCredits) setVideoCreditsBlocked(true);
         patchClip(clip.id, {
           status: 'failed',
-          error: e instanceof Error ? e.message : 'Não foi possível iniciar a geração do vídeo.',
+          error: blockedByCredits
+            ? 'O saldo de IA está insuficiente para criar este vídeo. A geração fica pausada até novos créditos estarem disponíveis.'
+            : info.description,
+          retryable: blockedByCredits ? false : info.retryable,
+          blockedByCredits,
         });
       } finally {
         delete aborts.current[clip.id];
@@ -344,6 +354,13 @@ const Studio = () => {
 
 
   const generateVideo = useCallback(async () => {
+    if (videoCreditsBlocked) {
+      toast({
+        title: 'Geração de vídeo pausada',
+        description: 'O saldo de IA está insuficiente. Imagens e memes continuam disponíveis.',
+      });
+      return;
+    }
     const base = videoPrompt.trim();
     if (!base) {
       toast({ title: 'Descreva o vídeo', description: 'Conte o que deve acontecer na cena.' });
@@ -365,7 +382,7 @@ const Studio = () => {
     const refData = videoRef ? await toDataUrl(videoRef) : undefined;
     await runClip(clip, refData);
     setVideoBusy(false);
-  }, [videoPrompt, cameraMove, videoModel, videoSize, seconds, videoRef, runClip, toast]);
+  }, [videoCreditsBlocked, videoPrompt, cameraMove, videoModel, videoSize, seconds, videoRef, runClip, toast]);
 
   const retryClip = (clip: Clip) => {
     patchClip(clip.id, { status: 'queued', error: undefined, progress: 0 });
@@ -850,15 +867,17 @@ const Studio = () => {
 
             <button
               onClick={generateVideo}
-              disabled={videoBusy}
+              disabled={videoBusy || videoCreditsBlocked}
               className="hidden lg:flex w-full h-14 rounded-2xl bg-gradient-to-r from-[#8B5CF6] to-[#06B6D4] font-bold items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.99] transition-transform"
             >
 
               {videoBusy ? <Loader2 className="h-5 w-5 animate-spin" /> : <Film className="h-5 w-5" />}
-              {videoBusy ? 'Gerando vídeo… (1-3 min)' : 'Gerar vídeo'}
+              {videoBusy ? 'Gerando vídeo… (1-3 min)' : videoCreditsBlocked ? 'Vídeo pausado por falta de saldo' : 'Gerar vídeo'}
             </button>
             <p className="text-[10px] text-neutral-600 text-center">
-              Vídeo com áudio. A criação pode levar alguns minutos — mantenha esta aba aberta.
+              {videoCreditsBlocked
+                ? 'Imagens e memes continuam disponíveis normalmente.'
+                : 'Vídeo com áudio. A criação pode levar alguns minutos — mantenha esta aba aberta.'}
             </p>
           </section>
         )}
@@ -888,12 +907,14 @@ const Studio = () => {
                       <div className="p-6 text-center">
                         <AlertTriangle className="h-7 w-7 mx-auto text-red-400 mb-2" />
                         <p className="text-[11px] text-neutral-400 mb-3">{c.error}</p>
-                        <button
-                          onClick={() => retryClip(c)}
-                          className="min-h-[44px] px-4 rounded-lg bg-white/10 text-xs inline-flex items-center gap-1.5"
-                        >
-                          <RefreshCw className="h-3.5 w-3.5" /> Tentar novamente
-                        </button>
+                        {c.retryable !== false && (
+                          <button
+                            onClick={() => retryClip(c)}
+                            className="min-h-[44px] px-4 rounded-lg bg-white/10 text-xs inline-flex items-center gap-1.5"
+                          >
+                            <RefreshCw className="h-3.5 w-3.5" /> Tentar novamente
+                          </button>
+                        )}
                       </div>
                     ) : (
                       <div className="p-8 text-center">
@@ -1086,7 +1107,7 @@ const Studio = () => {
       >
         <button
           onClick={tab === 'video' ? generateVideo : tab === 'meme' ? generateMeme : generate}
-          disabled={tab === 'video' ? videoBusy : busy}
+          disabled={tab === 'video' ? videoBusy || videoCreditsBlocked : busy}
           className="w-full h-14 rounded-2xl bg-gradient-to-r from-[#8B5CF6] to-[#06B6D4] font-bold flex items-center justify-center gap-2 shadow-lg shadow-black/40 disabled:opacity-60 active:scale-[0.99] transition-transform"
         >
           {(tab === 'video' ? videoBusy : busy) ? (
@@ -1101,7 +1122,9 @@ const Studio = () => {
           {tab === 'video'
             ? videoBusy
               ? 'Gerando vídeo… (1-3 min)'
-              : 'Gerar vídeo'
+              : videoCreditsBlocked
+                ? 'Vídeo pausado por falta de saldo'
+                : 'Gerar vídeo'
             : busy
               ? 'Criando…'
               : tab === 'meme'
