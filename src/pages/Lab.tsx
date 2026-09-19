@@ -436,7 +436,7 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
       >
         <Link to="/" className="flex items-center gap-2 text-neutral-300 hover:text-white shrink-0">
           <ArrowLeft className="h-5 w-5" />
-          <span className="font-bold ramu-accent-text text-base hidden sm:inline">
+          <span className="font-bold ramu-accent-text text-base">
             RAMU<span className="text-neutral-500">.lab</span>
           </span>
         </Link>
@@ -451,19 +451,27 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
           <kbd className="ml-auto text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-neutral-300">Ctrl K</kbd>
         </button>
 
-        <div className="ml-auto flex items-center gap-1 sm:gap-2">
-          <span className="hidden md:inline text-xs text-neutral-400">
+        {/* Mobile/tablet: um único botão de menu */}
+        <button
+          onClick={() => setMenuOpen(true)}
+          className="lg:hidden ml-auto h-10 w-10 rounded-lg border border-white/10 flex items-center justify-center text-neutral-300"
+          aria-label="Abrir menu"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+
+        <div className="ml-auto hidden lg:flex items-center gap-2">
+          <span className="text-xs text-neutral-400">
             <span className="text-white font-medium">grátis</span> · sem limite
           </span>
 
           <button
             onClick={() => openPaywall('Contribua com o nosso trabalho ❤️')}
-            className="h-10 px-3 min-w-[44px] rounded-lg ramu-accent-bg text-white text-xs font-medium flex items-center gap-1.5 whitespace-nowrap"
+            className="h-10 px-3 rounded-lg ramu-accent-bg text-white text-xs font-medium flex items-center gap-1.5 whitespace-nowrap"
             aria-label="Me pague um café"
           >
             <Coffee className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Me colabore, me pague um café</span>
-            <span className="inline xs:hidden sm:hidden">Café</span>
+            Me pague um café
           </button>
 
           <Link
@@ -472,9 +480,8 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
             title="Chat com Ramon"
           >
             <MessageCircle className="h-4 w-4" />
-            <span className="hidden sm:inline">Ramon</span>
+            Ramon
           </Link>
-
 
           <button
             onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
@@ -494,6 +501,53 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
           </Link>
         </div>
       </header>
+
+      {/* Menu mobile */}
+      <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+        <SheetContent side="right" className="w-[82vw] max-w-xs bg-[#0A0A0B] border-white/10 text-white">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2 text-white">
+              <RamuMascot size={28} /> RAMU.lab
+            </SheetTitle>
+          </SheetHeader>
+
+          <div className="mt-6 flex flex-col gap-2">
+            <button
+              onClick={() => {
+                setMenuOpen(false);
+                openPaywall('Contribua com o nosso trabalho ❤️');
+              }}
+              className="h-12 px-4 rounded-xl ramu-accent-bg text-white text-sm font-medium flex items-center gap-2"
+            >
+              <Coffee className="h-4 w-4" /> Me pague um café
+            </button>
+
+            <Link
+              to="/lab/ramon"
+              onClick={() => setMenuOpen(false)}
+              className="h-12 px-4 rounded-xl border border-white/10 flex items-center gap-2 text-sm text-neutral-200"
+            >
+              <MessageCircle className="h-4 w-4 text-[#06B6D4]" /> Conversar com o Ramon
+            </Link>
+
+            <button
+              onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
+              className="h-12 px-4 rounded-xl border border-white/10 flex items-center gap-2 text-sm text-neutral-200"
+            >
+              {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              {theme === 'dark' ? 'Modo claro' : 'Modo escuro'}
+            </button>
+
+            <Link
+              to="/api-status"
+              onClick={() => setMenuOpen(false)}
+              className="h-12 px-4 rounded-xl border border-white/10 flex items-center gap-2 text-sm text-neutral-200"
+            >
+              <Activity className="h-4 w-4 text-[#06B6D4]" /> Status das integrações
+            </Link>
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* Canvas */}
       <main className="pt-14 pb-40 lg:pb-0 h-screen">
