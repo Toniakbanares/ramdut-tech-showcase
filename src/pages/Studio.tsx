@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -101,7 +101,42 @@ interface Clip {
   provider?: string;
   retryable?: boolean;
   blockedByCredits?: boolean;
+  /** quando a geração começou — usado no cronômetro de progresso */
+  createdAt?: number;
 }
+
+/** histórico de vídeos guardado no aparelho para sobreviver a um reload */
+const CLIPS_KEY = 'ramdut-studio-clips';
+
+const loadClips = (): Clip[] => {
+  try {
+    const raw = localStorage.getItem(CLIPS_KEY);
+    const list = raw ? (JSON.parse(raw) as Clip[]) : [];
+    return Array.isArray(list) ? list.slice(0, 12) : [];
+  } catch {
+    return [];
+  }
+};
+
+const saveClips = (clips: Clip[]) => {
+  try {
+    const light = clips.slice(0, 12).map((c) => ({
+      ...c,
+      // pôsteres muito grandes estouram o armazenamento local
+      poster: c.poster && c.poster.length > 400_000 ? undefined : c.poster,
+    }));
+    localStorage.setItem(CLIPS_KEY, JSON.stringify(light));
+  } catch {
+    /* armazenamento cheio — o histórico local é opcional */
+  }
+};
+
+/** tempo decorrido legível: 0:42 */
+const elapsedLabel = (from?: number, now = Date.now()) => {
+  if (!from) return '';
+  const s = Math.max(0, Math.round((now - from) / 1000));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+};
 
 
 const fileToDataUrl = (file: File) =>
@@ -153,6 +188,9 @@ const Studio = () => {
   const [advanced, setAdvanced] = useState(false);
   /** aborta o polling de um clipe específico */
   const aborts = useRef<Record<string, AbortController>>({});
+  /** relógio para o cronômetro dos vídeos em andamento */
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  const resumed = useRef(false);
 
 
   const activePreset = useMemo(() => PRESETS.find((p) => p.id === preset), [preset]);
@@ -376,6 +414,7 @@ const Studio = () => {
       seconds: videoSize.includes('1920') || videoSize.includes('1080x') ? '8' : seconds,
       size: videoSize,
       poster: videoRef,
+      createdAt: Date.now(),
     };
     setClips((c) => [clip, ...c]);
     setVideoBusy(true);
@@ -385,7 +424,7 @@ const Studio = () => {
   }, [videoCreditsBlocked, videoPrompt, cameraMove, videoModel, videoSize, seconds, videoRef, runClip, toast]);
 
   const retryClip = (clip: Clip) => {
-    patchClip(clip.id, { status: 'queued', error: undefined, progress: 0 });
+    patchClip(clip.id, { status: 'queued', error: undefined, progress: 0, createdAt: Date.now() });
     void (async () => {
       setVideoBusy(true);
       const refData = clip.poster ? await toDataUrl(clip.poster) : undefined;
@@ -393,6 +432,54 @@ const Studio = () => {
       setVideoBusy(false);
     })();
   };
+
+  /** volta a acompanhar um vídeo que já estava sendo criado antes do reload */
+  const resumeClip = useCallback(async (clip: Clip) => {
+    if (!clip.jobId) {
+      patchClip(clip.id, { status: 'failed', error: 'A criação foi interrompida. Tente novamente.', retryable: true });
+      return;
+    }
+    const controller = new AbortController();
+    aborts.current[clip.id] = controller;
+    try {
+      const job = await waitForVideo(
+        clip.jobId,
+        (j) => patchClip(clip.id, { status: j.status, progress: j.progress }),
+        { signal: controller.signal },
+      );
+      if (job.status === 'completed' && job.videoUrl) {
+        patchClip(clip.id, { status: 'completed', videoUrl: job.videoUrl, progress: 100 });
+      } else if (job.status === 'failed') {
+        patchClip(clip.id, { status: 'failed', error: job.error || 'Não foi possível gerar o vídeo.' });
+      }
+    } finally {
+      delete aborts.current[clip.id];
+    }
+  }, []);
+
+  /** histórico local: recupera a lista e retoma os vídeos em andamento */
+  useEffect(() => {
+    if (resumed.current) return;
+    resumed.current = true;
+    const stored = loadClips();
+    if (!stored.length) return;
+    setClips(stored);
+    stored
+      .filter((c) => c.status === 'queued' || c.status === 'processing')
+      .forEach((c) => void resumeClip(c));
+  }, [resumeClip]);
+
+  useEffect(() => {
+    saveClips(clips);
+  }, [clips]);
+
+  /** cronômetro só roda enquanto existe vídeo sendo criado */
+  const hasRunningClip = clips.some((c) => c.status === 'queued' || c.status === 'processing');
+  useEffect(() => {
+    if (!hasRunningClip) return;
+    const t = setInterval(() => setNowTick(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [hasRunningClip]);
 
   /** Imagem gerada → vira referência de vídeo (image-to-video sem novo upload) */
   const animate = (shot: Shot) => {
@@ -790,7 +877,7 @@ const Studio = () => {
               aria-expanded={advanced}
             >
               <SlidersHorizontal className="h-3.5 w-3.5" />
-              Ajustes {advanced ? '' : `· ${VIDEO_MODELS.find((m) => m.id === videoModel)?.label} · ${is1080 ? '8' : seconds}s`}
+              Ajustes {advanced ? '' : `· ${VIDEO_MODELS.find((m) => m.id === videoModel)?.label} · ${VIDEO_SIZES.find((s) => s.id === videoSize)?.label} · ${is1080 ? '8' : seconds}s · ${MOTION_PRESETS.find((m) => m.id === cameraMove)?.label}`}
               <ChevronDown className={`h-3.5 w-3.5 transition-transform ${advanced ? 'rotate-180' : ''}`} />
             </button>
 
@@ -891,7 +978,10 @@ const Studio = () => {
                 <p className="text-sm">Descreva uma cena (ou anime uma imagem) e gere seu primeiro vídeo.</p>
               </div>
             ) : (
-              clips.map((c) => (
+              clips.map((c) => {
+                const running = c.status === 'queued' || c.status === 'processing';
+                const pct = c.status === 'queued' ? 5 : Math.max(8, Math.min(99, c.progress ?? 0));
+                return (
                 <article key={c.id} className="rounded-2xl overflow-hidden border border-white/10 bg-white/[0.03]">
                   <div className="relative bg-neutral-900">
                     {c.status === 'completed' && c.videoUrl ? (
@@ -916,41 +1006,93 @@ const Studio = () => {
                           </button>
                         )}
                       </div>
+                    ) : c.status === 'cancelled' ? (
+                      <div className="p-6 text-center">
+                        <Ban className="h-7 w-7 mx-auto text-neutral-500 mb-2" />
+                        <p className="text-[11px] text-neutral-500 mb-3">Criação cancelada.</p>
+                        <button
+                          onClick={() => retryClip(c)}
+                          className="min-h-[44px] px-4 rounded-lg bg-white/10 text-xs inline-flex items-center gap-1.5"
+                        >
+                          <RefreshCw className="h-3.5 w-3.5" /> Gerar de novo
+                        </button>
+                      </div>
                     ) : (
-                      <div className="p-8 text-center">
+                      <div className="p-6 text-center">
                         {c.poster && (
                           <img src={c.poster} alt="" className="absolute inset-0 w-full h-full object-cover opacity-20" />
                         )}
                         <div className="relative">
                           <Loader2 className="h-7 w-7 mx-auto animate-spin text-[#8B5CF6] mb-2" />
-                          <p className="text-xs text-neutral-400">
-                            {c.status === 'queued' ? 'Na fila…' : `Renderizando… ${c.progress ?? 0}%`}
+                          <p className="text-xs text-neutral-300">
+                            {c.status === 'queued' ? 'Na fila do provedor…' : 'Renderizando a cena…'}
                           </p>
+                          <p className="text-[10px] text-neutral-500 mt-1">
+                            {elapsedLabel(c.createdAt, nowTick)} decorrido · costuma levar de 1 a 3 minutos
+                          </p>
+                          <div className="mt-3 h-1.5 w-full max-w-xs mx-auto rounded-full bg-white/10 overflow-hidden">
+                            <div
+                              className="h-full bg-gradient-to-r from-[#8B5CF6] to-[#06B6D4] transition-all duration-700"
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                          <button
+                            onClick={() => cancelClip(c)}
+                            className="mt-3 min-h-[44px] px-4 rounded-lg bg-white/10 text-xs inline-flex items-center gap-1.5"
+                          >
+                            <Ban className="h-3.5 w-3.5" /> Cancelar
+                          </button>
                         </div>
                       </div>
                     )}
                   </div>
+
+                  <div className="px-3 pt-2 flex flex-wrap gap-1.5">
+                    {[
+                      VIDEO_SIZES.find((s) => s.id === c.size)?.label,
+                      `${c.seconds}s`,
+                      VIDEO_MODELS.find((m) => m.id === c.model)?.label,
+                      c.poster ? 'a partir de imagem' : undefined,
+                    ]
+                      .filter(Boolean)
+                      .map((chip) => (
+                        <span key={chip as string} className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-neutral-400">
+                          {chip}
+                        </span>
+                      ))}
+                  </div>
                   <p className="px-3 py-2 text-[11px] text-neutral-400 line-clamp-2">{c.prompt}</p>
-                  {c.status === 'completed' && c.videoUrl && (
-                    <div className="grid grid-cols-2 border-t border-white/5">
-                      <button
-                        onClick={() => downloadVideo(c.videoUrl!, `ramdut-${c.id.slice(0, 8)}.mp4`)}
-                        className="min-h-[44px] text-[11px] text-neutral-300 hover:bg-white/5 flex items-center justify-center gap-1.5"
-                      >
-                        <Download className="h-3.5 w-3.5" /> Baixar MP4
-                      </button>
-                      <a
-                        href={c.videoUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="min-h-[44px] text-[11px] text-neutral-300 hover:bg-white/5 flex items-center justify-center gap-1.5"
-                      >
-                        <Play className="h-3.5 w-3.5" /> Abrir
-                      </a>
-                    </div>
-                  )}
+
+                  <div className="grid grid-cols-3 border-t border-white/5">
+                    <button
+                      onClick={() => c.videoUrl && downloadVideo(c.videoUrl, `ramdut-${c.id.slice(0, 8)}.mp4`)}
+                      disabled={!c.videoUrl}
+                      className="min-h-[44px] text-[11px] text-neutral-300 hover:bg-white/5 flex items-center justify-center gap-1.5 disabled:opacity-30"
+                    >
+                      <Download className="h-3.5 w-3.5" /> Baixar
+                    </button>
+                    <button
+                      onClick={() => {
+                        setVideoPrompt(c.prompt);
+                        setVideoModel(c.model);
+                        setVideoSize(c.size);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      className="min-h-[44px] text-[11px] text-neutral-300 hover:bg-white/5 flex items-center justify-center gap-1.5 border-x border-white/5"
+                    >
+                      <Wand2 className="h-3.5 w-3.5" /> Reusar
+                    </button>
+                    <button
+                      onClick={() => deleteClip(c)}
+                      disabled={running}
+                      className="min-h-[44px] text-[11px] text-neutral-400 hover:bg-white/5 flex items-center justify-center gap-1.5 disabled:opacity-30"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" /> Excluir
+                    </button>
+                  </div>
                 </article>
-              ))
+                );
+              })
             )}
           </section>
         )}
