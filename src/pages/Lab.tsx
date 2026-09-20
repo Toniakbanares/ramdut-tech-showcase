@@ -559,26 +559,19 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
               transition={{ type: 'spring', stiffness: 400, damping: 40 }}
               className="text-center pointer-events-auto"
             >
-              <Sparkles className="h-12 w-12 mx-auto text-[#8B5CF6] mb-4" />
-              <h1 className="text-3xl sm:text-4xl font-bold ramu-accent-text mb-2">Canvas em branco</h1>
-              <p className="text-neutral-400 mb-6 max-w-md text-sm sm:text-base">
-                Toque no <span className="text-white font-medium">+</span> abaixo (ou{' '}
-                <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-xs">Ctrl K</kbd>) e mande uma ideia.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-2 justify-center">
-                <button
-                  onClick={() => setPaletteOpen(true)}
-                  className="h-12 px-5 ramu-accent-bg rounded-lg text-white font-medium flex items-center gap-2 justify-center"
-                >
-                  <Plus className="h-4 w-4" /> Nova geração
-                </button>
-                <button
-                  onClick={() => setMixOpen(true)}
-                  className="h-12 px-5 rounded-lg border border-[#8B5CF6]/40 text-white font-medium flex items-center gap-2 justify-center hover:bg-white/5"
-                >
-                  <Wand2 className="h-4 w-4" /> Modo /mix
-                </button>
+              <div className="mx-auto mb-4 w-fit">
+                <RamuMascot size={72} float />
               </div>
+              <h1 className="text-2xl sm:text-4xl font-bold ramu-accent-text mb-2">Vamos criar?</h1>
+              <p className="text-neutral-400 mb-6 max-w-xs sm:max-w-md mx-auto text-sm">
+                Toque no botão abaixo e me conte a sua ideia.
+              </p>
+              <button
+                onClick={() => setPaletteOpen(true)}
+                className="h-12 px-6 ramu-accent-bg rounded-xl text-white font-medium flex items-center gap-2 justify-center mx-auto"
+              >
+                <Plus className="h-4 w-4" /> Nova geração
+              </button>
             </motion.div>
           </div>
         )}
