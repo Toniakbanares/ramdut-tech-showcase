@@ -188,6 +188,9 @@ const Studio = () => {
   const [advanced, setAdvanced] = useState(false);
   /** aborta o polling de um clipe específico */
   const aborts = useRef<Record<string, AbortController>>({});
+  /** relógio para o cronômetro dos vídeos em andamento */
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  const resumed = useRef(false);
 
 
   const activePreset = useMemo(() => PRESETS.find((p) => p.id === preset), [preset]);
