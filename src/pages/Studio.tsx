@@ -101,7 +101,42 @@ interface Clip {
   provider?: string;
   retryable?: boolean;
   blockedByCredits?: boolean;
+  /** quando a geração começou — usado no cronômetro de progresso */
+  createdAt?: number;
 }
+
+/** histórico de vídeos guardado no aparelho para sobreviver a um reload */
+const CLIPS_KEY = 'ramdut-studio-clips';
+
+const loadClips = (): Clip[] => {
+  try {
+    const raw = localStorage.getItem(CLIPS_KEY);
+    const list = raw ? (JSON.parse(raw) as Clip[]) : [];
+    return Array.isArray(list) ? list.slice(0, 12) : [];
+  } catch {
+    return [];
+  }
+};
+
+const saveClips = (clips: Clip[]) => {
+  try {
+    const light = clips.slice(0, 12).map((c) => ({
+      ...c,
+      // pôsteres muito grandes estouram o armazenamento local
+      poster: c.poster && c.poster.length > 400_000 ? undefined : c.poster,
+    }));
+    localStorage.setItem(CLIPS_KEY, JSON.stringify(light));
+  } catch {
+    /* armazenamento cheio — o histórico local é opcional */
+  }
+};
+
+/** tempo decorrido legível: 0:42 */
+const elapsedLabel = (from?: number, now = Date.now()) => {
+  if (!from) return '';
+  const s = Math.max(0, Math.round((now - from) / 1000));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+};
 
 
 const fileToDataUrl = (file: File) =>
