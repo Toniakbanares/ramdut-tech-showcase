@@ -17,7 +17,9 @@ import 'reactflow/dist/style.css';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Command as CmdIcon, Coffee, ArrowLeft, Activity, Sparkles, Plus, Zap, Wand2, Sun, Moon, MessageCircle } from 'lucide-react';
+import { Command as CmdIcon, Coffee, ArrowLeft, Activity, Plus, Zap, Wand2, Sun, Moon, MessageCircle, Menu } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { RamuMascot } from '@/components/RamuMascot';
 
 import { useLabStore, type LabCard } from '@/store/lab-store';
 import { useGenerationLimit } from '@/hooks/use-generation-limit';
@@ -97,6 +99,7 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
   const limit = useGenerationLimit();
 
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [mixOpen, setMixOpen] = useState(false);
   const [pixOpen, setPixOpen] = useState(false);
   const [pixReason, setPixReason] = useState<string>('');
