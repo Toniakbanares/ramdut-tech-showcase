@@ -643,7 +643,9 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
         onRegenerate={(p) => selectedCard && handleGenerate(selectedCard.type, p)}
       />
 
-      <RamuAssistant selectedCard={selectedCard} totalCards={cards.length} />
+      <div className="hidden lg:block">
+        <RamuAssistant selectedCard={selectedCard} totalCards={cards.length} />
+      </div>
 
       <CommandPalette
         open={paletteOpen}
