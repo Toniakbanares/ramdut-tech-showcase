@@ -414,6 +414,7 @@ const Studio = () => {
       seconds: videoSize.includes('1920') || videoSize.includes('1080x') ? '8' : seconds,
       size: videoSize,
       poster: videoRef,
+      createdAt: Date.now(),
     };
     setClips((c) => [clip, ...c]);
     setVideoBusy(true);
