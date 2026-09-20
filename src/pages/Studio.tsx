@@ -877,7 +877,7 @@ const Studio = () => {
               aria-expanded={advanced}
             >
               <SlidersHorizontal className="h-3.5 w-3.5" />
-              Ajustes {advanced ? '' : `· ${VIDEO_MODELS.find((m) => m.id === videoModel)?.label} · ${is1080 ? '8' : seconds}s`}
+              Ajustes {advanced ? '' : `· ${VIDEO_MODELS.find((m) => m.id === videoModel)?.label} · ${VIDEO_SIZES.find((s) => s.id === videoSize)?.label} · ${is1080 ? '8' : seconds}s · ${MOTION_PRESETS.find((m) => m.id === cameraMove)?.label}`}
               <ChevronDown className={`h-3.5 w-3.5 transition-transform ${advanced ? 'rotate-180' : ''}`} />
             </button>
 
