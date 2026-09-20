@@ -617,33 +617,18 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setPaletteOpen(true)}
-            className="flex-1 min-h-[56px] h-14 px-4 rounded-2xl bg-black/40 border border-white/10 text-left text-sm text-neutral-300 flex items-center gap-2.5"
+            className="flex-1 min-h-[56px] h-14 px-4 rounded-2xl ramu-accent-bg text-left text-sm text-white flex items-center gap-3 active:scale-[0.99] transition-transform"
           >
-            <CmdIcon className="h-5 w-5 text-[#8B5CF6]" />
+            <RamuMascot size={36} ring={false} />
             <span className="font-medium">Gerar com IA…</span>
           </button>
           <button
             onClick={() => setMixOpen(true)}
-            className="h-14 w-14 min-w-[56px] rounded-2xl border border-[#8B5CF6]/40 bg-[#8B5CF6]/10 grid place-items-center text-[#06B6D4] active:scale-95 transition-transform"
-            aria-label="Modo mix"
+            className="h-14 w-14 min-w-[56px] rounded-2xl border border-white/10 bg-black/40 grid place-items-center text-[#8B5CF6] active:scale-95 transition-transform"
+            aria-label="Misturar imagens"
           >
             <Wand2 className="h-6 w-6" />
           </button>
-          <Link
-            to="/lab/ramon"
-            className="h-14 w-14 min-w-[56px] rounded-2xl border border-[#06B6D4]/40 bg-[#06B6D4]/10 grid place-items-center text-[#06B6D4] active:scale-95 transition-transform"
-            aria-label="Chat com Ramon"
-          >
-            <MessageCircle className="h-6 w-6" />
-          </Link>
-          <button
-            onClick={() => setPaletteOpen(true)}
-            className="hidden sm:grid h-14 w-14 min-w-[56px] rounded-2xl ramu-accent-bg place-items-center text-white shadow-lg shadow-[#8B5CF6]/30 active:scale-95 transition-transform"
-            aria-label="Nova geração"
-          >
-            <Plus className="h-6 w-6" />
-          </button>
-
         </div>
       </div>
 
