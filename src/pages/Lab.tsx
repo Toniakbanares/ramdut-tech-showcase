@@ -17,7 +17,9 @@ import 'reactflow/dist/style.css';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Command as CmdIcon, Coffee, ArrowLeft, Activity, Sparkles, Plus, Zap, Wand2, Sun, Moon, MessageCircle } from 'lucide-react';
+import { Command as CmdIcon, Coffee, ArrowLeft, Activity, Plus, Zap, Wand2, Sun, Moon, MessageCircle, Menu } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { RamuMascot } from '@/components/RamuMascot';
 
 import { useLabStore, type LabCard } from '@/store/lab-store';
 import { useGenerationLimit } from '@/hooks/use-generation-limit';
@@ -97,6 +99,7 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
   const limit = useGenerationLimit();
 
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [mixOpen, setMixOpen] = useState(false);
   const [pixOpen, setPixOpen] = useState(false);
   const [pixReason, setPixReason] = useState<string>('');
@@ -559,26 +562,19 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
               transition={{ type: 'spring', stiffness: 400, damping: 40 }}
               className="text-center pointer-events-auto"
             >
-              <Sparkles className="h-12 w-12 mx-auto text-[#8B5CF6] mb-4" />
-              <h1 className="text-3xl sm:text-4xl font-bold ramu-accent-text mb-2">Canvas em branco</h1>
-              <p className="text-neutral-400 mb-6 max-w-md text-sm sm:text-base">
-                Toque no <span className="text-white font-medium">+</span> abaixo (ou{' '}
-                <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-xs">Ctrl K</kbd>) e mande uma ideia.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-2 justify-center">
-                <button
-                  onClick={() => setPaletteOpen(true)}
-                  className="h-12 px-5 ramu-accent-bg rounded-lg text-white font-medium flex items-center gap-2 justify-center"
-                >
-                  <Plus className="h-4 w-4" /> Nova geração
-                </button>
-                <button
-                  onClick={() => setMixOpen(true)}
-                  className="h-12 px-5 rounded-lg border border-[#8B5CF6]/40 text-white font-medium flex items-center gap-2 justify-center hover:bg-white/5"
-                >
-                  <Wand2 className="h-4 w-4" /> Modo /mix
-                </button>
+              <div className="mx-auto mb-4 w-fit">
+                <RamuMascot size={72} float />
               </div>
+              <h1 className="text-2xl sm:text-4xl font-bold ramu-accent-text mb-2">Vamos criar?</h1>
+              <p className="text-neutral-400 mb-6 max-w-xs sm:max-w-md mx-auto text-sm">
+                Toque no botão abaixo e me conte a sua ideia.
+              </p>
+              <button
+                onClick={() => setPaletteOpen(true)}
+                className="h-12 px-6 ramu-accent-bg rounded-xl text-white font-medium flex items-center gap-2 justify-center mx-auto"
+              >
+                <Plus className="h-4 w-4" /> Nova geração
+              </button>
             </motion.div>
           </div>
         )}
@@ -624,33 +620,18 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setPaletteOpen(true)}
-            className="flex-1 min-h-[56px] h-14 px-4 rounded-2xl bg-black/40 border border-white/10 text-left text-sm text-neutral-300 flex items-center gap-2.5"
+            className="flex-1 min-h-[56px] h-14 px-4 rounded-2xl ramu-accent-bg text-left text-sm text-white flex items-center gap-3 active:scale-[0.99] transition-transform"
           >
-            <CmdIcon className="h-5 w-5 text-[#8B5CF6]" />
+            <RamuMascot size={36} ring={false} />
             <span className="font-medium">Gerar com IA…</span>
           </button>
           <button
             onClick={() => setMixOpen(true)}
-            className="h-14 w-14 min-w-[56px] rounded-2xl border border-[#8B5CF6]/40 bg-[#8B5CF6]/10 grid place-items-center text-[#06B6D4] active:scale-95 transition-transform"
-            aria-label="Modo mix"
+            className="h-14 w-14 min-w-[56px] rounded-2xl border border-white/10 bg-black/40 grid place-items-center text-[#8B5CF6] active:scale-95 transition-transform"
+            aria-label="Misturar imagens"
           >
             <Wand2 className="h-6 w-6" />
           </button>
-          <Link
-            to="/lab/ramon"
-            className="h-14 w-14 min-w-[56px] rounded-2xl border border-[#06B6D4]/40 bg-[#06B6D4]/10 grid place-items-center text-[#06B6D4] active:scale-95 transition-transform"
-            aria-label="Chat com Ramon"
-          >
-            <MessageCircle className="h-6 w-6" />
-          </Link>
-          <button
-            onClick={() => setPaletteOpen(true)}
-            className="hidden sm:grid h-14 w-14 min-w-[56px] rounded-2xl ramu-accent-bg place-items-center text-white shadow-lg shadow-[#8B5CF6]/30 active:scale-95 transition-transform"
-            aria-label="Nova geração"
-          >
-            <Plus className="h-6 w-6" />
-          </button>
-
         </div>
       </div>
 
@@ -662,7 +643,9 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
         onRegenerate={(p) => selectedCard && handleGenerate(selectedCard.type, p)}
       />
 
-      <RamuAssistant selectedCard={selectedCard} totalCards={cards.length} />
+      <div className="hidden lg:block">
+        <RamuAssistant selectedCard={selectedCard} totalCards={cards.length} />
+      </div>
 
       <CommandPalette
         open={paletteOpen}
