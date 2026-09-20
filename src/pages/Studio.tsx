@@ -424,7 +424,7 @@ const Studio = () => {
   }, [videoCreditsBlocked, videoPrompt, cameraMove, videoModel, videoSize, seconds, videoRef, runClip, toast]);
 
   const retryClip = (clip: Clip) => {
-    patchClip(clip.id, { status: 'queued', error: undefined, progress: 0 });
+    patchClip(clip.id, { status: 'queued', error: undefined, progress: 0, createdAt: Date.now() });
     void (async () => {
       setVideoBusy(true);
       const refData = clip.poster ? await toDataUrl(clip.poster) : undefined;
@@ -432,6 +432,54 @@ const Studio = () => {
       setVideoBusy(false);
     })();
   };
+
+  /** volta a acompanhar um vídeo que já estava sendo criado antes do reload */
+  const resumeClip = useCallback(async (clip: Clip) => {
+    if (!clip.jobId) {
+      patchClip(clip.id, { status: 'failed', error: 'A criação foi interrompida. Tente novamente.', retryable: true });
+      return;
+    }
+    const controller = new AbortController();
+    aborts.current[clip.id] = controller;
+    try {
+      const job = await waitForVideo(
+        clip.jobId,
+        (j) => patchClip(clip.id, { status: j.status, progress: j.progress }),
+        { signal: controller.signal },
+      );
+      if (job.status === 'completed' && job.videoUrl) {
+        patchClip(clip.id, { status: 'completed', videoUrl: job.videoUrl, progress: 100 });
+      } else if (job.status === 'failed') {
+        patchClip(clip.id, { status: 'failed', error: job.error || 'Não foi possível gerar o vídeo.' });
+      }
+    } finally {
+      delete aborts.current[clip.id];
+    }
+  }, []);
+
+  /** histórico local: recupera a lista e retoma os vídeos em andamento */
+  useEffect(() => {
+    if (resumed.current) return;
+    resumed.current = true;
+    const stored = loadClips();
+    if (!stored.length) return;
+    setClips(stored);
+    stored
+      .filter((c) => c.status === 'queued' || c.status === 'processing')
+      .forEach((c) => void resumeClip(c));
+  }, [resumeClip]);
+
+  useEffect(() => {
+    saveClips(clips);
+  }, [clips]);
+
+  /** cronômetro só roda enquanto existe vídeo sendo criado */
+  const hasRunningClip = clips.some((c) => c.status === 'queued' || c.status === 'processing');
+  useEffect(() => {
+    if (!hasRunningClip) return;
+    const t = setInterval(() => setNowTick(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [hasRunningClip]);
 
   /** Imagem gerada → vira referência de vídeo (image-to-video sem novo upload) */
   const animate = (shot: Shot) => {
