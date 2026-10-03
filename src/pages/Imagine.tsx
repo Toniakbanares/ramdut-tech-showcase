@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -84,11 +84,6 @@ const Imagine = () => {
 
   const toggleStyle = (id: string) =>
     setStyles((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
-
-  const aspectStyle = useMemo(() => {
-    const r = RATIOS.find((x) => x.id === ratio)!;
-    return { aspectRatio: `${r.w} / ${r.h}` };
-  }, [ratio]);
 
   const handleGenerate = useCallback(async () => {
     const txt = prompt.trim();

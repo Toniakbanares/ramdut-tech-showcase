@@ -107,7 +107,7 @@ export const CommandPalette = ({ open, onClose, onSubmit, onMix, defaultMode = '
 
   const ASPECTS = ['1:1', '16:9', '9:16', '4:3', '3:2', '21:9'];
   const QUALITIES: { id: 'fast' | 'standard' | 'hd' | 'ultra'; label: string; hint: string }[] = [
-    { id: 'fast', label: 'Rápido', hint: 'Qualidade menor' },
+    { id: 'fast', label: 'Rápido', hint: 'Padrão' },
     { id: 'standard', label: 'Padrão', hint: 'Equilibrado' },
     { id: 'hd', label: 'HD', hint: 'Alta qualidade' },
     { id: 'ultra', label: 'Ultra', hint: 'Máxima qualidade' },

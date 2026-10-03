@@ -18,7 +18,7 @@ const HUMAN: Record<string, string> = {
   timeout: 'O modelo demorou demais para responder. Tente novamente ou reduza a qualidade.',
   network: 'Sem conexão com o servidor de IA. Verifique sua internet.',
   empty: 'O modelo não retornou resultado. Reformule o prompt e tente de novo.',
-  blocked: 'O prompt foi bloqueado pelo filtro de segurança do modelo. Reescreva com outras palavras.',
+  blocked: 'O provedor bloqueou esta solicitação. Consulte o motivo informado pelo provedor.',
 };
 
 export function humanizeAiError(e: unknown): { title: string; description: string; retryable: boolean } {
@@ -37,7 +37,7 @@ export function humanizeAiError(e: unknown): { title: string; description: strin
   if (msg.includes('failed to fetch') || msg.includes('networkerror') || msg.includes('load failed'))
     return pick('network', true);
   if (msg.includes('sem imagem') || msg.includes('sem resultado') || msg.includes('no result')) return pick('empty', true);
-  if (msg.includes('safety') || msg.includes('blocked') || msg.includes('prohibited')) return pick('blocked', false);
+  if (msg.includes('safety') || msg.includes('blocked') || msg.includes('prohibited')) return { title: 'Solicitação bloqueada', description: raw.slice(0, 220), retryable: false };
 
   return {
     title: 'Não deu pra gerar',
@@ -63,29 +63,29 @@ interface InvokeOptions {
 export async function invokeAi<T = any>(
   fn: string,
   body: Record<string, unknown>,
-  { retries = 3, timeoutMs = 90_000, onRetry }: InvokeOptions = {},
+  { retries = 1, onRetry }: InvokeOptions = {},
 ): Promise<T> {
   let lastError: unknown;
 
   for (let attempt = 1; attempt <= retries; attempt++) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
       const { data, error } = await supabase.functions.invoke(fn, {
         body,
-        signal: controller.signal,
       });
 
-      clearTimeout(timer);
 
-      if (error) throw new AiError(error.message || 'Erro na função', 'invoke', true);
-      if (data?.error) throw new AiError(String(data.error), 'provider', true);
+      if (error) {
+        const response = error.context as Response | undefined;
+        const payload = await response?.clone().json().catch(() => null);
+        const message = payload?.error || payload?.message || error.message || 'Falha na geração';
+        throw new AiError(message, String(response?.status || 'invoke'), response?.status === 429 || (response?.status || 0) >= 500);
+      }
+      if (data?.error) throw new AiError(String(data.error), 'provider', false);
       return data as T;
     } catch (e) {
-      clearTimeout(timer);
       lastError = e;
       const info = humanizeAiError(e);
-      if (!info.retryable || attempt === retries) break;
+      if (!(e instanceof AiError ? e.retryable : info.retryable) || attempt === retries) break;
       onRetry?.(attempt, e);
       await sleep(600 * 2 ** (attempt - 1)); // 600ms, 1.2s, 2.4s...
     }
