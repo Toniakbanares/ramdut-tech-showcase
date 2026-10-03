@@ -215,8 +215,6 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
             'generate-image',
             {
               prompt: finalPrompt,
-              // Só força Pollinations quando o usuário escolhe explicitamente esse modo
-              provider: mode === 'pollinations' ? 'pollinations' : undefined,
               aspect_ratio: opts?.aspect_ratio,
               quality: opts?.quality,
               reference_images: hasRefs ? referenceImages : undefined,
@@ -226,7 +224,7 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
           if (!data?.imageUrl) throw new Error('Sem imagem');
           updateCard(cardId, {
             imageUrl: data.imageUrl,
-            model: data.provider || 'pollinations',
+            model: data.provider || 'imagem',
             status: 'done',
           });
         }
@@ -553,26 +551,23 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
       </Sheet>
 
       {/* Canvas */}
-      <main className="pt-14 pb-40 lg:pb-0 h-screen">
+      <main className="pt-14 pb-36 lg:pb-0 h-dvh">
         {cards.length === 0 && !generating && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none px-4">
+          <div className="absolute inset-x-0 top-14 bottom-36 lg:bottom-0 flex items-center justify-center pointer-events-none px-4">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ type: 'spring', stiffness: 400, damping: 40 }}
               className="text-center pointer-events-auto"
             >
-              <div className="mx-auto mb-4 w-fit">
-                <RamuMascot size={72} float />
+              <div className="mx-auto mb-3 w-fit">
+                <RamuMascot size={64} float />
               </div>
               <h1 className="text-2xl sm:text-4xl font-bold ramu-accent-text mb-2">Vamos criar?</h1>
-              <p className="text-neutral-400 mb-6 max-w-xs sm:max-w-md mx-auto text-sm">
+              <p className="text-neutral-400 max-w-xs sm:max-w-md mx-auto text-sm">
                 Toque no botão abaixo e me conte a sua ideia.
               </p>
-              <button
-                onClick={() => setPaletteOpen(true)}
-                className="h-12 px-6 ramu-accent-bg rounded-xl text-white font-medium flex items-center gap-2 justify-center mx-auto"
-              >
+              <button onClick={() => setPaletteOpen(true)} className="hidden lg:flex mt-6 h-12 px-6 ramu-accent-bg rounded-xl text-white font-medium items-center gap-2 justify-center mx-auto">
                 <Plus className="h-4 w-4" /> Nova geração
               </button>
             </motion.div>
@@ -614,20 +609,20 @@ const Lab = ({ initialMode, metaKey = 'default' }: Props) => {
 
       {/* Bottom command bar — mobile/tablet */}
       <div
-        className="lg:hidden fixed inset-x-0 z-50 ramu-glass border-t border-white/5 px-3 pt-3 pb-3"
+        className="lg:hidden fixed inset-x-0 z-50 ramu-glass border-t border-white/5 px-3 py-2"
         style={{ bottom: 'calc(env(safe-area-inset-bottom) + 64px)' }}
       >
         <div className="flex items-center gap-2">
           <button
             onClick={() => setPaletteOpen(true)}
-            className="flex-1 min-h-[56px] h-14 px-4 rounded-2xl ramu-accent-bg text-left text-sm text-white flex items-center gap-3 active:scale-[0.99] transition-transform"
+            className="flex-1 min-w-0 min-h-[48px] h-12 px-3 rounded-lg ramu-accent-bg text-left text-sm text-primary-foreground flex items-center gap-2 active:scale-[0.99] transition-transform"
           >
-            <RamuMascot size={36} ring={false} />
+            <RamuMascot size={30} ring={false} />
             <span className="font-medium">Gerar com IA…</span>
           </button>
           <button
             onClick={() => setMixOpen(true)}
-            className="h-14 w-14 min-w-[56px] rounded-2xl border border-white/10 bg-black/40 grid place-items-center text-[#8B5CF6] active:scale-95 transition-transform"
+            className="h-12 w-12 min-w-[48px] rounded-lg border border-border bg-card grid place-items-center text-primary active:scale-95 transition-transform"
             aria-label="Misturar imagens"
           >
             <Wand2 className="h-6 w-6" />

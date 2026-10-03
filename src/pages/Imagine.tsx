@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -85,11 +85,6 @@ const Imagine = () => {
   const toggleStyle = (id: string) =>
     setStyles((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
 
-  const aspectStyle = useMemo(() => {
-    const r = RATIOS.find((x) => x.id === ratio)!;
-    return { aspectRatio: `${r.w} / ${r.h}` };
-  }, [ratio]);
-
   const handleGenerate = useCallback(async () => {
     const txt = prompt.trim();
     if (!txt) {
@@ -125,7 +120,7 @@ const Imagine = () => {
         url = data.imageUrl;
       } else {
         const { data, error } = await supabase.functions.invoke('generate-image', {
-          body: { prompt: final, model: 'google/gemini-2.5-flash-image', aspect_ratio: aspect },
+           body: { prompt: final, aspect_ratio: aspect, quality: 'hd' },
         });
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
@@ -395,7 +390,7 @@ const Imagine = () => {
       </header>
 
       {/* Layout principal */}
-      <div className="max-w-[1600px] mx-auto px-4 py-4 lg:py-6 pb-40 lg:pb-6">
+       <div className="max-w-[1600px] mx-auto px-3 sm:px-4 py-3 lg:py-6 pb-40 lg:pb-6">
         <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4 lg:gap-6">
           {/* Sidebar — desktop */}
           <aside className={`hidden lg:flex flex-col gap-5 p-5 rounded-2xl ${t.glass} h-fit sticky top-20`}>
@@ -404,10 +399,10 @@ const Imagine = () => {
 
           {/* Canvas */}
           <section className="flex flex-col gap-4">
-            <div className={`rounded-2xl ${t.glass} p-4 lg:p-6`}>
+             <div className={`rounded-lg ${t.glass} p-2 sm:p-4 lg:p-6`}>
               <div
-                className={`relative rounded-xl ${t.canvasBg} overflow-hidden flex items-center justify-center`}
-                style={aspectStyle}
+                className={`relative rounded-lg ${t.canvasBg} overflow-hidden flex items-center justify-center w-full max-h-[min(65dvh,720px)] min-h-[200px]`}
+                style={{ aspectRatio: `${RATIOS.find((x) => x.id === (current?.ratio || ratio))?.w || 1} / ${RATIOS.find((x) => x.id === (current?.ratio || ratio))?.h || 1}` }}
               >
                 {generating && (
                   <div className="absolute inset-0 grid place-items-center bg-gradient-to-br from-[#7C3AED]/10 to-[#2563EB]/10 z-10">
@@ -429,7 +424,7 @@ const Imagine = () => {
                     initial={{ opacity: 0, scale: 0.98 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ type: 'spring', stiffness: 400, damping: 40 }}
-                    className="w-full h-full object-contain"
+                    className="absolute inset-0 w-full h-full object-contain"
                   />
                 ) : (
                   !generating && (
@@ -503,17 +498,17 @@ const Imagine = () => {
 
       {/* Bottom bar mobile/tablet */}
       <div
-        className={`lg:hidden fixed inset-x-0 z-50 ${t.glass} border-t ${t.border} px-3 pt-2 pb-3`}
+         className={`lg:hidden fixed inset-x-0 z-50 ${t.glass} border-t ${t.border} px-3 py-2`}
         style={{ bottom: 'calc(env(safe-area-inset-bottom) + 64px)' }}
       >
         <div className="flex items-center gap-2">
           <button
             onClick={() => setSheetOpen(true)}
-            className={`flex-1 h-12 min-h-[44px] rounded-xl ${t.input} text-sm text-left px-3 flex items-center gap-2`}
+            className={`flex-1 min-w-0 h-12 min-h-[44px] rounded-lg ${t.input} text-sm text-left px-3 flex items-center gap-2`}
           >
             <ImageIcon className="h-4 w-4 opacity-60" />
-            <span className="truncate opacity-70">{prompt || 'Descreva a imagem…'}</span>
-            <ChevronUp className="h-4 w-4 ml-auto opacity-60" />
+            <span className="truncate min-w-0 flex-1 opacity-70">{prompt || 'Descreva a imagem…'}</span>
+            <ChevronUp className="h-4 w-4 shrink-0 opacity-60" />
           </button>
           <button
             onClick={handleGenerate}
