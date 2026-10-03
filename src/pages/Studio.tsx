@@ -43,10 +43,9 @@ const PRESETS: Preset[] = [
   { id: 'analog', label: 'Analógico', emoji: '📷', aspect: '3:2', suffix: '35mm film photo, grain, natural light, candid moment, faded colors' },
 ];
 
-const ENGINES: { id: 'auto' | 'pollinations' | 'pro-fal'; label: string; desc: string }[] = [
-  { id: 'auto', label: 'Auto', desc: 'Gemini com fallback' },
-  { id: 'pollinations', label: 'Turbo', desc: 'Grátis e ilimitado' },
-  { id: 'pro-fal', label: 'Pro', desc: 'Flux / SDXL' },
+const ENGINES: { id: 'auto' | 'pro-fal'; label: string; desc: string }[] = [
+  { id: 'auto', label: 'Imagem', desc: 'Alta qualidade' },
+  { id: 'pro-fal', label: 'Flux', desc: 'fal.ai' },
 ];
 
 const ASPECTS = ['1:1', '16:9', '9:16', '4:3', '3:2', '21:9'];
@@ -75,7 +74,7 @@ interface Shot {
   imageUrl?: string;
   error?: string;
   model?: string;
-  engine: 'auto' | 'pollinations' | 'pro-fal';
+  engine: 'auto' | 'pro-fal';
   aspect: string;
   quality: Quality;
   ref?: string;
@@ -156,7 +155,7 @@ const Studio = () => {
   const [tab, setTab] = useState<'create' | 'meme' | 'video'>('create');
   const [prompt, setPrompt] = useState('');
   const [preset, setPreset] = useState<string | null>('cinematic');
-  const [engine, setEngine] = useState<'auto' | 'pollinations' | 'pro-fal'>('auto');
+  const [engine, setEngine] = useState<'auto' | 'pro-fal'>('auto');
   const [aspect, setAspect] = useState('16:9');
   const [quality, setQuality] = useState<Quality>('hd');
   const [batch, setBatch] = useState(1);
@@ -219,10 +218,9 @@ const Studio = () => {
 
         const data =
           shot.engine === 'pro-fal'
-            ? await invokeAi<any>('generate-fal', { prompt: full, model: 'flux-schnell' })
+             ? await invokeAi<any>('generate-fal', { prompt: full, model: 'flux-dev', aspect_ratio: shot.aspect })
             : await invokeAi<any>('generate-image', {
                 prompt: full,
-                provider: shot.engine === 'pollinations' ? 'pollinations' : undefined,
                 aspect_ratio: shot.aspect,
                 quality: shot.quality,
                 reference_images: shot.ref ? [shot.ref] : undefined,
@@ -737,7 +735,7 @@ const Studio = () => {
           {advanced && (
             <div className="space-y-3 pt-1">
               {/* Engine */}
-              <div className="grid grid-cols-3 gap-1.5">
+               <div className="grid grid-cols-2 gap-1.5">
                 {ENGINES.map((e) => (
                   <button
                     key={e.id}
@@ -1244,8 +1242,8 @@ const Studio = () => {
 
       {/* Ação principal fixa no mobile — nunca sai da tela */}
       <div
-        className="lg:hidden fixed inset-x-0 z-50 px-3"
-        style={{ bottom: 'calc(70px + env(safe-area-inset-bottom, 0px))' }}
+        className="lg:hidden fixed inset-x-0 z-50 px-3 py-2 ramu-glass border-t border-border"
+        style={{ bottom: 'calc(64px + env(safe-area-inset-bottom, 0px))' }}
       >
         <button
           onClick={tab === 'video' ? generateVideo : tab === 'meme' ? generateMeme : generate}

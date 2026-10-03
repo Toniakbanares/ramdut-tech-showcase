@@ -14,7 +14,7 @@ export class AiError extends Error {
 
 const HUMAN: Record<string, string> = {
   rate_limit: 'Muitas gerações seguidas. Aguarde alguns segundos e tente de novo.',
-  no_credits: 'Os créditos de IA acabaram por agora. Tente o modo Pollinations (grátis).',
+  no_credits: 'Os créditos de IA acabaram. Adicione créditos para voltar a gerar imagens.',
   timeout: 'O modelo demorou demais para responder. Tente novamente ou reduza a qualidade.',
   network: 'Sem conexão com o servidor de IA. Verifique sua internet.',
   empty: 'O modelo não retornou resultado. Reformule o prompt e tente de novo.',

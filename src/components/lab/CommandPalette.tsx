@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Command } from 'cmdk';
 import {
-  Image as ImageIcon, FileCode, Crown, MessageSquare, Laugh, Sparkles, X, Wand2, Flower2, Music, Clapperboard,
+  Image as ImageIcon, FileCode, Crown, MessageSquare, Laugh, Sparkles, X, Wand2, Music, Clapperboard,
   SlidersHorizontal, ChevronDown,
 } from 'lucide-react';
 
@@ -25,8 +25,7 @@ interface Props {
 
 
 const MODES: { id: LabMode; label: string; desc: string; icon: any }[] = [
-  { id: 'image', label: 'Gerar Imagem', desc: 'Nano Banana / Gemini', icon: ImageIcon },
-  { id: 'pollinations', label: 'Pollinations (grátis)', desc: 'Flux ilimitado, sem chave', icon: Flower2 },
+  { id: 'image', label: 'Gerar Imagem', desc: 'Alta qualidade, sem marca', icon: ImageIcon },
   { id: 'svg', label: 'SVG vetorial', desc: 'Recraft v3 — vetor editável', icon: FileCode },
   { id: 'pro-fal', label: 'Pro fal.ai', desc: 'Flux / SDXL / SD 3', icon: Crown },
   { id: 'music', label: 'Compositor de Músicas', desc: 'Letra, acordes e estrutura', icon: Music },
@@ -89,7 +88,7 @@ export const CommandPalette = ({ open, onClose, onSubmit, onMix, defaultMode = '
       return;
     }
     if (!trimmed) return;
-    const isImageMode = mode === 'pollinations' || mode === 'image' || mode === 'pro-fal';
+    const isImageMode = mode === 'image' || mode === 'pro-fal';
     const opts: GenerateOptions = isImageMode
       ? { aspect_ratio: aspect, quality }
       : mode === 'music'
@@ -103,15 +102,15 @@ export const CommandPalette = ({ open, onClose, onSubmit, onMix, defaultMode = '
 
   if (!open) return null;
   const cur = MODES.find((m) => m.id === mode)!;
-  const showChips = mode === 'image' || mode === 'svg' || mode === 'pro-fal' || mode === 'meme' || mode === 'pollinations';
-  const showQuality = mode === 'pollinations' || mode === 'image' || mode === 'pro-fal';
+  const showChips = mode === 'image' || mode === 'svg' || mode === 'pro-fal' || mode === 'meme';
+  const showQuality = mode === 'image' || mode === 'pro-fal';
 
   const ASPECTS = ['1:1', '16:9', '9:16', '4:3', '3:2', '21:9'];
   const QUALITIES: { id: 'fast' | 'standard' | 'hd' | 'ultra'; label: string; hint: string }[] = [
-    { id: 'fast', label: 'Rápido', hint: '~768px' },
-    { id: 'standard', label: 'Padrão', hint: '~1024px' },
-    { id: 'hd', label: 'HD', hint: '~1536px' },
-    { id: 'ultra', label: 'Ultra', hint: '~2048px' },
+    { id: 'fast', label: 'Rápido', hint: 'Qualidade menor' },
+    { id: 'standard', label: 'Padrão', hint: 'Equilibrado' },
+    { id: 'hd', label: 'HD', hint: 'Alta qualidade' },
+    { id: 'ultra', label: 'Ultra', hint: 'Máxima qualidade' },
   ];
 
 
